@@ -23,7 +23,7 @@
 2. 点击 **Install Extension**
 3. 粘贴仓库 URL：
    ```
-   https://github.com/YOUR_USERNAME/preset-transfer
+   https://github.com/Lorenzzz-Elio/preset-transfer.git
    ```
 4. 点击 **Save** 并刷新页面
 
