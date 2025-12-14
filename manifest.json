@@ -1,0 +1,12 @@
+{
+  "display_name": "Preset Transfer Tool",
+  "loading_order": 100,
+  "requires": [],
+  "optional": [],
+  "js": "dist/index.js",
+  "css": "dist/style.css",
+  "author": "discord-qianqiumeng",
+  "version": "1.0.0",
+  "homePage": "https://github.com/Lorenzzz-Elio/preset-transfer",
+  "description": "Powerful preset migration and management tool with entry transfer, state management, and regex binding."
+}

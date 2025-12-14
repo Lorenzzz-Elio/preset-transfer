@@ -1,0 +1,235 @@
+/* Compare Modal Styles */
+
+#compare-modal {
+    --pt-font-size: var(--mainFontSize, 16px);
+    /* Reuse the same theme variables as the main preset transfer modal when available */
+    --pt-accent-color: var(--SmartThemeEmColor, var(--active, #3b82f6));
+    --pt-danger-color: var(--fullred, #dc2626);
+    --pt-body-color: var(--SmartThemeBodyColor, #e5e7eb);
+    --pt-quote-color: var(--SmartThemeQuoteColor, #9ca3af);
+
+    /* The overlay itself stays fixed; only the inner content scrolls.
+       Do NOT make this a scroll container, otherwise sticky close button
+       will move with the header and disappear. */
+    z-index: 10002;
+    overflow: hidden;
+}
+
+#compare-modal .compare-modal-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    animation: pt-slideUp 0.3s ease-out;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Header layout */
+#compare-modal .compare-modal-header {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Title row: icon + title centered */
+#compare-modal .compare-modal-header .title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Close button: pinned to the top-right corner of the compare card itself. */
+#compare-modal .close-compare-btn {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    z-index: 3;
+}
+
+/* Inner scroll area: only the contents inside this container scroll. */
+#compare-modal .compare-modal-scroll {
+    display: flex;
+    flex-direction: column;
+}
+
+#compare-modal .compare-modal-header h2 {
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+#compare-modal .compare-info {
+    margin-top: 8px;
+    font-weight: 500;
+}
+
+#compare-modal .compare-stats {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+#compare-modal .stat-item {
+    text-align: center;
+}
+
+#compare-modal .stat-number {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+#compare-modal .stat-number.different {
+    color: var(--pt-danger-color);
+}
+
+#compare-modal .stat-number.same {
+    color: var(--pt-quote-color);
+}
+
+#compare-modal .stat-label {
+    font-weight: 500;
+}
+
+#compare-modal .compare-content h3 {
+    font-weight: 600;
+}
+
+#compare-modal .compare-entry {
+    overflow: hidden;
+}
+
+#compare-modal .compare-entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+#compare-modal .compare-entry-header h4 {
+    margin: 0;
+    font-weight: 600;
+    flex: 1;
+    min-width: 0;
+}
+
+#compare-modal .compare-actions {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+#compare-modal .compare-action-btn {
+    border: 1px solid;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+#compare-modal .compare-action-btn:hover {
+    opacity: 0.8;
+}
+
+#compare-modal .compare-entry-body {
+    display: grid;
+}
+
+#compare-modal .compare-side {
+    overflow-x: auto;
+}
+
+#compare-modal .compare-side h5 {
+    margin: 0 0 8px 0;
+    font-weight: 600;
+}
+
+#compare-modal .compare-field {
+    margin-bottom: 12px;
+}
+
+#compare-modal .compare-field-label {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+#compare-modal .compare-field-value {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.5;
+    padding: 8px;
+    border-radius: 6px;
+}
+
+#compare-modal .compare-field-value.different {
+    background: rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--pt-danger-color);
+}
+
+#compare-modal .compare-field-value.same {
+    opacity: 0.7;
+}
+
+/* Highlight span for differing parts inside content preview */
+#compare-modal .diff-highlight {
+    background-color: rgba(0, 0, 0, 0.25);
+    color: var(--pt-danger-color);
+    padding: 1px 3px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+/* Generic field-level diff highlighting (role/position/depth/order/triggers etc.) */
+#compare-modal .detail-row .value.different {
+    background: rgba(0, 0, 0, 0.18);
+    border-radius: 4px;
+    padding: 2px 6px;
+    border: 1px solid var(--pt-danger-color) !important;
+    color: var(--pt-danger-color);
+    font-weight: 600;
+}
+
+/* Content preview box when the full content differs */
+#compare-modal .content-preview.different {
+    background: rgba(0, 0, 0, 0.18) !important;
+    border-color: var(--pt-danger-color) !important;
+    box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.35);
+}
+
+/* No-difference message */
+#compare-modal .no-diff-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--pt-quote-color);
+}
+
+/* Subtle scrollbars (near-invisible) */
+#compare-modal,
+#compare-modal * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(127, 127, 127, 0.16) transparent;
+}
+
+#compare-modal *::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+}
+
+#compare-modal *::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#compare-modal *::-webkit-scrollbar-thumb {
+    background: rgba(127, 127, 127, 0.14);
+    border-radius: 999px;
+}
+
+#compare-modal *::-webkit-scrollbar-thumb:hover {
+    background: rgba(127, 127, 127, 0.22);
+}

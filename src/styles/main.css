@@ -1,0 +1,77 @@
+/* 预设转移工具 - 主样式文件 */
+/* 样式将从 styles-application.js 动态注入 */
+
+@keyframes pt-fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Prompt manager entry grouping (outside the modal) */
+.pt-entry-grouping-root .pt-entry-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  margin: 4px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  background: var(--pt-section-bg, rgba(0, 0, 0, 0.08));
+  border: 1px solid var(--pt-border, rgba(0, 0, 0, 0.15));
+  color: var(--pt-text, inherit);
+}
+
+.pt-entry-grouping-root .pt-entry-group-header:hover {
+  filter: brightness(1.03);
+}
+
+.pt-entry-grouping-root .pt-entry-group-toggle {
+  width: 16px;
+  flex: 0 0 16px;
+  text-align: center;
+  opacity: 0.9;
+}
+
+.pt-entry-grouping-root .pt-entry-group-toggle::before {
+  content: "\25B6";
+}
+
+.pt-entry-grouping-root .pt-entry-group-header.is-expanded .pt-entry-group-toggle::before {
+  content: "\25BC";
+}
+
+.pt-entry-grouping-root .pt-entry-group-name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.pt-entry-grouping-root .pt-entry-group-count {
+  opacity: 0.7;
+  font-size: 12px;
+}
+
+.pt-entry-grouping-root .pt-entry-group-wrapper {
+  display: none;
+  margin-bottom: 6px;
+}
+
+.pt-entry-grouping-root .pt-entry-group-wrapper.is-expanded {
+  display: block;
+}
+
+.pt-entry-grouping-root .pt-entry-group-edit-btn,
+.pt-entry-grouping-root .pt-entry-group-clear-btn {
+  font-size: 10px;
+  padding: 2px 6px;
+  line-height: 1.2;
+}
+
+.pt-entry-grouping-root .pt-entry-group-clear-btn {
+  color: var(--pt-danger, #dc2626);
+}

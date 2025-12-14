@@ -1,0 +1,832 @@
+/* Preset Transfer Modal Styles */
+
+#preset-transfer-modal {
+    --pt-font-size: var(--mainFontSize, 16px);
+    /* Theme-aware colors derived from SillyTavern smart theme variables */
+    --pt-accent-color: var(--SmartThemeEmColor, var(--active, #3b82f6));
+    --pt-accent-color-muted: var(--SmartThemeBorderColor, #6b7280);
+    --pt-danger-color: var(--fullred, #dc2626);
+    --pt-border-color: var(--SmartThemeBorderColor, #4b5563);
+    --pt-body-color: var(--SmartThemeBodyColor, #e5e7eb);
+    --pt-quote-color: var(--SmartThemeQuoteColor, #9ca3af);
+
+    z-index: 10000;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+#preset-transfer-modal .transfer-modal-content {
+    min-height: 400px;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    animation: pt-slideUp 0.3s ease-out;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+#preset-transfer-modal .transfer-modal-content,
+#preset-transfer-modal .transfer-modal-content *,
+#preset-transfer-modal h1,
+#preset-transfer-modal h2,
+#preset-transfer-modal h3,
+#preset-transfer-modal h4,
+#preset-transfer-modal h5,
+#preset-transfer-modal .modal-header h2,
+#preset-transfer-modal .entry-name,
+#preset-transfer-modal .entry-content,
+#preset-transfer-modal button,
+#preset-transfer-modal select,
+#preset-transfer-modal input,
+#preset-transfer-modal label,
+#preset-transfer-modal span,
+#preset-transfer-modal div {
+    font-size: var(--pt-font-size);
+}
+
+/* Global placeholder text font size */
+input::placeholder,
+textarea::placeholder,
+input::-webkit-input-placeholder,
+textarea::-webkit-input-placeholder,
+input::-moz-placeholder,
+textarea::-moz-placeholder {
+    font-size: inherit !important;
+}
+
+/* Global select option font size */
+select option {
+    font-size: calc(var(--pt-font-size) * 0.875) !important;
+}
+
+#preset-transfer-modal .modal-header {
+    text-align: center;
+    position: relative;
+}
+
+#preset-transfer-modal .theme-toggle-btn {
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: rgba(0,0,0, 0.1);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+#preset-transfer-modal .theme-toggle-btn:hover {
+    background: rgba(0,0,0, 0.2);
+    transform: scale(1.05);
+}
+
+#preset-transfer-modal .theme-toggle-btn:active {
+    transform: scale(0.98);
+}
+
+#preset-transfer-modal .font-size-control {
+    display: flex;
+    align-items: center;
+}
+
+#preset-transfer-modal .font-size-control label {
+    cursor: pointer;
+    margin: 0;
+}
+
+#preset-transfer-modal .modal-header > div:first-of-type {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+#preset-transfer-modal .version-info {
+    margin-top: 8px;
+    text-align: center;
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+#preset-transfer-modal .version-info .author {
+    font-weight: 500;
+}
+
+#preset-transfer-modal .preset-field {
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+#preset-transfer-modal .preset-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+#preset-transfer-modal .preset-input-group select {
+    flex: 1;
+}
+
+#preset-transfer-modal .get-current-btn {
+    background: var(--pt-accent-color-muted);
+    border: none;
+    color: var(--pt-body-color);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translateZ(0);
+    will-change: background-color, transform;
+}
+
+#preset-transfer-modal .get-current-btn svg {
+    width: 1.35em;
+    height: 1.35em;
+    display: block;
+}
+
+#preset-transfer-modal .pt-icon {
+    width: 1.35em;
+    height: 1.35em;
+}
+
+#preset-transfer-modal .pt-icon-outline,
+#preset-transfer-modal .pt-icon-stroke {
+    stroke: var(--pt-body-color);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+}
+
+#preset-transfer-modal .pt-icon-accent {
+    fill: var(--pt-body-color);
+    opacity: 0.18;
+}
+
+#preset-transfer-modal .get-current-btn:hover {
+    filter: brightness(1.05);
+    transform: scale(1.05);
+}
+
+#preset-transfer-modal .get-current-btn:active {
+    filter: brightness(0.95);
+    transform: scale(0.98);
+}
+
+#preset-transfer-modal .create-here-btn {
+    background: var(--pt-accent-color-muted);
+    border: none;
+    color: var(--pt-body-color);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translateZ(0);
+    will-change: background-color, transform;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    margin-left: 8px;
+}
+
+#preset-transfer-modal .create-here-btn:hover {
+    filter: brightness(1.05);
+    transform: scale(1.05);
+}
+
+#preset-transfer-modal .create-here-btn:active {
+    filter: brightness(0.95);
+    transform: scale(0.98);
+}
+
+#preset-transfer-modal .create-here-btn svg {
+    width: 1.2em;
+    height: 1.2em;
+    display: block;
+}
+
+#preset-transfer-modal .preset-field label {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    font-weight: 600;
+    min-height: 50px;
+}
+
+#preset-transfer-modal .preset-field label span:first-child {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#preset-transfer-modal .preset-field label span:first-child span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+}
+
+#preset-transfer-modal select {
+    width: 100%;
+    font-weight: 500;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><path fill="%236b7280" d="M2 0L0 2h4zm0 5L0 3h4z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 12px;
+    padding-right: 45px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    transform: translateZ(0);
+    will-change: border-color, box-shadow;
+}
+
+#preset-transfer-modal select:focus {
+    border-color: var(--pt-accent-color, var(--pt-accent-color-muted)) !important;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.15) !important;
+    outline: none !important;
+}
+
+#preset-transfer-modal select:hover {
+    border-color: var(--pt-border-color);
+}
+
+#preset-transfer-modal .action-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+#preset-transfer-modal #load-entries {
+    background: var(--pt-accent-color);
+    border: none;
+    color: var(--pt-body-color);
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transform: translateZ(0);
+    will-change: background-color, opacity;
+}
+
+#preset-transfer-modal #load-entries:hover {
+    opacity: 0.9;
+}
+
+#preset-transfer-modal #load-entries:active {
+    opacity: 0.8;
+}
+
+#preset-transfer-modal #batch-delete-presets {
+    background: var(--pt-danger-color);
+    border: none;
+    color: var(--pt-body-color);
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transform: translateZ(0);
+    will-change: background-color, opacity;
+}
+
+#preset-transfer-modal #batch-delete-presets:hover {
+    opacity: 0.9;
+}
+
+#preset-transfer-modal #batch-delete-presets:active {
+    opacity: 0.8;
+}
+
+#preset-transfer-modal .auto-switch-label {
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+#preset-transfer-modal .auto-switch-label input {
+    accent-color: var(--pt-accent-color-muted);
+    cursor: pointer;
+}
+
+#preset-transfer-modal #entries-container {
+    width: 100%;
+}
+
+#preset-transfer-modal .entries-header {
+    border-radius: 12px;
+}
+
+#preset-transfer-modal .entries-header h4 {
+    margin: 0 0 16px 0;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+}
+
+#preset-transfer-modal .entries-header p {
+    margin: 0 0 14px 0;
+    line-height: 1.5;
+}
+
+#preset-transfer-modal .search-section {
+    margin-bottom: 16px;
+}
+
+#preset-transfer-modal .left-search-section {
+    margin-bottom: 16px;
+}
+
+#preset-transfer-modal .left-search-container,
+#preset-transfer-modal .right-search-container {
+    margin-bottom: 12px;
+}
+
+#preset-transfer-modal #left-entry-search,
+#preset-transfer-modal #left-entry-search-inline,
+#preset-transfer-modal #right-entry-search-inline {
+    width: 100%;
+    border-radius: 8px;
+    font-weight: 400;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+#preset-transfer-modal #left-entry-search:focus,
+#preset-transfer-modal #left-entry-search-inline:focus,
+#preset-transfer-modal #right-entry-search-inline:focus {
+    border-color: var(--pt-accent-color, var(--pt-accent-color-muted)) !important;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.15) !important;
+    outline: none !important;
+}
+
+#preset-transfer-modal .display-option-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+#preset-transfer-modal .display-option-label input {
+    accent-color: var(--pt-accent-color-muted);
+    cursor: pointer;
+}
+
+#preset-transfer-modal #entry-search {
+    width: 100%;
+    border-radius: 8px;
+    font-weight: 400;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+#preset-transfer-modal #entry-search:focus {
+    border-color: var(--pt-accent-color, var(--pt-accent-color-muted)) !important;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.15) !important;
+    outline: none !important;
+}
+
+#preset-transfer-modal .search-input-wrapper {
+    position: relative;
+    display: block;
+}
+
+#preset-transfer-modal .search-content-toggle {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    pointer-events: all;
+    z-index: 1;
+}
+
+#preset-transfer-modal .search-content-toggle input[type="checkbox"] {
+    accent-color: var(--pt-accent-color-muted);
+    cursor: pointer;
+    margin: 0;
+}
+
+#preset-transfer-modal .selection-controls {
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+#preset-transfer-modal .selection-btn {
+    border: none;
+    color: #ffffff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transform: translateZ(0);
+    will-change: background-color, opacity;
+    background: var(--pt-accent-color);
+}
+
+#preset-transfer-modal .selection-btn:hover {
+    opacity: 0.9;
+}
+
+#preset-transfer-modal .selection-btn:active {
+    opacity: 0.8;
+}
+
+#preset-transfer-modal .selection-btn .btn-icon {
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    line-height: 1;
+}
+
+#preset-transfer-modal .selection-btn .btn-icon:empty {
+    /* If there is no icon content, hide the placeholder to avoid left-side gaps */
+    display: none;
+}
+
+#preset-transfer-modal #selection-count {
+    font-weight: 600;
+    padding: 8px 14px;
+    background: #f3f4f6;
+    border-radius: 6px;
+}
+
+#preset-transfer-modal .single-entries-container {
+    position: relative;
+}
+
+#preset-transfer-modal .single-side {
+    border-radius: 12px;
+}
+
+/* Hide dual preset container in single preset mode */
+#preset-transfer-modal .single-entries-container:not([style*="display: none"]) ~ .dual-entries-container {
+    display: none !important;
+}
+
+#preset-transfer-modal .entries-side {
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+#preset-transfer-modal .side-header {
+    border-bottom: 1px solid;
+}
+
+#preset-transfer-modal .side-header h5 {
+    margin: 0;
+    font-weight: 700;
+}
+
+#preset-transfer-modal .side-controls {
+    display: flex;
+    flex-direction: column;
+}
+
+#preset-transfer-modal .display-options {
+    margin-top: 6px;
+}
+
+#preset-transfer-modal .display-mode-select {
+    width: 100%;
+    font-weight: 500;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><path fill="%236b7280" d="M2 0L0 2h4zm0 5L0 3h4z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 10px;
+    padding-right: 32px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    transform: translateZ(0);
+    will-change: border-color, box-shadow;
+}
+
+#preset-transfer-modal .display-mode-select:focus {
+    border-color: var(--pt-accent-color, var(--pt-accent-color-muted)) !important;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15) !important;
+    outline: none !important;
+}
+
+#preset-transfer-modal .display-mode-select:hover {
+    border-color: var(--pt-border-color);
+}
+
+/* Prevent layout shift on dropdown click */
+#preset-transfer-modal .display-options,
+#preset-transfer-modal .preset-field {
+    contain: layout style;
+}
+
+#preset-transfer-modal select,
+#preset-transfer-modal .display-mode-select {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+#preset-transfer-modal .selection-count {
+    font-weight: 500;
+}
+
+#preset-transfer-modal .entries-list {
+    overflow-y: auto;
+    border-radius: 10px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(127, 127, 127, 0.16) transparent;
+    flex: 1;
+    /* ???????????????? entry-item ????????????????*/
+    touch-action: pan-y;
+}
+
+#preset-transfer-modal .side-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+#preset-transfer-modal .side-actions button {
+    border: none;
+    color: var(--pt-body-color);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: calc(var(--pt-font-size) * 0.75);
+    font-weight: 700;
+    transition: all 0.2s ease;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transform: translateZ(0);
+    will-change: background-color, opacity, transform;
+}
+
+#preset-transfer-modal .side-actions button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+#preset-transfer-modal .side-actions button:active {
+    opacity: 0.8;
+    transform: translateY(0px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+#preset-transfer-modal .side-actions button[id$="-edit"] {
+    background: var(--pt-accent-color-muted);
+}
+
+#preset-transfer-modal .side-actions button[id$="-delete"] {
+    background: var(--pt-danger-color);
+}
+
+#preset-transfer-modal .side-actions button[id$="-copy"],
+#preset-transfer-modal .side-actions button[id$="-move"],
+#preset-transfer-modal .side-actions button[id^="transfer-"] {
+    background: var(--pt-accent-color);
+}
+
+#preset-transfer-modal .side-controls .selection-btn {
+    background: var(--pt-accent-color);
+    border-radius: 6px;
+    border: none;
+    color: var(--pt-body-color);
+    /* Make these look like buttons, but keep the elevation subtle */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.16);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    transform: translateZ(0);
+    will-change: background-color, box-shadow;
+}
+
+#preset-transfer-modal .side-controls .selection-btn:hover {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+#preset-transfer-modal .side-controls .selection-btn:active {
+    box-shadow: 0 1px 2px rgba(0,0,0,0.16);
+}
+
+/* Visual hints for source/target selection use the accent color,
+   but stay relatively subtle to avoid clashing with the main theme. */
+#preset-transfer-modal .entries-side.transfer-target {
+    border-color: var(--pt-accent-color);
+    box-shadow: 0 0 0 1px var(--pt-accent-color);
+}
+
+#preset-transfer-modal .entries-side.transfer-source {
+    border-style: dashed;
+}
+
+#preset-transfer-modal .entries-side.new-entry-target {
+    border-color: var(--pt-accent-color);
+}
+
+/* Search jump button styles */
+#preset-transfer-modal .jump-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--pt-accent-color);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#preset-transfer-modal .jump-btn:hover {
+    filter: brightness(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+#preset-transfer-modal .jump-btn .jump-icon {
+    color: var(--pt-body-color);
+    font-weight: bold;
+    line-height: 1;
+    transform: rotate(-45deg);
+}
+
+/* Jump highlight effect */
+#preset-transfer-modal .entry-item.jump-highlight {
+    background: rgba(0, 0, 0, 0.1) !important;
+    border-color: var(--pt-accent-color) !important;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25) !important;
+    animation: pt-jumpPulse 2s ease-in-out;
+}
+
+@keyframes pt-jumpPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+#preset-transfer-modal #insert-position-section {
+    background: var(--SmartThemeBlurTintColor, #111827);
+    border-radius: 12px;
+    border: 1px solid var(--pt-border-color);
+}
+
+#preset-transfer-modal #insert-position-section label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: var(--pt-body-color);
+}
+
+#preset-transfer-modal #insert-position-section label span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    background: transparent;
+    border: 1px solid var(--pt-border-color);
+    border-radius: 6px;
+    color: var(--pt-body-color);
+    font-size: calc(var(--pt-font-size) * 0.875);
+}
+
+#preset-transfer-modal #insert-position-section p {
+    margin: 0 0 16px 0;
+    color: var(--pt-quote-color);
+    line-height: 1.5;
+}
+
+#preset-transfer-modal .modal-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+#preset-transfer-modal .modal-actions button {
+    border: none;
+    color: var(--pt-body-color);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: calc(var(--pt-font-size) * 0.875);
+    font-weight: 600;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+    letter-spacing: 0.3px;
+    transform: translateZ(0);
+    will-change: background-color, opacity;
+}
+
+#preset-transfer-modal .modal-actions button:hover {
+    opacity: 0.9;
+}
+
+#preset-transfer-modal .modal-actions button:active {
+    opacity: 0.8;
+}
+
+#preset-transfer-modal #execute-transfer {
+    background: var(--pt-accent-color);
+}
+
+#preset-transfer-modal #execute-delete {
+    background: var(--pt-danger-color);
+}
+
+#preset-transfer-modal #edit-entry {
+    background: var(--pt-accent-color-muted);
+}
+
+#preset-transfer-modal #close-modal {
+    background: var(--pt-accent-color-muted);
+}
+
+/* Drag & drop visual states */
+#preset-transfer-modal .entry-item,
+#preset-transfer-modal .entry-item * {
+    /* ???????????? / ????????????pointercancel ?? */
+}
+
+#preset-transfer-modal.pt-dragging .entry-item {
+    cursor: grabbing !important;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+#preset-transfer-modal.pt-dragging {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+#preset-transfer-modal .entry-item.pt-drag-source {
+    opacity: 0.6;
+    transform: scale(0.98);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+}
+
+#preset-transfer-modal .entry-item.pt-drop-target {
+    border-color: var(--pt-entry-hover-border, #9ca3af) !important;
+    box-shadow: 0 6px 18px var(--pt-entry-hover-shadow, rgba(0,0,0,0.25)) !important;
+    transform: translateY(-2px) !important;
+}
+
+#preset-transfer-modal .entry-item.pt-drop-target::before,
+#preset-transfer-modal .entry-item.pt-drop-target::after {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    height: 0;
+    border-top: 2px solid var(--pt-entry-hover-border, #9ca3af);
+    box-shadow: 0 0 6px rgba(0,0,0,0.35);
+    opacity: 0;
+}
+
+#preset-transfer-modal .entry-item.pt-drop-target-top::before {
+    opacity: 1;
+    top: -3px;
+}
+
+#preset-transfer-modal .entry-item.pt-drop-target-after::after,
+#preset-transfer-modal .entry-item.pt-drop-target-bottom::after {
+    opacity: 1;
+    bottom: -3px;
+}
+
+/* Override touch-action for entries to allow normal scrolling on mobile.
+#preset-transfer-modal .entry-item,
+#preset-transfer-modal .entry-item * {
+}

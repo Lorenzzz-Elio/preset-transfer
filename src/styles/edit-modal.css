@@ -1,0 +1,248 @@
+/* Edit Entry Modal Styles */
+
+#edit-entry-modal {
+    --pt-font-size: var(--mainFontSize, 16px);
+    /* Theme-aware colors derived from SillyTavern smart theme variables */
+    --pt-accent-color: var(--SmartThemeEmColor, var(--active, #3b82f6));
+    --pt-accent-color-muted: var(--SmartThemeBorderColor, #6b7280);
+    --pt-danger-color: var(--fullred, #dc2626);
+    --pt-border-color: var(--SmartThemeBorderColor, #4b5563);
+    --pt-body-color: var(--SmartThemeBodyColor, #e5e7eb);
+    --pt-quote-color: var(--SmartThemeQuoteColor, #9ca3af);
+
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+#edit-entry-modal .edit-modal-content {
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    animation: pt-slideUp 0.3s ease-out;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+#edit-entry-modal .edit-modal-header {
+    text-align: center;
+}
+
+#edit-entry-modal .edit-modal-header > div:first-child {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#edit-entry-modal .edit-modal-header h2 {
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+#edit-entry-modal .preset-info {
+    margin-top: 8px;
+    font-weight: 500;
+}
+
+#edit-entry-modal .edit-form {
+    display: flex;
+    flex-direction: column;
+}
+
+#edit-entry-modal .form-field {
+    display: flex;
+    flex-direction: column;
+}
+
+#edit-entry-modal .form-field label {
+    margin-bottom: 8px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#edit-entry-modal .form-field input,
+#edit-entry-modal .form-field select,
+#edit-entry-modal .form-field textarea {
+    font-weight: 400;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+#edit-entry-modal .form-field select {
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><path fill="%236b7280" d="M2 0L0 2h4zm0 5L0 3h4z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 12px;
+    padding-right: 45px;
+    cursor: pointer;
+}
+
+#edit-entry-modal .form-field textarea {
+    resize: vertical;
+    min-height: 120px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    line-height: 1.5;
+}
+
+#edit-entry-modal .trigger-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+}
+
+#edit-entry-modal .ai-assistant-section {
+    margin-top: 10px;
+}
+
+#edit-entry-modal .ai-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 600px) {
+    #edit-entry-modal .ai-controls {
+        grid-template-columns: 1fr;
+    }
+}
+
+#edit-entry-modal .ai-buttons-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+#edit-entry-modal .ai-btn {
+    color: var(--pt-body-color);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-weight: 500;
+}
+
+#edit-entry-modal #ai-style-entry-selector {
+    border-radius: 6px;
+}
+
+#edit-entry-modal #ai-additional-prompt {
+    border-radius: 6px;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.4;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#edit-entry-modal .ai-assistant-section label span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#edit-entry-modal .trigger-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#edit-entry-modal .trigger-label input[type="checkbox"] {
+    display: none;
+}
+
+#edit-entry-modal .trigger-label span {
+    position: relative;
+    padding-left: 25px;
+}
+
+#edit-entry-modal .trigger-label span::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    border: 2px solid;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+#edit-entry-modal .trigger-label input[type="checkbox"]:checked + span::before {
+    background-color: var(--pt-accent-color);
+    border-color: var(--pt-accent-color);
+}
+
+#edit-entry-modal .trigger-label input[type="checkbox"]:checked + span::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    width: 6px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: translateY(-50%) rotate(45deg);
+}
+
+#edit-entry-modal .edit-modal-actions {
+    display: flex;
+    justify-content: center;
+    border-top: 1px solid var(--pt-border-color);
+}
+
+#edit-entry-modal .edit-modal-actions button {
+    border: none;
+    color: var(--pt-body-color);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: calc(var(--pt-font-size) * 0.875);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+#edit-entry-modal .edit-modal-actions button:hover {
+    box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+    transform: translateY(-1px);
+}
+
+#edit-entry-modal .edit-modal-actions button:active {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transform: translateY(0);
+}
+
+#edit-entry-modal #save-entry-changes,
+#edit-entry-modal #find-replace-btn,
+#edit-entry-modal #cancel-edit {
+    background: var(--pt-accent-color-muted);
+}
+
+/* Subtle scrollbars (near-invisible) */
+#edit-entry-modal,
+#edit-entry-modal * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(127, 127, 127, 0.16) transparent;
+}
+
+#edit-entry-modal *::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+}
+
+#edit-entry-modal *::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#edit-entry-modal *::-webkit-scrollbar-thumb {
+    background: rgba(127, 127, 127, 0.14);
+    border-radius: 999px;
+}
+
+#edit-entry-modal *::-webkit-scrollbar-thumb:hover {
+    background: rgba(127, 127, 127, 0.22);
+}

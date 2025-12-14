@@ -1,0 +1,330 @@
+/* 移动端适配样式 */
+@media (max-width: 768px) {
+  /* 预设管理模态框基础调整 */
+  /* padding/width 已由 styles-application.js 统一管理，此处移除重复定义 */
+
+  #preset-transfer-modal .modal-header {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+  }
+
+  /* 顶部预设选择区改为纵向排列 */
+  #preset-transfer-modal .preset-selection {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  /* 操作区按钮布局：双栏网格 */
+  body #preset-transfer-modal .action-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: stretch;
+  }
+
+  /* 按钮和开关样式适配 */
+  #preset-transfer-modal #load-entries,
+  #preset-transfer-modal #batch-delete-presets {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 16px 0;
+    font-size: calc(var(--pt-font-size) * 1.05);
+  }
+
+  #preset-transfer-modal .auto-switch-label {
+    width: 100%;
+    margin: 0;
+    padding: 12px 0;
+    justify-content: center;
+    background: var(--SmartThemeBlurTintColor, rgba(0, 0, 0, 0.2));
+    border: 1px solid var(--pt-border-color);
+    border-radius: 12px;
+    box-sizing: border-box;
+  }
+
+  /* 搜索栏适配 */
+  #preset-transfer-modal .search-input-wrapper input[type='text'] {
+    padding-right: 50px;
+  }
+
+  /* 移动端双栏视图强制样式 */
+  #preset-transfer-modal .dual-entries-container.mobile-dual-view {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px;
+    align-items: start;
+  }
+
+  /* 默认移动端视图（非双栏时） */
+  #preset-transfer-modal .dual-entries-container:not(.mobile-dual-view) {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  /* 底部操作按钮：2x2网格 */
+  #preset-transfer-modal .side-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px;
+  }
+}
+
+/* 横屏模式优化 (Landscape Mode) */
+/* 仅在移动端横屏时启用 - 使用 max-height 和 aspect-ratio 判断 */
+@media (max-height: 680px) and (min-aspect-ratio: 13/9) {
+  #preset-transfer-modal .transfer-modal-content {
+    width: 98vw !important;
+    height: 98vh !important;
+    height: 98dvh !important;
+    height: calc(var(--pt-vh, 1vh) * 98) !important;
+    max-width: none !important;
+    max-height: none !important;
+    padding: 10px !important;
+    border-radius: 0;
+
+    /* 使用 Grid 布局：左侧控制栏，右侧列表区 */
+    display: grid !important;
+    grid-template-columns: 200px 1fr !important; /* 稍微加宽以防止某些浏览器换行 */
+    /* 定义两行：presets(占据剩余空间), actions(底部自适应) */
+    grid-template-rows: 1fr auto !important;
+    gap: 8px;
+    overflow: hidden !important;
+  }
+
+  /* 隐藏头部 */
+  #preset-transfer-modal .modal-header {
+    display: none !important;
+  }
+
+  /* 预设选择区 (左上 - Row 1) */
+  #preset-transfer-modal .preset-selection {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 0 !important;
+    padding-right: 4px;
+    overflow-y: auto;
+    max-height: none;
+  }
+
+  #preset-transfer-modal .preset-field {
+    padding: 6px !important;
+    border-radius: 8px;
+  }
+
+  /* 紧凑化标签 */
+  #preset-transfer-modal .preset-field label {
+    font-size: 0.8rem;
+    margin-bottom: 2px !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  /* 隐藏描述文本 */
+  #preset-transfer-modal .preset-field label span:last-child {
+    display: none !important;
+  }
+
+  /* 修复选择框名字不显示BUG */
+  #preset-transfer-modal select {
+    padding: 4px 6px;
+    font-size: 0.8rem;
+    height: auto !important;
+    min-height: 32px;
+    color: var(--pt-body-color) !important;
+    background-color: var(--pt-input-focus-shadow) !important;
+  }
+  /* 隐藏获取当前按钮 */
+  #preset-transfer-modal .get-current-btn {
+    display: none !important;
+  }
+
+  /* 操作按钮区 (左下 - Row 2) - 2x2 Grid + 底部对齐 */
+  body #preset-transfer-modal .action-section {
+    grid-column: 1;
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 4px;
+    padding-right: 4px;
+    padding-bottom: 20px;
+    margin-bottom: 0;
+    align-self: end;
+    align-content: end;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 调整按钮和开关 - 统一高度和样式 */
+  #preset-transfer-modal #load-entries,
+  #preset-transfer-modal #batch-delete-presets {
+    width: 100%;
+    min-width: 0 !important;
+    height: 36px;
+    margin: 0;
+    padding: 6px 4px;
+    font-size: 0.7rem;
+    box-sizing: border-box;
+    letter-spacing: -0.5px;
+    white-space: normal;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #preset-transfer-modal .auto-switch-label {
+    width: 100%;
+    min-width: 0 !important;
+    height: 36px;
+    font-size: 0.7rem;
+    padding: 6px 4px;
+    justify-content: center;
+    box-sizing: border-box;
+    white-space: normal;
+    text-align: center;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  #preset-transfer-modal .auto-switch-label input {
+    transform: scale(0.8);
+  }
+
+  /* 右侧内容区 (列表) */
+  #preset-transfer-modal #entries-container {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-left: 1px solid var(--pt-border-color);
+    padding-left: 6px;
+    margin-left: 0;
+    height: 100%;
+  }
+
+  /* 隐藏列表头 */
+  #preset-transfer-modal .entries-header {
+    display: none !important;
+  }
+
+  /* 双栏视图容器 - 强制左右排列 (修复 Edge/Via 下变成竖排的问题) */
+  #preset-transfer-modal .dual-entries-container {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    flex: 1;
+    overflow: hidden;
+    margin-bottom: 0;
+    gap: 8px;
+  }
+  /* 确保 mobile-dual-view 也是如此 */
+  #preset-transfer-modal .dual-entries-container.mobile-dual-view {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* 单栏容器 */
+  #preset-transfer-modal .single-entries-container {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  #preset-transfer-modal .single-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+  }
+  #preset-transfer-modal #single-entries-list {
+    flex: 1;
+    overflow-y: auto;
+    max-height: none !important;
+    min-height: 0 !important;
+  }
+
+  /* 面板内部调整 */
+  #preset-transfer-modal .entries-side {
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    height: 100%;
+    overflow: hidden;
+    padding: 6px;
+    border-radius: 8px;
+  }
+
+  /* 隐藏右侧红框区域内的所有控制元素 */
+  #preset-transfer-modal .side-header {
+    display: none !important;
+  }
+
+  /* 核心：列表滚动 */
+  #preset-transfer-modal .entries-list {
+    flex: 1;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto;
+    border: 1px solid var(--pt-border-color);
+  }
+
+  /* 底部按钮 (Entries Actions) */
+  #preset-transfer-modal .side-actions {
+    flex-shrink: 0;
+    padding-top: 0;
+    margin-top: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 3px;
+    height: 36px;
+  }
+
+  #preset-transfer-modal .side-actions button {
+    height: 100%;
+    padding: 0 2px;
+    font-size: 0.68rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  /* 条目卡片适配 */
+  #preset-transfer-modal .entry-item {
+    min-height: 28px !important;
+    padding: 4px !important;
+  }
+
+  #preset-transfer-modal .entry-name {
+    font-size: 0.8rem !important;
+  }
+
+  #preset-transfer-modal .entry-details {
+    font-size: 0.7rem !important;
+  }
+
+  /* 底部关闭按钮区 - 隐藏 */
+  #preset-transfer-modal .modal-actions {
+    display: none !important;
+  }
+}

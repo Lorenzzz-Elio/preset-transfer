@@ -1,0 +1,11 @@
+node_modules/
+.DS_Store
+*.log
+
+# Local/dev-only helpers (do not publish)
+.claude/
+CLAUDE.md
+docs/
+fix-file.cjs
+fix-file.js
+split-code.js
