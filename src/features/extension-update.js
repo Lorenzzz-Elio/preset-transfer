@@ -14,6 +14,7 @@ let state = {
 };
 
 let checkPromise = null;
+let csrfTokenPromise = null;
 
 function getExtensionUpdateState() {
   return state;
@@ -260,20 +261,48 @@ async function checkForExtensionUpdate() {
 }
 
 async function updateExtensionViaServer() {
-  const parentWindow = getParentWindow();
-  const headers =
-    typeof parentWindow.getRequestHeaders === 'function'
-      ? parentWindow.getRequestHeaders()
-      : { 'Content-Type': 'application/json' };
+  async function getCsrfToken() {
+    if (csrfTokenPromise) return csrfTokenPromise;
+    csrfTokenPromise = (async () => {
+      const response = await fetch('/csrf-token', { cache: 'no-store', credentials: 'same-origin' });
+      if (!response.ok) {
+        throw new Error(`无法获取 CSRF Token：HTTP ${response.status}`);
+      }
+      const json = await response.json().catch(() => ({}));
+      const token = json?.token;
+      if (!token || typeof token !== 'string') {
+        throw new Error('无法获取 CSRF Token：返回格式异常');
+      }
+      return token;
+    })();
+    return csrfTokenPromise;
+  }
+
+  const token = await getCsrfToken();
+  const headers = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    'X-CSRF-Token': token,
+  };
 
   const response = await fetch('/api/extensions/update', {
     method: 'POST',
     headers,
+    credentials: 'same-origin',
     body: JSON.stringify({ extensionName: EXTENSION_NAME, global: true }),
   });
 
   if (!response.ok) {
     const text = await response.text().catch(() => '');
+    if (response.status === 403) {
+      // 403 can be either missing/invalid CSRF token or a permission issue for global extensions.
+      // We already attach CSRF, so if this persists it's usually a permission/login issue.
+      throw new Error(
+        text && text.trim()
+          ? text
+          : '更新被拒绝（403）。请刷新页面后重试；如仍失败，检查是否为管理员账号/是否允许更新全局扩展。',
+      );
+    }
     throw new Error(text || `更新失败：HTTP ${response.status}`);
   }
 
