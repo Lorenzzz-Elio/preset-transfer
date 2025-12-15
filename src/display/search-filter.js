@@ -1,5 +1,5 @@
 import { getJQuery } from '../core/utils.js';
-import { getPresetDataFromManager, getNewEntries } from '../preset/preset-manager.js';
+import { getActiveTransferAdapter } from '../transfer/transfer-context.js';
 import { updateSelectionCount } from './ui-updates.js';
 
 // Filter entries on both sides (and single mode) using the main search box.
@@ -274,10 +274,27 @@ function toggleNewEntries(apiInfo, side) {
 
   // Turn on "new entries" mode.
   try {
-    const leftData = getPresetDataFromManager(apiInfo, leftPreset);
-    const rightData = getPresetDataFromManager(apiInfo, rightPreset);
-    const allNewEntries = getNewEntries(leftData, rightData, side);
-    const newEntryIdentifiers = new Set(allNewEntries.map(entry => entry.identifier));
+    const adapter = getActiveTransferAdapter();
+    const leftEntries = window.leftEntries || [];
+    const rightEntries = window.rightEntries || [];
+    const getKey = entry => entry?.ptKey || entry?.name || entry?.identifier || '';
+    const leftKeys = new Set(leftEntries.map(getKey));
+    const rightKeys = new Set(rightEntries.map(getKey));
+    const newKeySet = new Set();
+
+    if (side === 'left') {
+      for (const key of leftKeys) {
+        if (!rightKeys.has(key)) newKeySet.add(key);
+      }
+    } else {
+      for (const key of rightKeys) {
+        if (!leftKeys.has(key)) newKeySet.add(key);
+      }
+    }
+
+    const newEntryIdentifiers = new Set(
+      (side === 'left' ? leftEntries : rightEntries).filter(e => newKeySet.has(getKey(e))).map(e => e.identifier),
+    );
 
     const sideLabel = side === 'left' ? '左侧' : '右侧';
 

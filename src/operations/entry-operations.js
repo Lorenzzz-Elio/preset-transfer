@@ -1,8 +1,12 @@
 import { getJQuery } from '../core/utils.js';
 import { NEW_FIELD_DEFAULTS } from '../core/constants.js';
 import { getSelectedEntries, loadAndDisplayEntries } from '../display/entry-display.js';
-function startTransferMode(apiInfo, fromSide, toSide) {
+import { getActiveTransferAdapter } from '../transfer/transfer-context.js';
+import { createWorldbookEditEntryModal } from '../worldbook/edit-modal.js';
+import { performTransfer } from './core-operations.js';
+async function startTransferMode(apiInfo, fromSide, toSide) {
   const $ = getJQuery();
+  const adapter = getActiveTransferAdapter();
   const selectedEntries = getSelectedEntries(fromSide);
   const toPreset = $(`#${toSide}-preset`).val();
 
@@ -17,6 +21,27 @@ function startTransferMode(apiInfo, fromSide, toSide) {
   }
 
   // 设置转移模式
+  if (!adapter.capabilities.supportsInsertPosition) {
+    const fromPreset = $(`#${fromSide}-preset`).val();
+    const displayMode = $(`#${toSide}-display-mode`).val();
+    const autoEnable = $('#auto-enable-entry').prop('checked');
+
+    try {
+      await performTransfer(apiInfo, fromPreset, toPreset, selectedEntries, null, autoEnable, displayMode);
+
+      if ($('#auto-close-modal').prop('checked')) {
+        $('#preset-transfer-modal').remove();
+        return;
+      }
+
+      await loadAndDisplayEntries(apiInfo);
+    } catch (error) {
+      console.error('转移失败:', error);
+      alert('转移失败: ' + error.message);
+    }
+    return;
+  }
+
   window.transferMode = {
     apiInfo: apiInfo,
     fromSide: fromSide,
@@ -201,6 +226,7 @@ function editEntryInPreset(apiInfo, presetName, entryData, entryName, fromCompar
 
 function editSelectedEntry(apiInfo, side) {
   const $ = getJQuery();
+  const adapter = getActiveTransferAdapter();
   const selectedEntries = getSelectedEntries(side);
   let presetName, entries, displayMode;
 
@@ -216,6 +242,15 @@ function editSelectedEntry(apiInfo, side) {
 
   if (!presetName) {
     alert('请先选择预设');
+    return;
+  }
+
+  if (adapter.id === 'worldbook') {
+    if (selectedEntries.length !== 1) {
+      alert('世界书条目编辑目前仅支持单条编辑，请只选择一个条目');
+      return;
+    }
+    createWorldbookEditEntryModal(apiInfo, presetName, selectedEntries[0]);
     return;
   }
 

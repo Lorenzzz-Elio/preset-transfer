@@ -1,10 +1,13 @@
 import { getJQuery, getCurrentApiInfo } from '../core/utils.js';
 import { getPresetDataFromManager, getPromptEntries } from '../preset/preset-manager.js';
 import { loadAndDisplayEntries, getSelectedEntries } from '../display/entry-display.js';
+import { getActiveTransferAdapter } from '../transfer/transfer-context.js';
 import { performDelete } from '../operations/core-operations.js';
 
 async function deleteSelectedEntries(apiInfo, side) {
   const $ = getJQuery();
+  const adapter = getActiveTransferAdapter();
+  const containerLabel = adapter?.ui?.containerLabel ?? '预设';
   const selectedEntries = getSelectedEntries(side);
   let presetName;
 
@@ -20,12 +23,12 @@ async function deleteSelectedEntries(apiInfo, side) {
   }
 
   if (!presetName) {
-    alert('请先选择预设');
+    alert(`请先选择${containerLabel}`);
     return;
   }
 
   showConfirmDialog(
-    `确定要从预设 "${presetName}" 中删除 ${selectedEntries.length} 个条目吗？此操作不可撤销。`,
+    `确定要从${containerLabel} "${presetName}" 中删除 ${selectedEntries.length} 个条目吗？此操作不可撤销。`,
     async () => {
       try {
         const deleteButton = side === 'single' ? '#single-delete' : `#${side}-delete`;

@@ -8,10 +8,13 @@ import { editSelectedEntry, startTransferMode } from '../operations/entry-operat
 import { createBatchDeleteModal } from '../preset/batch-delete.js';
 import { setCurrentPreset } from '../preset/preset-manager.js';
 import { applyStoredSettings, saveCurrentSettings } from '../settings/settings-application.js';
+import { getActiveTransferAdapter } from '../transfer/transfer-context.js';
 import { showCompareModal } from '../ui/compare-modal.js';
 import { deleteSelectedEntries } from '../ui/edit-modal.js';
+import { initExtensionUpdateUI } from '../ui/extension-update-modal.js';
 import { showPresetUpdateModal } from '../ui/preset-update-modal.js';
 import { updatePresetRegexStatus } from '../ui/regex-ui.js';
+import { createWorldbookBatchDeleteModal } from '../worldbook/batch-delete.js';
 import { initDragDrop } from './drag-drop-events.js';
 function bindTransferEvents(apiInfo, modal) {
   const $ = getJQuery();
@@ -118,13 +121,20 @@ function bindTransferEvents(apiInfo, modal) {
       control.wrap('<div class="font-size-wrapper"></div>');
     }
     const wrapper = header.find('.font-size-wrapper');
+    let actionsRow = wrapper.find('.pt-header-mini-actions');
+    if (!actionsRow.length) {
+      actionsRow = $('<div class="pt-header-mini-actions"></div>');
+      wrapper.prepend(actionsRow);
+    }
 
     let toggle = $('#font-size-toggle');
     if (!toggle.length) {
       toggle = $(
         '<button id="font-size-toggle" class="font-size-toggle" type="button" title="调节字体大小">Aa</button>',
       );
-      wrapper.prepend(toggle);
+      actionsRow.append(toggle);
+    } else if (!toggle.closest('.pt-header-mini-actions').length) {
+      actionsRow.append(toggle);
     }
 
     // Hide the panel by default so it only shows when explicitly opened.
@@ -154,6 +164,9 @@ function bindTransferEvents(apiInfo, modal) {
     modal.on('remove.fontSize', () => {
       $(document).off('click.presetTransferFontSize');
     });
+
+    // Extension update button (only shown when an update is available).
+    initExtensionUpdateUI(modal);
   }
 
   // 恢复搜索内容选项偏好
@@ -278,13 +291,24 @@ function bindTransferEvents(apiInfo, modal) {
   });
 
   loadBtn.on('click', () => loadAndDisplayEntries(apiInfo));
-  $('#batch-delete-presets').on('click', () => {
+  $('#batch-delete-presets').on('click', async () => {
     const currentApiInfo = getCurrentApiInfo();
     if (!currentApiInfo) {
       alert('无法获取当前API信息，请确保 SillyTavern 已正确加载');
       return;
     }
-    createBatchDeleteModal(currentApiInfo);
+
+    const adapter = getActiveTransferAdapter();
+    try {
+      if (adapter.id === 'worldbook') {
+        await createWorldbookBatchDeleteModal();
+      } else {
+        createBatchDeleteModal(currentApiInfo);
+      }
+    } catch (error) {
+      console.error('批量删除打开失败:', error);
+      alert('批量删除打开失败: ' + error.message);
+    }
   });
 
   updateToRightBtn.on('click', () => {
@@ -443,7 +467,9 @@ function bindTransferEvents(apiInfo, modal) {
 
   // 初始化条目拖拽（排序 / 跨侧移动）
   try {
-    initDragDrop(apiInfo);
+    if (getActiveTransferAdapter().capabilities.supportsMove) {
+      initDragDrop(apiInfo);
+    }
   } catch (error) {
     console.warn('PresetTransfer: 初始化拖拽功能失败', error);
   }

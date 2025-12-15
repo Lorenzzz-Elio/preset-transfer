@@ -28,6 +28,7 @@ import * as EntryGrouping from './features/entry-grouping.js';
 import * as GlobalListener from './features/global-listener.js';
 import * as ImportExport from './features/import-export.js';
 import * as RegexBinding from './features/regex-binding.js';
+import { checkForExtensionUpdate } from './features/extension-update.js';
 
 // UI 模块
 import * as BatchEditor from './ui/batch-editor.js';
@@ -179,42 +180,61 @@ function integrateIntoExtensionsMenu() {
       return;
     }
 
-    // 防止重复创建
-    if ($('#preset-transfer-menu-item').length > 0) {
-      console.log('PresetTransfer: 菜单项已存在，跳过创建');
-      return;
-    }
-
     const extensionsMenu = $('#extensionsMenu');
     if (!extensionsMenu.length) {
       console.error('PresetTransfer: 未找到 #extensionsMenu 容器');
       return;
     }
 
-    const menuItem = $(`
-      <a id="preset-transfer-menu-item" class="list-group-item" href="#" title="预设转移">
-        <i class="fa-solid fa-exchange-alt"></i> 预设转移
-      </a>
-    `);
+    if ($('#preset-transfer-menu-item').length === 0) {
+      const menuItem = $(`
+        <a id="preset-transfer-menu-item" class="list-group-item" href="#" title="预设转移">
+          <i class="fa-solid fa-exchange-alt"></i> 预设转移
+        </a>
+      `);
 
-    extensionsMenu.append(menuItem);
+      extensionsMenu.append(menuItem);
 
-    menuItem.on('click', event => {
-      event.preventDefault();
-      event.stopPropagation();
+      menuItem.on('click', async event => {
+        event.preventDefault();
+        event.stopPropagation();
 
-      // 关闭扩展菜单
-      $('#extensionsMenu').fadeOut(200);
+        // 关闭扩展菜单
+        $('#extensionsMenu').fadeOut(200);
 
-      try {
-        MainUI.createTransferUI?.();
-      } catch (error) {
-        console.error('PresetTransfer: 创建 UI 失败', error);
-        alert('创建预设转移工具界面失败：' + error.message);
-      }
-    });
+        try {
+          await MainUI.createTransferUI?.({ adapterKey: 'preset' });
+        } catch (error) {
+          console.error('PresetTransfer: 创建 UI 失败', error);
+          alert('创建预设转移工具界面失败：' + error.message);
+        }
+      });
+    }
 
     // 全局滚动条等样式
+    // Worldbook transfer entry (added alongside preset transfer)
+    if ($('#worldbook-transfer-menu-item').length === 0) {
+      const worldbookMenuItem = $(`
+        <a id="worldbook-transfer-menu-item" class="list-group-item" href="#" title="世界书转移">
+          <i class="fa-solid fa-book"></i> 世界书转移
+        </a>
+      `);
+
+      extensionsMenu.append(worldbookMenuItem);
+
+      worldbookMenuItem.on('click', async event => {
+        event.preventDefault();
+        event.stopPropagation();
+        $('#extensionsMenu').fadeOut(200);
+        try {
+          await MainUI.createTransferUI?.({ adapterKey: 'worldbook' });
+        } catch (error) {
+          console.error('PresetTransfer: åˆ›å»º UI å¤±è´¥', error);
+          alert('创建世界书转移工具界面失败：' + error.message);
+        }
+      });
+    }
+
     $('#preset-transfer-global-styles').remove();
     $('head').append(`
       <style id="preset-transfer-global-styles">
@@ -325,6 +345,10 @@ function integrateIntoExtensionsMenu() {
 async function initPresetTransferIntegration() {
   try {
     console.log('预设转移工具开始初始化...');
+
+    // Check for updates once per page load (no git operations here; only HTTP fetch).
+    // If an update is available, the UI will show an update button when the modal is opened.
+    checkForExtensionUpdate().catch(() => {});
 
     // 等待扩展菜单和 jQuery 就绪
     await waitForExtensionsMenu();

@@ -1,10 +1,14 @@
 import { ensureViewportCssVars, getCurrentApiInfo, getDeviceInfo, getJQuery } from '../core/utils.js';
 import { bindTransferEvents } from '../events/event-binding.js';
+import { loadLocalManifest } from '../features/extension-update.js';
 import { initializeEnhancedFeatures } from '../settings/enhanced-features.js';
+import { getActiveTransferAdapter, getTransferEngine, setActiveTransferAdapterKey } from '../transfer/transfer-context.js';
 import { getCurrentPresetIcon } from './icons.js';
 import { applyStyles } from './styles-application.js';
 
-function createTransferUI() {
+async function createTransferUI({ adapterKey = 'preset' } = {}) {
+  setActiveTransferAdapterKey(adapterKey);
+  const adapter = getActiveTransferAdapter();
   console.log('开始创建转移UI...');
 
   // 全局预设监听器在脚本加载时已经启动，这里不需要重复初始化
@@ -16,7 +20,8 @@ function createTransferUI() {
   }
 
   console.log('API信息获取成功，预设数量:', apiInfo.presetNames.length);
-  if (apiInfo.presetNames.length < 1) {
+  const containerNames = await getTransferEngine().listContainers(apiInfo);
+  if (containerNames.length < 1) {
     alert('至少需要 1 个预设才能进行操作');
     return;
   }
@@ -24,6 +29,10 @@ function createTransferUI() {
   const $ = getJQuery();
   const { isMobile, isSmallScreen, isPortrait } = getDeviceInfo();
   ensureViewportCssVars();
+
+  const extensionManifest = await loadLocalManifest()
+    .then(r => r.manifest)
+    .catch(() => null);
 
   const modalHtml = `
         <div id="preset-transfer-modal">
@@ -244,7 +253,167 @@ function createTransferUI() {
 
   $('body').append(modalHtml);
 
+  // Version text (based on manifest.json, so it updates automatically after a git pull + refresh).
+  try {
+    const version = extensionManifest?.version ? `V${String(extensionManifest.version)}` : 'V?';
+    const author = extensionManifest?.author ? ` by ${String(extensionManifest.author)}` : '';
+    $('#preset-transfer-modal .version-info').html('<span class="author" id="pt-extension-version-info"></span>');
+    $('#pt-extension-version-info').text(`${version}${author}`);
+  } catch {
+    // ignore
+  }
+
   const modal = $('#preset-transfer-modal');
+  modal.attr('data-pt-adapter', adapter.id);
+
+  // Adapter-aware UI normalization (worldbook vs preset)
+  try {
+    modal.find('.modal-header h2').text(adapter.ui.toolTitle);
+
+    const fields = modal.find('.preset-selection .preset-field');
+    const leftField = fields.eq(0).find('label span');
+    const rightField = fields.eq(1).find('label span');
+    leftField.eq(0).text(`左侧${adapter.ui.containerLabel}`);
+    leftField.eq(1).text(`选择要管理的${adapter.ui.containerLabel}`);
+    rightField.eq(0).text(`右侧${adapter.ui.containerLabel}`);
+    rightField.eq(1).text(`选择要管理的${adapter.ui.containerLabel}`);
+
+    const optionsHtml = [`<option value="">请选择${adapter.ui.containerLabel}</option>`]
+      .concat(containerNames.map(name => `<option value="${name}">${name}</option>`))
+      .join('');
+
+    $('#left-preset').html(optionsHtml);
+    $('#right-preset').html(optionsHtml);
+
+    $('#batch-delete-presets').text(`批量删除${adapter.ui.containerLabel}`);
+
+    if (adapter.id === 'worldbook') {
+      const enableDblClickSearch = (selectId) => {
+        const $select = $(selectId);
+        if (!$select.length) return;
+        $select.attr('title', `双击搜索${adapter.ui.containerLabel}`);
+
+        const datalistId = 'pt-worldbook-name-datalist';
+        let $datalist = $(`#${datalistId}`);
+        if ($datalist.length === 0) {
+          $datalist = $('<datalist>').attr('id', datalistId);
+          $('body').append($datalist);
+        }
+
+        $select.off('dblclick.ptWorldbookSearch');
+        $select.on('dblclick.ptWorldbookSearch', function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+
+          const $this = $(this);
+          if ($this.data('pt-search-active')) return;
+          $this.data('pt-search-active', true);
+
+          const optionNames = $this
+            .find('option')
+            .map((_, opt) => String(opt?.value ?? ''))
+            .get()
+            .filter(Boolean);
+
+          $datalist.empty();
+          for (const name of optionNames) {
+            $('<option>').attr('value', name).appendTo($datalist);
+          }
+
+          const currentValue = String($this.val() ?? '');
+          const $input = $('<input>')
+            .attr({
+              type: 'text',
+              list: datalistId,
+              placeholder: `搜索${adapter.ui.containerLabel}...`,
+            })
+            .addClass('pt-container-search-input')
+            .val(currentValue);
+
+          const resolveValue = (rawValue) => {
+            const needle = String(rawValue ?? '').trim();
+            if (!needle) return null;
+            const exact = optionNames.find(n => n === needle);
+            if (exact) return exact;
+            const lower = needle.toLowerCase();
+            const matches = optionNames.filter(n => String(n).toLowerCase().includes(lower));
+            if (matches.length === 1) return matches[0];
+            return null;
+          };
+
+          const restore = (apply = false) => {
+            const nextValue = resolveValue($input.val());
+            $input.remove();
+            $this.show();
+            $this.data('pt-search-active', false);
+
+            if (apply && nextValue) {
+              $this.val(nextValue).trigger('change');
+            }
+          };
+
+          $this.after($input).hide();
+          $input.focus().select();
+
+          $input.on('keydown', e => {
+            if (e.key === 'Escape') {
+              e.preventDefault();
+              restore(false);
+              return;
+            }
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              restore(true);
+            }
+          });
+
+          $input.on('blur', () => {
+            restore(true);
+          });
+        });
+      };
+
+      enableDblClickSearch('#left-preset');
+      enableDblClickSearch('#right-preset');
+    }
+
+    if (!adapter.capabilities.supportsBatchDeleteContainers) {
+      $('#batch-delete-presets').hide();
+    }
+    if (!adapter.capabilities.supportsCompare) {
+      $('#compare-entries').hide();
+    }
+    if (!adapter.capabilities.supportsEdit) {
+      $('#left-edit, #right-edit, #single-edit').hide();
+    }
+    if (!adapter.capabilities.supportsCopy) {
+      $('#left-copy, #right-copy, #single-copy').hide();
+    }
+    if (!adapter.capabilities.supportsMove) {
+      $('#single-move').hide();
+    }
+    if (!adapter.capabilities.supportsUninsertedMode) {
+      $('#left-display-mode option[value="show_uninserted"]').remove();
+      $('#right-display-mode option[value="show_uninserted"]').remove();
+      $('#single-display-mode option[value="show_uninserted"]').remove();
+    }
+
+    if (adapter.id !== 'preset') {
+      $('#get-current-left, #get-current-right, #left-preview-btn, #right-preview-btn').remove();
+    }
+
+    if ($(`#pt-adapter-style-${adapter.id}`).length === 0) {
+      $('head').append(`
+        <style id="pt-adapter-style-${adapter.id}">
+          #preset-transfer-modal[data-pt-adapter="worldbook"] .create-here-btn { display: none !important; }
+          #preset-transfer-modal[data-pt-adapter="worldbook"] #auto-switch-preset { display: none !important; }
+          #preset-transfer-modal[data-pt-adapter="worldbook"] .preset-input-group .pt-container-search-input { flex: 1; }
+        </style>
+      `);
+    }
+  } catch (e) {
+    console.warn('PresetTransfer: adapter UI tweaks failed', e);
+  }
   // Keep semantic placement: “补全左侧” on the left, “补全右侧” on the right.
   modal.find('.preset-update-slot[data-side="left"]').append($('#preset-update-to-left'));
   modal.find('.preset-update-slot[data-side="right"]').append($('#preset-update-to-right'));
@@ -258,7 +427,9 @@ function createTransferUI() {
   bindTransferEvents(apiInfo, $('#preset-transfer-modal'));
 
   // 初始化增强功能（包括“新增条目”过滤等）
-  initializeEnhancedFeatures(apiInfo);
+  if (adapter.id === 'preset') {
+    initializeEnhancedFeatures(apiInfo);
+  }
 }
 
 export { createTransferUI };

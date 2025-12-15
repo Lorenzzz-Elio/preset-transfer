@@ -3,6 +3,7 @@ import { getPresetDataFromManager } from '../preset/preset-manager.js';
 import { getOrCreateDummyCharacterPromptOrder } from '../ui/edit-modal.js';
 import { getSelectedEntries, loadAndDisplayEntries } from '../display/entry-display.js';
 import { getPresetNameForSide } from '../batch/batch-modifications.js';
+import { getActiveTransferAdapter } from '../transfer/transfer-context.js';
 // ==================== 新增功能模块 ====================
 
 // QuickCopy模块已移除 - 复制功能已被"在此处新建"功能替代
@@ -25,9 +26,113 @@ function generateIdentifier() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
 
+let worldInfoModulePromise = null;
+
+async function getWorldInfoModule() {
+  if (!worldInfoModulePromise) {
+    worldInfoModulePromise = import('/scripts/world-info.js');
+  }
+  return await worldInfoModulePromise;
+}
+
+function getFreeUidFallback(targetData) {
+  const entriesObj = targetData?.entries && typeof targetData.entries === 'object' ? targetData.entries : {};
+  const used = new Set(Object.values(entriesObj).map(e => Number(e?.uid)).filter(Number.isFinite));
+  let uid = 0;
+  while (used.has(uid)) uid += 1;
+  return uid;
+}
+
+function cloneWorldEntry(sourceEntry) {
+  const clone = JSON.parse(JSON.stringify(sourceEntry ?? {}));
+  delete clone.uid;
+  return clone;
+}
+
+async function copyWorldbookEntries(side, apiInfo) {
+  const $ = getJQuery();
+  const selectedEntries = getSelectedEntries(side);
+  const worldbookName = getPresetNameForSide(side);
+  const autoEnable = $('#auto-enable-entry').prop('checked');
+
+  if (selectedEntries.length === 0) {
+    alert('请选择要复制的条目');
+    return;
+  }
+
+  if (!worldbookName) {
+    alert('无法确定目标世界书');
+    return;
+  }
+
+  const mod = await getWorldInfoModule();
+  if (typeof mod.loadWorldInfo !== 'function' || typeof mod.saveWorldInfo !== 'function') {
+    throw new Error('World Info module missing loadWorldInfo/saveWorldInfo');
+  }
+
+  const data = await mod.loadWorldInfo(worldbookName);
+  if (!data || typeof data !== 'object') {
+    throw new Error(`无法加载世界书: ${worldbookName}`);
+  }
+
+  if (!data.entries || typeof data.entries !== 'object') {
+    data.entries = {};
+  }
+
+  const getFreeWorldEntryUid =
+    typeof mod.getFreeWorldEntryUid === 'function' ? mod.getFreeWorldEntryUid : null;
+
+  const existingComments = new Set(Object.values(data.entries).map(e => String(e?.comment ?? '')));
+  const makeUniqueComment = (base) => {
+    const normalizedBase = String(base ?? '').trim();
+    const root = normalizedBase ? `${normalizedBase} 副本` : '副本';
+    if (!existingComments.has(root)) {
+      existingComments.add(root);
+      return root;
+    }
+
+    let index = 2;
+    while (existingComments.has(`${root}${index}`)) {
+      index += 1;
+    }
+    const next = `${root}${index}`;
+    existingComments.add(next);
+    return next;
+  };
+
+  for (const item of selectedEntries) {
+    const uid = item?.raw?.uid ?? Number(item?.identifier);
+    const src = item?.raw ?? (Number.isFinite(uid) ? data.entries[String(uid)] : null);
+    if (!src) continue;
+
+    const clone = cloneWorldEntry(src);
+    clone.comment = makeUniqueComment(clone.comment ?? '');
+    if (autoEnable) {
+      clone.disable = false;
+    }
+
+    const newUid = getFreeWorldEntryUid ? getFreeWorldEntryUid(data) : getFreeUidFallback(data);
+    data.entries[String(newUid)] = { uid: newUid, ...clone };
+  }
+
+  await mod.saveWorldInfo(worldbookName, data, true);
+  loadAndDisplayEntries(apiInfo);
+}
+
 // 简化的复制功能
 async function simpleCopyEntries(side, apiInfo) {
   const $ = getJQuery();
+  const adapter = getActiveTransferAdapter();
+  if (adapter.id === 'worldbook') {
+    try {
+      await copyWorldbookEntries(side, apiInfo);
+    } catch (error) {
+      console.error('复制失败:', error);
+      alert('复制失败: ' + error.message);
+    }
+    return;
+  }
+
   const selectedEntries = getSelectedEntries(side);
   const presetName = getPresetNameForSide(side);
 

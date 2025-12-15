@@ -6,11 +6,12 @@ import { executeNewEntryAtPosition, executeTransferToPosition } from '../operati
 import { ensureAllEntriesHaveNewFields } from '../preset/new-version-fields.js';
 import { getOrderedPromptEntries, getPresetDataFromManager } from '../preset/preset-manager.js';
 import { CommonStyles } from '../styles/common-styles.js';
+import { getActiveTransferAdapter, getTransferEngine } from '../transfer/transfer-context.js';
 import { updateCompareButton } from '../ui/compare-modal.js';
 import { getTargetPromptsList } from '../ui/edit-modal.js';
 import { createNewIcon } from '../ui/icons.js';
 import { updateSelectionCount } from './ui-updates.js';
-function loadAndDisplayEntries(apiInfo) {
+async function loadAndDisplayEntries(apiInfo) {
   const $ = getJQuery();
   const leftPreset = $('#left-preset').val();
   const rightPreset = $('#right-preset').val();
@@ -25,23 +26,22 @@ function loadAndDisplayEntries(apiInfo) {
   const isSingleMode = (leftPreset && !rightPreset) || (!leftPreset && rightPreset);
 
   if (isSingleMode) {
-    loadSinglePresetMode(apiInfo, leftPreset || rightPreset);
+    await loadSinglePresetMode(apiInfo, leftPreset || rightPreset);
   } else {
-    loadDualPresetMode(apiInfo, leftPreset, rightPreset);
+    await loadDualPresetMode(apiInfo, leftPreset, rightPreset);
   }
 }
 
-function loadSinglePresetMode(apiInfo, presetName) {
+async function loadSinglePresetMode(apiInfo, presetName) {
   const $ = getJQuery();
   const displayMode = $('#single-display-mode').val();
 
   try {
-    const presetData = getPresetDataFromManager(apiInfo, presetName);
-    let entries = getOrderedPromptEntries(presetData, displayMode);
-    entries = ensureAllEntriesHaveNewFields(entries);
+    const adapter = getActiveTransferAdapter();
+    const entries = await getTransferEngine().getEntries(apiInfo, presetName, displayMode);
 
     window.singleEntries = entries;
-    window.singlePresetData = presetData;
+    window.singlePresetData = null;
     window.singlePresetName = presetName;
 
     displayEntries(entries, 'single');
@@ -51,6 +51,7 @@ function loadSinglePresetMode(apiInfo, presetName) {
     $('#dual-container').hide();
     $('#single-container').show();
     $('#entries-container').show();
+    $('#single-preset-title').text(`${adapter.ui.containerLabel}管理: ${presetName}`);
 
     // 显示单一搜索栏，隐藏内联搜索栏
     $('.search-section').show();
@@ -69,22 +70,21 @@ function loadSinglePresetMode(apiInfo, presetName) {
   }
 }
 
-function loadDualPresetMode(apiInfo, leftPreset, rightPreset) {
+async function loadDualPresetMode(apiInfo, leftPreset, rightPreset) {
   const $ = getJQuery();
   const leftDisplayMode = $('#left-display-mode').val();
   const rightDisplayMode = $('#right-display-mode').val();
 
   try {
     // 获取预设数据
-    const leftData = leftPreset ? getPresetDataFromManager(apiInfo, leftPreset) : null;
-    const rightData = rightPreset ? getPresetDataFromManager(apiInfo, rightPreset) : null;
+    const adapter = getActiveTransferAdapter();
+    const engine = getTransferEngine();
 
     // 加载左侧条目
     if (leftPreset) {
-      let leftEntries = getOrderedPromptEntries(leftData, leftDisplayMode);
-      leftEntries = ensureAllEntriesHaveNewFields(leftEntries);
+      const leftEntries = await engine.getEntries(apiInfo, leftPreset, leftDisplayMode);
       window.leftEntries = leftEntries;
-      window.leftPresetData = leftData;
+      window.leftPresetData = null;
       displayEntries(leftEntries, 'left');
       $('#left-preset-title').text(`左侧预设: ${leftPreset}`);
     } else {
@@ -96,10 +96,9 @@ function loadDualPresetMode(apiInfo, leftPreset, rightPreset) {
 
     // 加载右侧条目
     if (rightPreset) {
-      let rightEntries = getOrderedPromptEntries(rightData, rightDisplayMode);
-      rightEntries = ensureAllEntriesHaveNewFields(rightEntries);
+      const rightEntries = await engine.getEntries(apiInfo, rightPreset, rightDisplayMode);
       window.rightEntries = rightEntries;
-      window.rightPresetData = rightData;
+      window.rightPresetData = null;
       displayEntries(rightEntries, 'right');
       $('#right-preset-title').text(`右侧预设: ${rightPreset}`);
     } else {
@@ -114,6 +113,18 @@ function loadDualPresetMode(apiInfo, leftPreset, rightPreset) {
     $('#dual-container').show();
     $('#entries-container').show();
 
+    if (leftPreset) {
+      $('#left-preset-title').text(`左侧${adapter.ui.containerLabel}: ${leftPreset}`);
+    } else {
+      $('#left-preset-title').text(`左侧${adapter.ui.containerLabel}: 未选择`);
+    }
+
+    if (rightPreset) {
+      $('#right-preset-title').text(`右侧${adapter.ui.containerLabel}: ${rightPreset}`);
+    } else {
+      $('#right-preset-title').text(`右侧${adapter.ui.containerLabel}: 未选择`);
+    }
+
     // 隐藏单一搜索栏，显示内联搜索栏
     $('.search-section').hide();
     $('.left-search-section').hide();
@@ -121,7 +132,9 @@ function loadDualPresetMode(apiInfo, leftPreset, rightPreset) {
     $('.right-search-container').show();
 
     updateSelectionCount();
-    updateCompareButton();
+    if (adapter.capabilities.supportsCompare) {
+      updateCompareButton();
+    }
 
     // 重置转移模式
     window.transferMode = null;
