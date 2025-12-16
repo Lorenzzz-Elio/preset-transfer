@@ -208,8 +208,8 @@ function createWorldbookEditEntryModal(apiInfo, worldbookName, entry) {
 
     #pt-worldbook-edit-modal .pt-wi-top-row {
       display: flex;
-      flex-direction: ${isSmallScreen ? 'column' : 'row'};
-      align-items: ${isSmallScreen ? 'stretch' : 'center'};
+      flex-direction: row;
+      align-items: center;
       justify-content: space-between;
       gap: ${vars.gap};
       padding: ${vars.paddingSmall};
@@ -224,6 +224,7 @@ function createWorldbookEditEntryModal(apiInfo, worldbookName, entry) {
       display: flex;
       flex-direction: column;
       gap: 4px;
+      flex: 1 1 auto;
     }
 
     #pt-worldbook-edit-modal .pt-wi-current-label {
@@ -244,11 +245,12 @@ function createWorldbookEditEntryModal(apiInfo, worldbookName, entry) {
     #pt-worldbook-edit-modal .pt-wi-toggle {
       display: inline-flex;
       align-items: center;
-      justify-content: ${isSmallScreen ? 'flex-end' : 'flex-start'};
+      justify-content: flex-start;
       gap: 8px;
       font-weight: 800;
       color: ${vars.textColor};
       white-space: nowrap;
+      flex: 0 0 auto;
     }
 
     #pt-worldbook-edit-modal .pt-wi-toggle input {

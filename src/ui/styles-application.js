@@ -1,6 +1,4 @@
 import { CommonStyles } from '../styles/common-styles.js';
-import { ensureNativeEntryStatesPanelInjected } from './native-entry-states-panel.js';
-import { ensureNativeRegexPanelInjected } from './native-panel.js';
 
 function applyStyles(isMobile, isSmallScreen, isPortrait) {
   const vars = CommonStyles.getVars();
@@ -221,16 +219,16 @@ function applyStyles(isMobile, isSmallScreen, isPortrait) {
             font-size: ${isMobile ? 'calc(var(--pt-font-size) * 0.9375)' : 'calc(var(--pt-font-size) * 0.875)'};
         }
         #preset-transfer-modal .search-input-wrapper input[type="text"] {
-            padding-right: ${isMobile ? '80px' : '70px'};
+            padding-right: ${isMobile ? '56px' : '54px'};
         }
-        #preset-transfer-modal .search-content-toggle {
+        #preset-transfer-modal .pt-search-settings-btn {
             right: ${isMobile ? '12px' : '10px'};
-            color: ${vars.tipColor}; font-size: ${
-    isMobile ? 'calc(var(--pt-font-size) * 0.75)' : 'calc(var(--pt-font-size) * 0.6875)'
-  };
+            width: ${isMobile ? '38px' : '34px'};
+            height: ${isMobile ? '34px' : '30px'};
         }
-        #preset-transfer-modal .search-content-toggle input[type="checkbox"] {
-            ${isMobile ? 'transform: scale(0.9);' : 'transform: scale(0.8);'}
+        #preset-transfer-modal .pt-search-settings-popover {
+            right: ${isMobile ? '12px' : '10px'};
+            font-size: ${isMobile ? 'calc(var(--pt-font-size) * 0.8125)' : 'calc(var(--pt-font-size) * 0.75)'};
         }
         #preset-transfer-modal .selection-controls {
             display: ${isMobile ? 'grid' : 'flex'};
@@ -388,8 +386,6 @@ function applyStyles(isMobile, isSmallScreen, isPortrait) {
    `;
   }
 
-  ensureNativeEntryStatesPanelInjected();
-  ensureNativeRegexPanelInjected();
 }
 
 export { applyStyles };

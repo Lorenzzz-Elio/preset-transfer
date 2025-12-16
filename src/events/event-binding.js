@@ -1,10 +1,11 @@
 import { debounce, getCurrentApiInfo, getDeviceInfo, getJQuery } from '../core/utils.js';
 import { arePresetsSameDifferentVersion } from '../core/preset-name-utils.js';
-import { loadAndDisplayEntries } from '../display/entry-display.js';
+import { commitWorldbookPickTarget, loadAndDisplayEntries } from '../display/entry-display.js';
+import { cancelGlobalSearch, closeAllPanels as closeAllGlobalSearchPanels, runGlobalSearch } from '../display/global-search.js';
 import { filterDualEntries, filterSideEntries, toggleNewEntries } from '../display/search-filter.js';
 import { updateSelectionCount } from '../display/ui-updates.js';
 import { simpleCopyEntries, startMoveMode } from '../operations/copy-move.js';
-import { editSelectedEntry, startTransferMode } from '../operations/entry-operations.js';
+import { createNewWorldbookEntry, editSelectedEntry, startTransferMode } from '../operations/entry-operations.js';
 import { createBatchDeleteModal } from '../preset/batch-delete.js';
 import { setCurrentPreset } from '../preset/preset-manager.js';
 import { applyStoredSettings, saveCurrentSettings } from '../settings/settings-application.js';
@@ -15,6 +16,7 @@ import { initExtensionUpdateUI } from '../ui/extension-update-modal.js';
 import { showPresetUpdateModal } from '../ui/preset-update-modal.js';
 import { updatePresetRegexStatus } from '../ui/regex-ui.js';
 import { createWorldbookBatchDeleteModal } from '../worldbook/batch-delete.js';
+import { loadSearchSettings, updateSearchSettings } from '../settings/search-settings.js';
 import { initDragDrop } from './drag-drop-events.js';
 function bindTransferEvents(apiInfo, modal) {
   const $ = getJQuery();
@@ -169,16 +171,83 @@ function bindTransferEvents(apiInfo, modal) {
     initExtensionUpdateUI(modal);
   }
 
-  // 恢复搜索内容选项偏好
-  function restoreSearchContentPreferences() {
-    const mainPref = localStorage.getItem('preset-transfer-search-content-main');
-    const leftPref = localStorage.getItem('preset-transfer-search-content-left');
-    const rightPref = localStorage.getItem('preset-transfer-search-content-right');
+  function applySearchSettingsToUI(settings) {
+    const { globalSearch, includeContent } = settings || loadSearchSettings();
 
-    // 默认为true（选中状态），除非用户明确设置为false
-    $('#search-content-main').prop('checked', mainPref !== 'false');
-    $('#search-content-left').prop('checked', leftPref !== 'false');
-    $('#search-content-right').prop('checked', rightPref !== 'false');
+    $('.pt-search-settings-popover').each(function () {
+      const $popover = $(this);
+      $popover.find('.pt-search-opt-global').prop('checked', !!globalSearch);
+      $popover.find('.pt-search-opt-content').prop('checked', !!includeContent);
+    });
+  }
+
+  function openSearchSettingsPopover(context) {
+    const $btn = $(`.pt-search-settings-btn[data-pt-search-context="${context}"]`);
+    const $popover = $(`.pt-search-settings-popover[data-pt-search-context="${context}"]`);
+    if (!$btn.length || !$popover.length) return;
+
+    // Close others
+    $('.pt-search-settings-popover').hide();
+    $popover.show();
+  }
+
+  function closeSearchSettingsPopovers() {
+    $('.pt-search-settings-popover').hide();
+  }
+
+  function getWrapperForContext(context) {
+    if (context === 'left') return $('#left-entry-search-inline').closest('.search-input-wrapper');
+    if (context === 'right') return $('#right-entry-search-inline').closest('.search-input-wrapper');
+    return $('#entry-search').closest('.search-input-wrapper');
+  }
+
+  function routeSearch(context) {
+    const settings = loadSearchSettings();
+    const includeContent = !!settings.includeContent;
+    const globalSearch = !!settings.globalSearch;
+
+    const $input =
+      context === 'left'
+        ? $('#left-entry-search-inline')
+        : context === 'right'
+        ? $('#right-entry-search-inline')
+        : $('#entry-search');
+
+    const term = $input.val();
+    const $wrapper = getWrapperForContext(context);
+
+    if (globalSearch) {
+      // Global search does not filter the existing list; keep list visible and show results panel.
+      if (context === 'left') {
+        filterSideEntries('left', '');
+      } else if (context === 'right') {
+        filterSideEntries('right', '');
+      } else {
+        // main search only exists in single-mode; use existing helper to clear jump buttons.
+        filterDualEntries('');
+      }
+
+      runGlobalSearch({
+        apiInfo,
+        context,
+        wrapperSelector: $wrapper,
+        searchTerm: term,
+        includeContent,
+      });
+      return;
+    }
+
+    // Local list filter
+    cancelGlobalSearch();
+    closeAllGlobalSearchPanels();
+
+    if (context === 'left') {
+      filterSideEntries('left', term);
+    } else if (context === 'right') {
+      filterSideEntries('right', term);
+    } else {
+      filterDualEntries(term);
+    }
   }
 
   // 重置界面到初始状态的函数
@@ -188,6 +257,11 @@ function bindTransferEvents(apiInfo, modal) {
     $('#left-entries-list, #right-entries-list, #single-entries-list').empty();
     $('#left-selection-count, #right-selection-count, #single-selection-count').text('');
     $('#entry-search, #left-entry-search-inline, #right-entry-search-inline').val('');
+    cancelGlobalSearch();
+    closeAllGlobalSearchPanels();
+    closeSearchSettingsPopovers();
+    window.ptWorldbookPickTarget = null;
+    $('#left-side, #right-side').removeClass('transfer-target');
     // Reset the "show new" buttons (icon cleared, only文字“新增”保留)
     $('#left-show-new, #right-show-new').removeClass('showing-new').find('.btn-icon').text('');
     Object.assign(window, {
@@ -322,33 +396,53 @@ function bindTransferEvents(apiInfo, modal) {
   // 智能导入按钮事件
 
   // 添加防抖优化的条目搜索
-  const debouncedDualSearch = debounce(function () {
-    filterDualEntries($('#entry-search').val());
-  }, 300);
-  const debouncedLeftSearch = debounce(function () {
-    filterSideEntries('left', $('#left-entry-search-inline').val());
-  }, 300);
-  const debouncedRightSearch = debounce(function () {
-    filterSideEntries('right', $('#right-entry-search-inline').val());
+  const debouncedRouteSearch = debounce(function (context) {
+    routeSearch(context);
   }, 300);
 
-  $('#entry-search').on('input', debouncedDualSearch);
-  $('#left-entry-search-inline').on('input', debouncedLeftSearch);
-  $('#right-entry-search-inline').on('input', debouncedRightSearch);
+  $('#entry-search').on('input', () => debouncedRouteSearch('main'));
+  $('#left-entry-search-inline').on('input', () => debouncedRouteSearch('left'));
+  $('#right-entry-search-inline').on('input', () => debouncedRouteSearch('right'));
 
-  // 搜索内容选项事件绑定
-  $('#search-content-main').on('change', function () {
-    localStorage.setItem('preset-transfer-search-content-main', $(this).is(':checked'));
-    debouncedDualSearch();
+  // Search settings gear + popover
+  applySearchSettingsToUI(loadSearchSettings());
+
+  $('.pt-search-settings-btn').on('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const context = $(this).data('pt-search-context');
+    const $popover = $(`.pt-search-settings-popover[data-pt-search-context="${context}"]`);
+    const isOpen = $popover.is(':visible');
+    closeSearchSettingsPopovers();
+    if (!isOpen) openSearchSettingsPopover(context);
   });
-  $('#search-content-left').on('change', function () {
-    localStorage.setItem('preset-transfer-search-content-left', $(this).is(':checked'));
-    debouncedLeftSearch();
+
+  $('.pt-search-settings-popover').on('click', function (e) {
+    // Don't close when interacting inside popover.
+    e.stopPropagation();
   });
-  $('#search-content-right').on('change', function () {
-    localStorage.setItem('preset-transfer-search-content-right', $(this).is(':checked'));
-    debouncedRightSearch();
-  });
+
+  $('.pt-search-settings-popover .pt-search-opt-global, .pt-search-settings-popover .pt-search-opt-content').on(
+    'change',
+    function () {
+      const $popover = $(this).closest('.pt-search-settings-popover');
+      const globalSearch = $popover.find('.pt-search-opt-global').is(':checked');
+      const includeContent = $popover.find('.pt-search-opt-content').is(':checked');
+      const settings = updateSearchSettings({ globalSearch, includeContent });
+      applySearchSettingsToUI(settings);
+
+      // Refresh search for all visible inputs that have content.
+      if ($('#left-entry-search-inline').is(':visible') && $('#left-entry-search-inline').val()) routeSearch('left');
+      if ($('#right-entry-search-inline').is(':visible') && $('#right-entry-search-inline').val()) routeSearch('right');
+      if ($('#entry-search').is(':visible') && $('#entry-search').val()) routeSearch('main');
+    },
+  );
+
+  $(document)
+    .off('click.ptSearchSettings')
+    .on('click.ptSearchSettings', function () {
+      closeSearchSettingsPopovers();
+    });
   // 添加防抖功能，避免频繁重新加载
   let displayModeChangeTimeout;
   $('#left-display-mode, #right-display-mode, #single-display-mode').on('change', function () {
@@ -367,8 +461,10 @@ function bindTransferEvents(apiInfo, modal) {
   // 绑定设置变更事件
   $('#auto-close-modal, #auto-enable-entry').on('change', saveCurrentSettings);
 
-  // 恢复搜索内容选项偏好
-  restoreSearchContentPreferences();
+  // Clean up global click handler when modal is removed.
+  modal.on('remove.ptSearchSettings', () => {
+    $(document).off('click.ptSearchSettings');
+  });
 
   // 自动根据屏幕方向切换双栏视图（移动端）
   const { isMobile } = getDeviceInfo();
@@ -400,7 +496,11 @@ function bindTransferEvents(apiInfo, modal) {
     updateSelectionCount();
   });
 
-  $('#left-show-new').on('click', () => toggleNewEntries(apiInfo, 'left'));
+  if (getActiveTransferAdapter().id === 'worldbook') {
+    $('#left-show-new').on('click', () => createNewWorldbookEntry(apiInfo, 'left'));
+  } else {
+    $('#left-show-new').on('click', () => toggleNewEntries(apiInfo, 'left'));
+  }
 
   $('#left-edit').on('click', () => editSelectedEntry(apiInfo, 'left'));
   $('#left-delete').on('click', () => deleteSelectedEntries(apiInfo, 'left'));
@@ -417,12 +517,35 @@ function bindTransferEvents(apiInfo, modal) {
     updateSelectionCount();
   });
 
-  $('#right-show-new').on('click', () => toggleNewEntries(apiInfo, 'right'));
+  if (getActiveTransferAdapter().id === 'worldbook') {
+    $('#right-show-new').on('click', () => createNewWorldbookEntry(apiInfo, 'right'));
+  } else {
+    $('#right-show-new').on('click', () => toggleNewEntries(apiInfo, 'right'));
+  }
 
   $('#right-edit').on('click', () => editSelectedEntry(apiInfo, 'right'));
   $('#right-delete').on('click', () => deleteSelectedEntries(apiInfo, 'right'));
   $('#right-copy').on('click', () => simpleCopyEntries('right', apiInfo));
   $('#transfer-to-left').on('click', () => startTransferMode(apiInfo, 'right', 'left'));
+
+  // Worldbook global-search target picking: allow clicking anywhere on the side panel (not just entries).
+  $('#left-side, #right-side')
+    .off('click.ptWorldbookPickTarget')
+    .on('click.ptWorldbookPickTarget', function (e) {
+      const adapter = getActiveTransferAdapter();
+      if (adapter?.id !== 'worldbook') return;
+      if (!window.ptWorldbookPickTarget) return;
+
+      const $t = $(e.target);
+      if ($t.closest('.pt-global-search-panel, .pt-search-settings-popover, .pt-search-settings-btn').length) return;
+      if ($t.closest('.entry-item, .create-here-btn, .entry-checkbox').length) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const side = this.id === 'left-side' ? 'left' : 'right';
+      commitWorldbookPickTarget(side);
+    });
   $('#compare-entries').on('click', () => showCompareModal(apiInfo));
 
   // 单预设控制
@@ -434,6 +557,10 @@ function bindTransferEvents(apiInfo, modal) {
     $('#single-entries-list .entry-checkbox').prop('checked', false);
     updateSelectionCount();
   });
+
+  if (getActiveTransferAdapter().id === 'worldbook') {
+    $('#single-show-new').on('click', () => createNewWorldbookEntry(apiInfo, 'single'));
+  }
 
   $('#single-edit').on('click', () => editSelectedEntry(apiInfo, 'single'));
   $('#single-delete').on('click', () => deleteSelectedEntries(apiInfo, 'single'));

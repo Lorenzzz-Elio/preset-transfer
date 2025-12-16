@@ -11,6 +11,57 @@ import { updateCompareButton } from '../ui/compare-modal.js';
 import { getTargetPromptsList } from '../ui/edit-modal.js';
 import { createNewIcon } from '../ui/icons.js';
 import { updateSelectionCount } from './ui-updates.js';
+
+async function commitWorldbookPickTarget(side) {
+  const $ = getJQuery();
+  const adapter = getActiveTransferAdapter();
+  if (adapter?.id !== 'worldbook') return;
+
+  const payload = window.ptWorldbookPickTarget;
+  if (!payload || !payload.apiInfo || !payload.sourceContainer || !Array.isArray(payload.entries) || payload.entries.length === 0) {
+    return;
+  }
+
+  let targetContainer = '';
+  let displayMode = 'default';
+
+  if (side === 'left') {
+    targetContainer = $('#left-preset').val();
+    displayMode = $('#left-display-mode').val() || 'default';
+  } else if (side === 'right') {
+    targetContainer = $('#right-preset').val();
+    displayMode = $('#right-display-mode').val() || 'default';
+  } else if (side === 'single') {
+    targetContainer = window.singlePresetName;
+    displayMode = $('#single-display-mode').val() || 'default';
+  }
+
+  if (!targetContainer) {
+    if (window.toastr) toastr.warning('请选择目标世界书');
+    return;
+  }
+
+  try {
+    const autoEnable = $('#auto-enable-entry').prop('checked');
+    await getTransferEngine().transfer(payload.apiInfo, {
+      sourceContainer: payload.sourceContainer,
+      targetContainer,
+      entries: payload.entries,
+      insertPosition: null,
+      autoEnable,
+      displayMode,
+    });
+
+    await loadAndDisplayEntries(payload.apiInfo);
+    if (window.toastr) toastr.success(`已转移到目标世界书: ${targetContainer}`);
+  } catch (error) {
+    console.error('世界书转移失败:', error);
+    if (window.toastr) toastr.error('转移失败: ' + error.message);
+  } finally {
+    window.ptWorldbookPickTarget = null;
+    $('#left-side, #right-side').removeClass('transfer-target');
+  }
+}
 async function loadAndDisplayEntries(apiInfo) {
   const $ = getJQuery();
   const leftPreset = $('#left-preset').val();
@@ -266,16 +317,24 @@ function displayEntries(entries, side) {
       updateSelectionCount();
     });
 
-    entriesContainer.off('click', '.entry-item').on('click', '.entry-item', function (e) {
+    entriesContainer.off('click', '.entry-item').on('click', '.entry-item', async function (e) {
       if (!parentJQuery(e.target).is('.entry-checkbox') && !parentJQuery(e.target).is('.create-here-btn')) {
         e.preventDefault();
         const $item = parentJQuery(this);
         const itemSide = $item.data('side');
+        const adapter = getActiveTransferAdapter();
+
+        // Worldbook quick target selection mode: click any entry to select target side (no insert position).
+        if (window.ptWorldbookPickTarget && adapter?.id === 'worldbook') {
+          e.stopPropagation();
+          await commitWorldbookPickTarget(itemSide);
+          return;
+        }
 
         // 位置项点击逻辑
         if ($item.hasClass('position-item')) {
           const position = $item.data('position');
-          if (window.transferMode && window.transferMode.toSide === itemSide) {
+          if (window.transferMode && (window.transferMode.toSide === itemSide || window.transferMode.toSide === 'any')) {
             executeTransferToPosition(window.transferMode.apiInfo, window.transferMode.fromSide, itemSide, position);
           } else if (window.newEntryMode && window.newEntryMode.side === itemSide) {
             executeNewEntryAtPosition(window.newEntryMode.apiInfo, itemSide, position);
@@ -286,20 +345,25 @@ function displayEntries(entries, side) {
         }
 
         // 转移模式下的目标条目点击逻辑
-        if (window.transferMode && window.transferMode.toSide === itemSide) {
+        if (window.transferMode && (window.transferMode.toSide === itemSide || window.transferMode.toSide === 'any')) {
           const index = parseInt($item.data('index'));
           const identifier = $item.data('identifier');
-          const targetPreset = $(`#${itemSide}-preset`).val();
+          const adapter = getActiveTransferAdapter();
 
-          // 始终使用完整列表来计算在prompt_order中的真实位置
-          const fullList = getTargetPromptsList(targetPreset, 'include_disabled');
-          const realIndex = fullList.findIndex(entry => entry.identifier === identifier);
+          let realIndex = index;
+          if (adapter?.id !== 'worldbook') {
+            const targetPreset = itemSide === 'single' ? window.singlePresetName : $(`#${itemSide}-preset`).val();
+            // 始终使用完整列表来计算在prompt_order中的真实位置
+            const fullList = getTargetPromptsList(targetPreset, 'include_disabled');
+            realIndex = fullList.findIndex(entry => entry.identifier === identifier);
+            if (realIndex < 0) realIndex = index;
+          }
 
           executeTransferToPosition(
             window.transferMode.apiInfo,
             window.transferMode.fromSide,
             itemSide,
-            realIndex >= 0 ? realIndex : index,
+            realIndex,
           );
           return;
         }
@@ -456,4 +520,4 @@ function getSelectedEntries(side) {
   return selected;
 }
 
-export { displayEntries, getSelectedEntries, loadAndDisplayEntries, loadDualPresetMode, loadSinglePresetMode };
+export { commitWorldbookPickTarget, displayEntries, getSelectedEntries, loadAndDisplayEntries, loadDualPresetMode, loadSinglePresetMode };

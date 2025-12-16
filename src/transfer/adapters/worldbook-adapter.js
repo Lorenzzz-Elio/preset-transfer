@@ -129,7 +129,6 @@ function getTriggerModeLabel(entry) {
 }
 
 async function transferWorldEntries(apiInfo, sourceName, targetName, entries, autoEnable) {
-    void apiInfo;
     const sourceData = await loadWorldbook(sourceName);
     const targetData = await loadWorldbook(targetName);
 

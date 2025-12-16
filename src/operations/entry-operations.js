@@ -4,6 +4,122 @@ import { getSelectedEntries, loadAndDisplayEntries } from '../display/entry-disp
 import { getActiveTransferAdapter } from '../transfer/transfer-context.js';
 import { createWorldbookEditEntryModal } from '../worldbook/edit-modal.js';
 import { performTransfer } from './core-operations.js';
+
+let worldInfoModulePromise = null;
+
+async function getWorldInfoModule() {
+  if (!worldInfoModulePromise) {
+    worldInfoModulePromise = import('/scripts/world-info.js');
+  }
+  return await worldInfoModulePromise;
+}
+
+function getFreeWorldEntryUidFallback(data) {
+  const entriesObj = data?.entries && typeof data.entries === 'object' ? data.entries : {};
+  const used = new Set(Object.values(entriesObj).map(e => Number(e?.uid)).filter(Number.isFinite));
+  let uid = 0;
+  while (used.has(uid)) uid += 1;
+  return uid;
+}
+
+function cloneDeepFallback(value) {
+  try {
+    if (typeof structuredClone === 'function') return structuredClone(value);
+  } catch {
+    // ignore
+  }
+  return JSON.parse(JSON.stringify(value));
+}
+
+async function createNewWorldbookEntry(apiInfo, side) {
+  const $ = getJQuery();
+  const adapter = getActiveTransferAdapter();
+
+  if (adapter?.id !== 'worldbook') {
+    startNewEntryMode(apiInfo, side);
+    return;
+  }
+
+  let worldbookName;
+  if (side === 'single') {
+    worldbookName = window.singlePresetName || $('#left-preset').val() || $('#right-preset').val();
+  } else {
+    worldbookName = $(`#${side}-preset`).val();
+  }
+  if (!worldbookName) {
+    alert('请先选择世界书');
+    return;
+  }
+
+  const autoEnable = $('#auto-enable-entry').prop('checked');
+
+  try {
+    const mod = await getWorldInfoModule();
+    if (typeof mod.loadWorldInfo !== 'function') {
+      throw new Error('World Info module missing loadWorldInfo');
+    }
+    if (typeof mod.saveWorldInfo !== 'function') {
+      throw new Error('World Info module missing saveWorldInfo');
+    }
+
+    const data = await mod.loadWorldInfo(worldbookName);
+    if (!data.entries || typeof data.entries !== 'object') {
+      data.entries = {};
+    }
+
+    let newEntry = null;
+
+    if (typeof mod.createWorldInfoEntry === 'function') {
+      newEntry = mod.createWorldInfoEntry(worldbookName, data);
+    }
+
+    if (!newEntry || !Number.isFinite(Number(newEntry.uid))) {
+      const getFreeWorldEntryUid = typeof mod.getFreeWorldEntryUid === 'function' ? mod.getFreeWorldEntryUid : null;
+      const uid = getFreeWorldEntryUid ? getFreeWorldEntryUid(data) : getFreeWorldEntryUidFallback(data);
+      if (!Number.isInteger(uid)) {
+        throw new Error('无法为新条目分配 UID');
+      }
+
+      const baseTemplate =
+        mod.newWorldInfoEntryTemplate && typeof mod.newWorldInfoEntryTemplate === 'object'
+          ? mod.newWorldInfoEntryTemplate
+          : {
+              key: [],
+              keysecondary: [],
+              comment: '',
+              content: '',
+              constant: false,
+              selective: true,
+              selectiveLogic: 0,
+              order: 100,
+              position: 0,
+              disable: false,
+              depth: 4,
+              triggers: [],
+            };
+
+      newEntry = { uid, ...cloneDeepFallback(baseTemplate) };
+      data.entries[String(uid)] = newEntry;
+    }
+
+    if (!autoEnable) {
+      newEntry.disable = true;
+    }
+
+    await mod.saveWorldInfo(worldbookName, data, true);
+    await loadAndDisplayEntries(apiInfo);
+
+    createWorldbookEditEntryModal(apiInfo, worldbookName, {
+      identifier: String(newEntry.uid),
+      name: String(newEntry.comment ?? ''),
+      content: String(newEntry.content ?? ''),
+      raw: newEntry,
+    });
+  } catch (error) {
+    console.error('新建世界书条目失败:', error);
+    alert('新建世界书条目失败: ' + error.message);
+  }
+}
 async function startTransferMode(apiInfo, fromSide, toSide) {
   const $ = getJQuery();
   const adapter = getActiveTransferAdapter();
@@ -90,11 +206,26 @@ function startNewEntryMode(apiInfo, side) {
 async function executeTransferToPosition(apiInfo, fromSide, toSide, targetPosition) {
   const $ = getJQuery();
   const selectedEntries = window.transferMode.selectedEntries;
-  const fromPreset = $(`#${fromSide}-preset`).val();
-  const toPreset = $(`#${toSide}-preset`).val();
-  const displayMode = $(`#${toSide}-display-mode`).val();
+  const fromPreset = window.transferMode?.sourceContainer || (fromSide ? $(`#${fromSide}-preset`).val() : '');
+
+  let toPreset;
+  let displayMode;
+  if (toSide === 'single') {
+    toPreset = window.singlePresetName;
+    displayMode = $('#single-display-mode').val();
+  } else {
+    toPreset = $(`#${toSide}-preset`).val();
+    displayMode = $(`#${toSide}-display-mode`).val();
+  }
 
   try {
+    if (!fromPreset) {
+      throw new Error('请选择源预设');
+    }
+    if (!toPreset) {
+      throw new Error('请选择目标预设');
+    }
+
     // 构建插入位置
     let insertPosition;
     if (typeof targetPosition === 'string') {
@@ -277,6 +408,7 @@ export {
   startNewEntryMode,
   executeTransferToPosition,
   executeNewEntryAtPosition,
+  createNewWorldbookEntry,
   copyEntryBetweenPresets,
   editEntryInPreset,
   editSelectedEntry

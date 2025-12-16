@@ -3,7 +3,7 @@ import { bindTransferEvents } from '../events/event-binding.js';
 import { loadLocalManifest } from '../features/extension-update.js';
 import { initializeEnhancedFeatures } from '../settings/enhanced-features.js';
 import { getActiveTransferAdapter, getTransferEngine, setActiveTransferAdapterKey } from '../transfer/transfer-context.js';
-import { getCurrentPresetIcon } from './icons.js';
+import { gearIcon, getCurrentPresetIcon } from './icons.js';
 import { applyStyles } from './styles-application.js';
 
 async function createTransferUI({ adapterKey = 'preset' } = {}) {
@@ -105,10 +105,19 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
                         <div class="search-section">
                             <div class="search-input-wrapper">
                                 <input type="text" id="entry-search" placeholder="搜索条目...">
-                                <label class="search-content-toggle">
-                                    <input type="checkbox" id="search-content-main" checked>
-                                    <span>含内容</span>
-                                </label>
+                                <button type="button" class="pt-search-settings-btn" data-pt-search-context="main" title="搜索选项">
+                                    ${gearIcon()}
+                                </button>
+                                <div class="pt-search-settings-popover" data-pt-search-context="main" style="display:none;">
+                                    <label class="pt-search-option">
+                                        <input type="checkbox" class="pt-search-opt-global">
+                                        <span>跨预设搜索</span>
+                                    </label>
+                                    <label class="pt-search-option">
+                                        <input type="checkbox" class="pt-search-opt-content">
+                                        <span>含内容（可能卡顿）</span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -125,6 +134,11 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
                                         </button>
                                         <button id="single-select-none" class="selection-btn">
                                             <span class="btn-icon"></span> 不选
+                                        </button>
+                                    </div>
+                                    <div class="control-row">
+                                        <button id="single-show-new" class="selection-btn" style="display: none;">
+                                            <span class="btn-icon"></span> 新建
                                         </button>
                                     </div>
                                     <div class="display-options">
@@ -179,10 +193,19 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
                             <div class="left-search-container" style="display: none;">
                                 <div class="search-input-wrapper">
                                     <input type="text" id="left-entry-search-inline" placeholder="搜索左侧条目...">
-                                    <label class="search-content-toggle">
-                                        <input type="checkbox" id="search-content-left" checked>
-                                        <span>含内容</span>
-                                    </label>
+                                    <button type="button" class="pt-search-settings-btn" data-pt-search-context="left" title="搜索选项">
+                                        ${gearIcon()}
+                                    </button>
+                                    <div class="pt-search-settings-popover" data-pt-search-context="left" style="display:none;">
+                                        <label class="pt-search-option">
+                                            <input type="checkbox" class="pt-search-opt-global">
+                                            <span>跨预设搜索</span>
+                                        </label>
+                                        <label class="pt-search-option">
+                                            <input type="checkbox" class="pt-search-opt-content">
+                                            <span>含内容（可能卡顿）</span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                             <div id="left-entries-list" class="entries-list"></div>
@@ -227,10 +250,19 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
                             <div class="right-search-container" style="display: none;">
                                 <div class="search-input-wrapper">
                                     <input type="text" id="right-entry-search-inline" placeholder="搜索右侧条目...">
-                                    <label class="search-content-toggle">
-                                        <input type="checkbox" id="search-content-right" checked>
-                                        <span>含内容</span>
-                                    </label>
+                                    <button type="button" class="pt-search-settings-btn" data-pt-search-context="right" title="搜索选项">
+                                        ${gearIcon()}
+                                    </button>
+                                    <div class="pt-search-settings-popover" data-pt-search-context="right" style="display:none;">
+                                        <label class="pt-search-option">
+                                            <input type="checkbox" class="pt-search-opt-global">
+                                            <span>跨预设搜索</span>
+                                        </label>
+                                        <label class="pt-search-option">
+                                            <input type="checkbox" class="pt-search-opt-content">
+                                            <span>含内容（可能卡顿）</span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                             <div id="right-entries-list" class="entries-list"></div>
@@ -270,6 +302,13 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
   try {
     modal.find('.modal-header h2').text(adapter.ui.toolTitle);
 
+    // Search popover label: "global" means cross-container search for the active adapter.
+    const globalSearchLabel = adapter.id === 'worldbook' ? '跨世界书搜索' : '跨预设搜索';
+    modal.find('.pt-search-settings-popover .pt-search-opt-global').each(function () {
+      const $input = $(this);
+      $input.closest('label').find('span').last().text(globalSearchLabel);
+    });
+
     const fields = modal.find('.preset-selection .preset-field');
     const leftField = fields.eq(0).find('label span');
     const rightField = fields.eq(1).find('label span');
@@ -288,6 +327,25 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
     $('#batch-delete-presets').text(`批量删除${adapter.ui.containerLabel}`);
 
     if (adapter.id === 'worldbook') {
+      try {
+        $('#entries-container .entries-header h4').text('双向世界书管理');
+        $('#entries-container .entries-header p').text(
+          '提示：左右两侧显示不同世界书的条目，可以互相转移、编辑、删除；点击上方“新建”可在当前世界书中创建条目。',
+        );
+        $('#left-show-new')
+          .attr('title', '在左侧世界书中新建条目')
+          .html('<span class="btn-icon"></span> 新建');
+        $('#right-show-new')
+          .attr('title', '在右侧世界书中新建条目')
+          .html('<span class="btn-icon"></span> 新建');
+        $('#single-show-new')
+          .show()
+          .attr('title', '在当前世界书中新建条目')
+          .html('<span class="btn-icon"></span> 新建');
+      } catch {
+        // ignore
+      }
+
       const enableDblClickSearch = (selectId) => {
         const $select = $(selectId);
         if (!$select.length) return;

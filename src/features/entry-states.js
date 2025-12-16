@@ -11,6 +11,7 @@ export {
   getEntryStatesGroupByPrefix,
   setEntryStatesGroupByPrefix,
   hookPresetSaveToProtectExtensions,
+  unhookPresetSaveToProtectExtensions,
   sanitizeWorldBindings,
   normalizeEntryStatesConfig,
   getPresetEntryStates,

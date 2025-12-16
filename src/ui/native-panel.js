@@ -2,8 +2,6 @@ import { PT } from '../core/api-compat.js';
 import { getJQuery, escapeHtml, debounce } from '../core/utils.js';
 import { CommonStyles } from '../styles/common-styles.js';
 import {
-  getEntryStatesSaveWorldBindings,
-  setEntryStatesSaveWorldBindings,
   getEntryStatesGroupByPrefix,
   setEntryStatesGroupByPrefix,
   getPresetEntryStates,
@@ -16,17 +14,61 @@ import {
 } from '../features/entry-states.js';
 import {
   getRegexBindingEnabled,
-  setRegexBindingEnabled,
   getPresetRegexBindings,
   getAllAvailableRegexes,
   savePresetRegexBindings,
-  getDefaultRegexBindings,
   switchPresetRegexes,
 } from '../features/regex-binding.js';
 
 // 本地缓存一份条目状态偏好，避免直接依赖未声明的全局变量
-let entryStatesSaveWorldBindings = getEntryStatesSaveWorldBindings();
 let entryStatesGroupByPrefix = getEntryStatesGroupByPrefix();
+let nativePanelInjectAttempts = 0;
+let nativePanelInjectTimer = null;
+let lastNativePanelFlags = { entryStatesPanelEnabled: true, regexBindingEnabled: true };
+
+function removeNativeEntryStatesPanel() {
+  const $ = getJQuery();
+  $('#st-native-entry-states-panel').remove();
+}
+
+function removeNativeRegexPanel() {
+  const $ = getJQuery();
+  $('#st-native-regex-panel').remove();
+}
+
+function scheduleNativePanelSync() {
+  if (nativePanelInjectTimer) {
+    clearTimeout(nativePanelInjectTimer);
+    nativePanelInjectTimer = null;
+  }
+
+  nativePanelInjectAttempts = 0;
+
+  const trySync = () => {
+    nativePanelInjectAttempts++;
+
+    const flags = lastNativePanelFlags || {};
+    const wantEntryStates = !!flags.entryStatesPanelEnabled;
+    const wantRegex = !!flags.regexBindingEnabled;
+
+    if (!wantEntryStates) removeNativeEntryStatesPanel();
+    if (!wantRegex) removeNativeRegexPanel();
+
+    // Ensure preset extensions are preserved if any native panel feature is on.
+    if (wantEntryStates || wantRegex) {
+      hookPresetSaveToProtectExtensions();
+    }
+
+    const entryOk = !wantEntryStates || ensureNativeEntryStatesPanelInjected();
+    const regexOk = !wantRegex || ensureNativeRegexPanelInjected();
+
+    if ((entryOk && regexOk) || nativePanelInjectAttempts >= 10) return;
+
+    nativePanelInjectTimer = setTimeout(trySync, 500);
+  };
+
+  trySync();
+}
 function ensureNativeEntryStatesPanelInjected() {
   const $ = getJQuery();
   const container = $('#openai_api-presets');
@@ -60,9 +102,6 @@ function ensureNativeEntryStatesPanelInjected() {
         <button id="save-current-entry-states" class="menu_button" style="font-size: 11px; padding: 2px 6px; display: inline-block; white-space: nowrap;" title="保存当前条目状态">保存</button>
         <button id="entry-states-group-toggle" class="menu_button" style="font-size: 11px; padding: 2px 6px; display: inline-block; white-space: nowrap;" title="按名称前缀分组显示">${
           entryStatesGroupByPrefix ? '分组:开' : '分组:关'
-        }</button>
-        <button id="entry-states-switch" class="menu_button" title="开启/关闭世界书绑定功能">${
-          entryStatesSaveWorldBindings ? '●' : '○'
         }</button>
       </div>
       <div class="content" style="display:none; max-height:50vh; overflow:auto; padding:10px;">
@@ -323,19 +362,6 @@ function bindNativeEntryStatesMainPanelEvents() {
       const presetName = PT.API.getLoadedPresetName?.();
       if (presetName) renderNativeEntryStatesContent(presetName);
     });
-
-  // 功能开关按钮
-  $('#entry-states-switch')
-    .off('click')
-    .on('click', function () {
-      entryStatesSaveWorldBindings = !entryStatesSaveWorldBindings;
-      setEntryStatesSaveWorldBindings(entryStatesSaveWorldBindings);
-      localStorage.setItem('preset-transfer-entry-states-save-world-bindings', entryStatesSaveWorldBindings);
-      $(this).text(entryStatesSaveWorldBindings ? '●' : '○');
-      if (window.toastr) {
-        toastr.info(entryStatesSaveWorldBindings ? '已开启世界书绑定功能，将在保存与应用时同步' : '已关闭世界书绑定功能，将忽略世界书同步');
-      }
-    });
 }
 
 // 更新条目状态管理面板状态显示
@@ -348,9 +374,6 @@ function updateNativeEntryStatesPanel(presetName) {
     const statesConfig = getPresetEntryStates(presetName);
     const count = Array.isArray(statesConfig.versions) ? statesConfig.versions.length : 0;
     panel.find('#st-entry-states-status').text(`预设: ${presetName}（已保存 ${count} 个状态版本）`);
-
-    // 更新开关按钮状态
-    panel.find('#entry-states-switch').text(entryStatesSaveWorldBindings ? '●' : '○');
   } catch (e) {
     console.warn('更新条目状态管理面板失败:', e);
   }
@@ -496,12 +519,6 @@ function ensureNativeRegexPanelInjected() {
         <span class="title">预设正则</span>
         <div style="flex:1;"></div>
         <button id="preset-regex-manage" class="menu_button" style="font-size: 11px; padding: 2px 6px; display: inline-block; white-space: nowrap;" title="选择要绑定到当前预设的正则">绑定管理</button>
-        <button id="export-preset-bundle" class="menu_button" style="font-size: 11px; padding: 2px 6px; display: inline-block; white-space: nowrap;" title="导出预设+正则包">导出预设</button>
-        <button id="import-preset-bundle" class="menu_button" style="font-size: 11px; padding: 2px 6px; display: inline-block; white-space: nowrap;" title="导入预设+正则包">导入预设</button>
-        <input type="file" id="import-preset-bundle-file" accept=".json" style="display: none;">
-        <button id="regex-binding-switch" class="menu_button" title="开启/关闭正则绑定功能">${
-          getRegexBindingEnabled() ? '●' : '○'
-        }</button>
       </div>
       <div class="content" style="display:none; max-height:50vh; overflow:auto; padding:10px;">
         <div id="st-regex-binding-status" style="opacity: .9;">加载中...</div>
@@ -811,48 +828,6 @@ function bindNativeRegexPanelEvents() {
   const panel = $('#st-native-regex-panel');
   if (!panel.length) return;
 
-  // 导出预设包按钮事件
-  $('#export-preset-bundle')
-    .off('click')
-    .on('click', async function () {
-      try {
-        const currentPreset = PT.API.getLoadedPresetName?.();
-        if (!currentPreset) {
-          if (window.toastr) toastr.error('请先选择一个预设');
-          return;
-        }
-        await exportPresetBundle(currentPreset);
-      } catch (e) {
-        console.error('导出预设包失败:', e);
-        if (window.toastr) toastr.error('导出失败: ' + e.message);
-      }
-    });
-
-  // 导入预设包按钮事件
-  $('#import-preset-bundle')
-    .off('click')
-    .on('click', function () {
-      $('#import-preset-bundle-file').trigger('click');
-    });
-
-  // 文件选择事件
-  $('#import-preset-bundle-file')
-    .off('change')
-    .on('change', async function (e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      try {
-        await importPresetBundle(file);
-      } catch (e) {
-        console.error('导入预设包失败:', e);
-        if (window.toastr) toastr.error('导入失败: ' + e.message);
-      }
-
-      // 清空文件选择
-      $(this).val('');
-    });
-
   $('#st-regex-toggle')
     .off('click')
     .on('click', function () {
@@ -889,37 +864,6 @@ function bindNativeRegexPanelEvents() {
         console.error('打开绑定管理失败:', e);
       }
     });
-
-  // 正则绑定开关按钮事件
-  $('#regex-binding-switch')
-    .off('click')
-    .on('click', function () {
-      const newValue = !getRegexBindingEnabled();
-      setRegexBindingEnabled(newValue);
-      localStorage.setItem('preset-transfer-regex-binding-enabled', newValue);
-      $(this).text(newValue ? '●' : '○');
-
-      // Toggle effect immediately for the current preset.
-      try {
-        const currentPreset = PT.API.getLoadedPresetName?.();
-        if (currentPreset) {
-          if (newValue) {
-            switchPresetRegexes(null, currentPreset).catch(() => {});
-          } else {
-            const currentBindings = getPresetRegexBindings(currentPreset);
-            switchPresetRegexes(currentPreset, null, {
-              fromBindings: currentBindings,
-              toBindings: getDefaultRegexBindings(),
-            }).catch(() => {});
-          }
-        }
-      } catch {
-        /* ignore */
-      }
-      if (window.toastr) {
-        toastr.info(`正则绑定功能已${newValue ? '开启' : '关闭'}`);
-      }
-    });
 }
 
 function updateNativeRegexPanel(presetName) {
@@ -931,9 +875,6 @@ function updateNativeRegexPanel(presetName) {
     const bindings = getPresetRegexBindings(presetName);
     const count = Array.isArray(bindings.bound) ? bindings.bound.length : Array.isArray(bindings.exclusive) ? bindings.exclusive.length : 0;
     panel.find('#st-regex-binding-status').text(`预设: ${presetName}（已绑定 ${count} 个正则）`);
-
-    // 更新开关按钮状态
-    panel.find('#regex-binding-switch').text(getRegexBindingEnabled() ? '●' : '○');
 
     // 刷新“预设正则”列表，并确保开关事件绑定到当前预设名（即使面板未展开也无妨）
     try {
@@ -948,21 +889,26 @@ function updateNativeRegexPanel(presetName) {
 }
 
 function initNativeRegexPanelIntegration() {
-  // 先安装Hook（只需要安装一次）
-  hookPresetSaveToProtectExtensions();
+  scheduleNativePanelSync();
+}
 
-  // 尝试立即注入；若容器未就绪，稍后重试几次
-  let attempts = 0;
-  const tryInject = () => {
-    attempts++;
-    // 先注入条目状态管理面板，再注入正则绑定面板
-    const entryStatesInjected = ensureNativeEntryStatesPanelInjected();
-    const regexInjected = ensureNativeRegexPanelInjected();
-
-    if (entryStatesInjected && regexInjected) return;
-    if (attempts < 10) setTimeout(tryInject, 500);
+function syncNativePanelsWithFeatureFlags(flags) {
+  lastNativePanelFlags = {
+    entryStatesPanelEnabled: !!flags?.entryStatesPanelEnabled,
+    regexBindingEnabled: !!flags?.regexBindingEnabled,
   };
-  tryInject();
+
+  if (!lastNativePanelFlags.entryStatesPanelEnabled) removeNativeEntryStatesPanel();
+  if (!lastNativePanelFlags.regexBindingEnabled) removeNativeRegexPanel();
+
+  if (nativePanelInjectTimer) {
+    clearTimeout(nativePanelInjectTimer);
+    nativePanelInjectTimer = null;
+  }
+
+  if (lastNativePanelFlags.entryStatesPanelEnabled || lastNativePanelFlags.regexBindingEnabled) {
+    scheduleNativePanelSync();
+  }
 }
 
 // 主题相关功能
@@ -970,14 +916,17 @@ function initNativeRegexPanelIntegration() {
 export {
   // 条目状态面板
   ensureNativeEntryStatesPanelInjected,
+  removeNativeEntryStatesPanel,
   updateNativeEntryStatesPanel,
   renderNativeEntryStatesContent,
   bindNativeEntryStatesPanelEvents,
   bindNativeEntryStatesMainPanelEvents,
   // 正则绑定面板
   ensureNativeRegexPanelInjected,
+  removeNativeRegexPanel,
   updateNativeRegexPanel,
   initNativeRegexPanelIntegration,
+  syncNativePanelsWithFeatureFlags,
   renderNativePresetRegexContent,
   bindNativePresetRegexPanelEvents,
   openPresetRegexBindingManager,

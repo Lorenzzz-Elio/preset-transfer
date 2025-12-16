@@ -7,6 +7,8 @@ function getDefaultSettings() {
     leftDisplayMode: 'default',
     rightDisplayMode: 'default',
     singleDisplayMode: 'default',
+    entryStatesPanelEnabled: true,
+    entryGroupingEnabled: true,
   };
 }
 

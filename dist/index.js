@@ -1,4 +1,4 @@
-function te(e, t) {
+function he(e, t) {
   let r;
   return function(...o) {
     const i = () => {
@@ -7,21 +7,21 @@ function te(e, t) {
     clearTimeout(r), r = setTimeout(i, t);
   };
 }
-function Q() {
+function te() {
   var t;
   const e = ((t = window.parent) == null ? void 0 : t.SillyTavern) ?? window.SillyTavern;
   if (e) return e.getContext();
   throw new Error("无法获取SillyTavern上下文");
 }
-function R() {
+function U() {
   return window.parent && window.parent !== window ? window.parent : window;
 }
 function v() {
-  return R().$ ?? window.$;
+  return U().$ ?? window.$;
 }
-function M() {
+function B() {
   try {
-    const e = Q(), t = e.mainApi, r = e.getPresetManager(t === "koboldhorde" ? "kobold" : t), { preset_names: n } = r.getPresetList(), o = Array.isArray(n) ? n : Object.keys(n || {});
+    const e = te(), t = e.mainApi, r = e.getPresetManager(t === "koboldhorde" ? "kobold" : t), { preset_names: n } = r.getPresetList(), o = Array.isArray(n) ? n : Object.keys(n || {});
     return {
       apiType: t,
       presetManager: r,
@@ -32,13 +32,13 @@ function M() {
     return console.error("获取API信息失败:", e), null;
   }
 }
-function G() {
-  const e = R(), t = e.innerWidth <= 768, r = e.innerWidth <= 480, n = e.innerHeight > e.innerWidth;
+function K() {
+  const e = U(), t = e.innerWidth <= 768, r = e.innerWidth <= 480, n = e.innerHeight > e.innerWidth;
   return { isMobile: t, isSmallScreen: r, isPortrait: n };
 }
-function q() {
+function Y() {
   var n, o;
-  const e = R(), t = ((n = e.document) == null ? void 0 : n.documentElement) || document.documentElement;
+  const e = U(), t = ((n = e.document) == null ? void 0 : n.documentElement) || document.documentElement;
   if (e.__presetTransferViewportCssVarsBound) {
     (o = e.__presetTransferViewportCssVarsHandler) == null || o.call(e);
     return;
@@ -49,77 +49,77 @@ function q() {
   };
   e.__presetTransferViewportCssVarsBound = !0, e.__presetTransferViewportCssVarsHandler = r, r(), e.addEventListener("resize", r, { passive: !0 }), e.addEventListener("orientationchange", r, { passive: !0 });
 }
-function C(e) {
+function I(e) {
   const t = document.createElement("div");
   return t.textContent = e, t.innerHTML;
 }
-function ls(e, t) {
+function Os(e, t) {
   const r = (e || "").split(/(\s+)/), n = (t || "").split(/(\s+)/), o = r.length, i = n.length;
   if (!t || i === 0)
-    return '<span class="diff-highlight">' + C(t || "") + "</span>";
+    return '<span class="diff-highlight">' + I(t || "") + "</span>";
   if (o === 0 || o * i > 25e4)
-    return '<span class="diff-highlight">' + C(t) + "</span>";
-  const l = Array(o + 1);
+    return '<span class="diff-highlight">' + I(t) + "</span>";
+  const a = Array(o + 1);
   for (let c = 0; c <= o; c++)
-    l[c] = new Array(i + 1).fill(0);
+    a[c] = new Array(i + 1).fill(0);
   for (let c = 1; c <= o; c++) {
     const p = r[c - 1];
     for (let u = 1; u <= i; u++)
-      p === n[u - 1] ? l[c][u] = l[c - 1][u - 1] + 1 : l[c][u] = l[c - 1][u] >= l[c][u - 1] ? l[c - 1][u] : l[c][u - 1];
+      p === n[u - 1] ? a[c][u] = a[c - 1][u - 1] + 1 : a[c][u] = a[c - 1][u] >= a[c][u - 1] ? a[c - 1][u] : a[c][u - 1];
   }
-  const a = [];
+  const l = [];
   let s = o, d = i;
   for (; s > 0 && d > 0; )
-    r[s - 1] === n[d - 1] ? (a.push({ value: n[d - 1], changed: !1 }), s--, d--) : l[s - 1][d] >= l[s][d - 1] ? s-- : (a.push({ value: n[d - 1], changed: !0 }), d--);
+    r[s - 1] === n[d - 1] ? (l.push({ value: n[d - 1], changed: !1 }), s--, d--) : a[s - 1][d] >= a[s][d - 1] ? s-- : (l.push({ value: n[d - 1], changed: !0 }), d--);
   for (; d > 0; )
-    a.push({ value: n[d - 1], changed: !0 }), d--;
-  return a.reverse(), a.map(
-    (c) => c.changed ? '<span class="diff-highlight">' + C(c.value) + "</span>" : C(c.value)
+    l.push({ value: n[d - 1], changed: !0 }), d--;
+  return l.reverse(), l.map(
+    (c) => c.changed ? '<span class="diff-highlight">' + I(c.value) + "</span>" : I(c.value)
   ).join("");
 }
-function Br(e, t) {
+function qr(e, t) {
   const r = e || "", n = t || "";
-  if (r === n) return C(n);
+  if (r === n) return I(n);
   const o = r.length, i = n.length;
-  let l = 0;
-  for (; l < o && l < i && r[l] === n[l]; )
-    l++;
-  let a = o, s = i;
-  for (; a > l && s > l && r[a - 1] === n[s - 1]; )
-    a--, s--;
-  const d = n.substring(0, l), c = n.substring(s), p = r.substring(l, a), u = n.substring(l, s);
+  let a = 0;
+  for (; a < o && a < i && r[a] === n[a]; )
+    a++;
+  let l = o, s = i;
+  for (; l > a && s > a && r[l - 1] === n[s - 1]; )
+    l--, s--;
+  const d = n.substring(0, a), c = n.substring(s), p = r.substring(a, l), u = n.substring(a, s);
   if (!u)
-    return C(d + c);
-  const f = ls(p, u);
-  return C(d) + f + C(c);
+    return I(d + c);
+  const f = Os(p, u);
+  return I(d) + f + I(c);
 }
-function cs(e) {
+function Ls(e) {
   return e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
-function ee() {
+function ne() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (e) => {
     const t = Math.random() * 16 | 0;
     return (e == "x" ? t : t & 3 | 8).toString(16);
   });
 }
-function et(e, t = null) {
+function nt(e, t = null) {
   if (!e || !e.prompts)
-    return t || ee();
+    return t || ne();
   const r = new Set(e.prompts.map((o) => o.identifier).filter(Boolean));
   if (!t) {
-    let o = ee();
+    let o = ne();
     for (; r.has(o); )
-      o = ee();
+      o = ne();
     return o;
   }
   if (!r.has(t))
     return t;
-  let n = ee();
+  let n = ne();
   for (; r.has(n); )
-    n = ee();
+    n = ne();
   return n;
 }
-function ds(e, t, r) {
+function Ds(e, t, r) {
   if (!e || !Array.isArray(e))
     return null;
   if (t) {
@@ -129,7 +129,7 @@ function ds(e, t, r) {
   }
   return r ? e.find((n) => n.name === r) : null;
 }
-function ps(e) {
+function Rs(e) {
   if (!e || !Array.isArray(e))
     return /* @__PURE__ */ new Map();
   const t = /* @__PURE__ */ new Map();
@@ -140,7 +140,7 @@ function ps(e) {
     }
   }), t;
 }
-function fs(e, t, r) {
+function Ws(e, t, r) {
   if (!e || e.size === 0)
     return null;
   if (t && e.has(t))
@@ -152,114 +152,114 @@ function fs(e, t, r) {
   }
   return null;
 }
-const Nr = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Jr = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  createIdentifierMap: ps,
-  debounce: te,
-  ensureUniqueIdentifier: et,
-  ensureViewportCssVars: q,
-  escapeHtml: C,
-  escapeRegExp: cs,
-  findEntryByIdentifierOrName: ds,
-  findEntryFromMap: fs,
-  generateUUID: ee,
-  getCurrentApiInfo: M,
-  getDeviceInfo: G,
+  createIdentifierMap: Rs,
+  debounce: he,
+  ensureUniqueIdentifier: nt,
+  ensureViewportCssVars: Y,
+  escapeHtml: I,
+  escapeRegExp: Ls,
+  findEntryByIdentifierOrName: Ds,
+  findEntryFromMap: Ws,
+  generateUUID: ne,
+  getCurrentApiInfo: B,
+  getDeviceInfo: K,
   getJQuery: v,
-  getParentWindow: R,
-  getSillyTavernContext: Q,
-  highlightDiff: Br
+  getParentWindow: U,
+  getSillyTavernContext: te,
+  highlightDiff: qr
 }, Symbol.toStringTag, { value: "Module" }));
-function us() {
+function Us() {
   return {
     eventOn(e, t) {
-      const r = Q(), n = r == null ? void 0 : r.eventSource;
+      const r = te(), n = r == null ? void 0 : r.eventSource;
       return n && typeof n.on == "function" ? (n.on(e, t), !0) : n && typeof n.addListener == "function" ? (n.addListener(e, t), !0) : !1;
     }
   };
 }
-function gs(e) {
+function Fs(e) {
   var n;
   const t = (e == null ? void 0 : e.mainApi) === "koboldhorde" ? "kobold" : e == null ? void 0 : e.mainApi, r = (n = e == null ? void 0 : e.getPresetManager) == null ? void 0 : n.call(e, t);
   if (!r) throw new Error("无法获取 PresetManager（请确认已在 SillyTavern 主界面运行）");
   return r;
 }
-function ms() {
+function Vs() {
   var r;
-  const e = Q(), t = gs(e);
+  const e = te(), t = Fs(e);
   return ((r = t.getSelectedPresetName) == null ? void 0 : r.call(t)) ?? null;
 }
-function Ft() {
+function rn() {
   var n;
-  const e = Q(), t = (e == null ? void 0 : e.mainApi) === "koboldhorde" ? "kobold" : e == null ? void 0 : e.mainApi, r = (n = e == null ? void 0 : e.getPresetManager) == null ? void 0 : n.call(e, t);
+  const e = te(), t = (e == null ? void 0 : e.mainApi) === "koboldhorde" ? "kobold" : e == null ? void 0 : e.mainApi, r = (n = e == null ? void 0 : e.getPresetManager) == null ? void 0 : n.call(e, t);
   if (!r)
     throw new Error("无法获取 PresetManager（请确认已在 SillyTavern 主界面运行）");
   return r;
 }
-function cr(e, t) {
+function yr(e, t) {
   var r;
   return e !== "in_use" ? e : ((r = t.getSelectedPresetName) == null ? void 0 : r.call(t)) || e;
 }
-function hs(e, ...t) {
+function Gs(e, ...t) {
   try {
     if (typeof e == "function") return e(...t);
   } catch (r) {
     console.warn("调用函数失败:", r);
   }
 }
-function bs() {
+function Hs() {
   return {
     // Preset read: prefer completion preset (includes prompts + prompt_order).
     getPreset(e) {
       var o, i;
-      const t = Ft(), r = cr(e, t), n = (o = t.getCompletionPresetByName) == null ? void 0 : o.call(t, r);
-      return n || hs((i = t.getPresetSettings) == null ? void 0 : i.bind(t), r);
+      const t = rn(), r = yr(e, t), n = (o = t.getCompletionPresetByName) == null ? void 0 : o.call(t, r);
+      return n || Gs((i = t.getPresetSettings) == null ? void 0 : i.bind(t), r);
     },
     // Preset write: save via PresetManager.
     async replacePreset(e, t) {
-      const r = Ft(), n = cr(e, r);
+      const r = rn(), n = yr(e, r);
       if (typeof r.savePreset != "function")
         throw new Error("PresetManager.savePreset 不可用");
       return await r.savePreset(n, t), !0;
     },
     // Current preset name: sourced from PresetManager UI state.
     getLoadedPresetName() {
-      return ms();
+      return Vs();
     },
     // Switch preset: select by option value.
     loadPreset(e) {
       var n, o;
-      const t = Ft(), r = (n = t.findPreset) == null ? void 0 : n.call(t, e);
+      const t = rn(), r = (n = t.findPreset) == null ? void 0 : n.call(t, e);
       if (r == null) throw new Error(`未找到预设: ${e}`);
       return (o = t.selectPreset) == null || o.call(t, r), !0;
     }
   };
 }
-const qe = {
+const Ke = {
   USER_INPUT: 1,
   AI_OUTPUT: 2,
   SLASH_COMMAND: 3,
   WORLD_INFO: 5,
   REASONING: 6
 };
-function Or(e) {
+function Kr(e) {
   try {
     return e == null ? e : JSON.parse(JSON.stringify(e));
   } catch {
     return e;
   }
 }
-function Lr(e) {
+function Yr(e) {
   if (!e || typeof e != "object") return e;
   const t = Object.prototype.hasOwnProperty.call(e, "enabled"), r = Object.prototype.hasOwnProperty.call(e, "disabled");
   return t ? e.disabled = !e.enabled : r && (e.enabled = !e.disabled), e;
 }
-function xs(e) {
+function qs(e) {
   if (Array.isArray(e == null ? void 0 : e.placement)) return [...e.placement];
   const t = (e == null ? void 0 : e.source) ?? {}, r = [];
-  return t.user_input && r.push(qe.USER_INPUT), t.ai_output && r.push(qe.AI_OUTPUT), t.slash_command && r.push(qe.SLASH_COMMAND), t.world_info && r.push(qe.WORLD_INFO), t.reasoning && r.push(qe.REASONING), r;
+  return t.user_input && r.push(Ke.USER_INPUT), t.ai_output && r.push(Ke.AI_OUTPUT), t.slash_command && r.push(Ke.SLASH_COMMAND), t.world_info && r.push(Ke.WORLD_INFO), t.reasoning && r.push(Ke.REASONING), r;
 }
-function Dr(e) {
+function Xr(e) {
   var p, u;
   if (!e || typeof e != "object") return null;
   const t = () => {
@@ -269,33 +269,33 @@ function Dr(e) {
     } catch {
     }
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (f) => {
-      const m = Math.random() * 16 | 0;
-      return (f === "x" ? m : m & 3 | 8).toString(16);
+      const g = Math.random() * 16 | 0;
+      return (f === "x" ? g : g & 3 | 8).toString(16);
     });
-  }, r = e.scriptName ?? e.script_name ?? e.name ?? "", n = e.findRegex ?? e.find_regex ?? "", o = e.replaceString ?? e.replace_string ?? "", i = e.runOnEdit ?? e.run_on_edit ?? !1, l = e.minDepth ?? e.min_depth ?? null, a = e.maxDepth ?? e.max_depth ?? null, s = e.markdownOnly ?? ((p = e.destination) == null ? void 0 : p.display) ?? !1, d = e.promptOnly ?? ((u = e.destination) == null ? void 0 : u.prompt) ?? !1, c = {
+  }, r = e.scriptName ?? e.script_name ?? e.name ?? "", n = e.findRegex ?? e.find_regex ?? "", o = e.replaceString ?? e.replace_string ?? "", i = e.runOnEdit ?? e.run_on_edit ?? !1, a = e.minDepth ?? e.min_depth ?? null, l = e.maxDepth ?? e.max_depth ?? null, s = e.markdownOnly ?? ((p = e.destination) == null ? void 0 : p.display) ?? !1, d = e.promptOnly ?? ((u = e.destination) == null ? void 0 : u.prompt) ?? !1, c = {
     id: String(e.id ?? "") || t(),
     scriptName: String(r ?? ""),
     findRegex: String(n ?? ""),
     replaceString: String(o ?? ""),
     trimStrings: Array.isArray(e.trimStrings) ? e.trimStrings : [],
-    placement: xs(e),
+    placement: qs(e),
     disabled: Object.prototype.hasOwnProperty.call(e, "enabled") ? !e.enabled : !!(e.disabled ?? !1),
     markdownOnly: !!s,
     promptOnly: !!d,
     runOnEdit: !!i,
     substituteRegex: typeof e.substituteRegex == "number" ? e.substituteRegex : 0,
     // ST accepts null/number; keep nulls if missing.
-    minDepth: typeof l == "number" ? l : l == null ? null : Number(l),
-    maxDepth: typeof a == "number" ? a : a == null ? null : Number(a)
+    minDepth: typeof a == "number" ? a : a == null ? null : Number(a),
+    maxDepth: typeof l == "number" ? l : l == null ? null : Number(l)
   };
   return c.enabled = !c.disabled, c.script_name = c.scriptName, c;
 }
-function vs(e, t) {
+function Js(e, t) {
   return t === "enabled" ? e.filter((r) => r && r.enabled === !0) : t === "disabled" ? e.filter((r) => r && r.enabled === !1) : e;
 }
-let Ht = null;
-function ys(e) {
-  Ht && clearTimeout(Ht), Ht = setTimeout(() => {
+let on = null;
+function Ks(e) {
+  on && clearTimeout(on), on = setTimeout(() => {
     var t;
     try {
       (t = e == null ? void 0 : e.saveSettingsDebounced) == null || t.call(e);
@@ -303,24 +303,24 @@ function ys(e) {
     }
   }, 350);
 }
-let Gt = null, $t = 0, qt = !1;
-function Rr(e) {
-  $t++;
-  const t = $t;
-  Gt && clearTimeout(Gt), Gt = setTimeout(() => {
-    ws(e, t);
+let sn = null, Nt = 0, an = !1;
+function Qr(e) {
+  Nt++;
+  const t = Nt;
+  sn && clearTimeout(sn), sn = setTimeout(() => {
+    Ys(e, t);
   }, 120);
 }
-async function ws(e, t) {
+async function Ys(e, t) {
   var r, n;
-  if (!qt) {
-    qt = !0;
+  if (!an) {
+    an = !0;
     try {
-      if (t !== $t) return;
-      const o = e ?? Q();
+      if (t !== Nt) return;
+      const o = e ?? te();
       if (!(o != null && o.updateMessageBlock) || !Array.isArray(o.chat)) return;
-      const i = (R == null ? void 0 : R()) ?? window, l = (i == null ? void 0 : i.document) ?? document, a = ((r = l.querySelectorAll) == null ? void 0 : r.call(l, "#chat [mesid]")) ?? [];
-      for (const s of a) {
+      const i = (U == null ? void 0 : U()) ?? window, a = (i == null ? void 0 : i.document) ?? document, l = ((r = a.querySelectorAll) == null ? void 0 : r.call(a, "#chat [mesid]")) ?? [];
+      for (const s of l) {
         const d = (n = s == null ? void 0 : s.getAttribute) == null ? void 0 : n.call(s, "mesid"), c = Number(d);
         if (!Number.isFinite(c) || c < 0) continue;
         const p = o.chat[c];
@@ -332,82 +332,82 @@ async function ws(e, t) {
       }
     } catch {
     } finally {
-      qt = !1;
+      an = !1;
     }
-    t !== $t && Rr(e);
+    t !== Nt && Qr(e);
   }
 }
-function ln(e = {}) {
-  const t = Q(), r = t == null ? void 0 : t.extensionSettings, o = (Array.isArray(r == null ? void 0 : r.regex) ? r.regex : []).map((i) => Dr(Or(i))).filter(Boolean).map(Lr);
-  return vs(o, (e == null ? void 0 : e.enable_state) ?? "all");
+function wn(e = {}) {
+  const t = te(), r = t == null ? void 0 : t.extensionSettings, o = (Array.isArray(r == null ? void 0 : r.regex) ? r.regex : []).map((i) => Xr(Kr(i))).filter(Boolean).map(Yr);
+  return Js(o, (e == null ? void 0 : e.enable_state) ?? "all");
 }
-async function $s(e) {
-  var a, s, d, c, p;
-  const t = Q(), r = t == null ? void 0 : t.extensionSettings;
+async function Xs(e) {
+  var l, s, d, c, p;
+  const t = te(), r = t == null ? void 0 : t.extensionSettings;
   if (!r) throw new Error("无法访问 SillyTavern extensionSettings");
-  const n = ln({ enable_state: "all" }), o = (typeof e == "function" ? await e(n) : n) ?? n, l = (Array.isArray(o) ? o : n).map((u) => Dr(Or(u))).filter(Boolean).map((u) => {
-    const { enabled: f, script_name: m, ...b } = u;
-    return Lr(b), delete b.enabled, delete b.script_name, b;
+  const n = wn({ enable_state: "all" }), o = (typeof e == "function" ? await e(n) : n) ?? n, a = (Array.isArray(o) ? o : n).map((u) => Xr(Kr(u))).filter(Boolean).map((u) => {
+    const { enabled: f, script_name: g, ...b } = u;
+    return Yr(b), delete b.enabled, delete b.script_name, b;
   });
   if (Array.isArray(r.regex)) {
     const u = new Map(
-      r.regex.filter((m) => m && typeof m == "object" && m.id != null).map((m) => [String(m.id), m])
-    ), f = l.map((m) => {
-      const b = String((m == null ? void 0 : m.id) ?? ""), g = b ? u.get(b) : null;
-      return g ? (Object.keys(g).forEach((h) => {
-        Object.prototype.hasOwnProperty.call(m, h) || delete g[h];
-      }), Object.assign(g, m), g) : m;
+      r.regex.filter((g) => g && typeof g == "object" && g.id != null).map((g) => [String(g.id), g])
+    ), f = a.map((g) => {
+      const b = String((g == null ? void 0 : g.id) ?? ""), m = b ? u.get(b) : null;
+      return m ? (Object.keys(m).forEach((h) => {
+        Object.prototype.hasOwnProperty.call(g, h) || delete m[h];
+      }), Object.assign(m, g), m) : g;
     });
     r.regex.length = 0, r.regex.push(...f);
   } else
-    r.regex = l;
+    r.regex = a;
   try {
-    (d = (a = t == null ? void 0 : t.eventSource) == null ? void 0 : a.emit) == null || d.call(a, (s = t == null ? void 0 : t.eventTypes) == null ? void 0 : s.SETTINGS_UPDATED);
+    (d = (l = t == null ? void 0 : t.eventSource) == null ? void 0 : l.emit) == null || d.call(l, (s = t == null ? void 0 : t.eventTypes) == null ? void 0 : s.SETTINGS_UPDATED);
   } catch {
   }
   try {
     (p = (c = t == null ? void 0 : t.eventSource) == null ? void 0 : c.emit) == null || p.call(c, "regex_scripts_updated", { source: "preset-transfer" });
   } catch {
   }
-  return Rr(t), ys(t), ln({ enable_state: "all" });
+  return Qr(t), Ks(t), wn({ enable_state: "all" });
 }
-function ks() {
+function Qs() {
   return {
     getTavernRegexes(e = {}) {
-      return ((e == null ? void 0 : e.scope) || "global") !== "global" ? [] : ln(e);
+      return ((e == null ? void 0 : e.scope) || "global") !== "global" ? [] : wn(e);
     },
     async updateTavernRegexesWith(e, t = {}) {
-      return ((t == null ? void 0 : t.scope) || "global") !== "global" ? [] : await $s(e);
+      return ((t == null ? void 0 : t.scope) || "global") !== "global" ? [] : await Xs(e);
     }
   };
 }
-const z = (() => {
-  const e = bs(), t = ks(), r = us();
+const M = (() => {
+  const e = Hs(), t = Qs(), r = Us();
   return { API: {
     ...e,
     ...t,
     ...r
   } };
-})(), Ss = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+})(), Zs = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  PT: z
-}, Symbol.toStringTag, { value: "Module" })), L = {
+  PT: M
+}, Symbol.toStringTag, { value: "Module" })), R = {
   injection_order: 100,
   injection_trigger: []
-}, Wr = ["normal", "continue", "impersonate", "swipe", "regenerate", "quiet"], Ur = {
+}, Zr = ["normal", "continue", "impersonate", "swipe", "regenerate", "quiet"], eo = {
   normal: "正常",
   continue: "继续",
   impersonate: "AI 帮答",
   swipe: "Swipe",
   regenerate: "重新生成",
   quiet: "Quiet"
-}, _s = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+}, ea = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  NEW_FIELD_DEFAULTS: L,
-  TRIGGER_TYPES: Wr,
-  TRIGGER_TYPE_LABELS: Ur
+  NEW_FIELD_DEFAULTS: R,
+  TRIGGER_TYPES: Zr,
+  TRIGGER_TYPE_LABELS: eo
 }, Symbol.toStringTag, { value: "Module" }));
-function dr(e, t) {
+function wr(e, t) {
   try {
     const r = window.parent && window.parent !== window ? window.parent : window, n = r.document, i = r.getComputedStyle(n.documentElement).getPropertyValue(e);
     if (i && i.trim())
@@ -416,75 +416,75 @@ function dr(e, t) {
   }
   return t;
 }
-function lt(e) {
+function ut(e) {
   if (!e || typeof e != "string") return null;
   const t = e.trim();
   if (t[0] === "#") {
     const n = t.slice(1);
     if (n.length === 3) {
-      const o = parseInt(n[0] + n[0], 16), i = parseInt(n[1] + n[1], 16), l = parseInt(n[2] + n[2], 16);
-      return [o, i, l].some((a) => Number.isNaN(a)) ? null : { r: o, g: i, b: l };
+      const o = parseInt(n[0] + n[0], 16), i = parseInt(n[1] + n[1], 16), a = parseInt(n[2] + n[2], 16);
+      return [o, i, a].some((l) => Number.isNaN(l)) ? null : { r: o, g: i, b: a };
     }
     if (n.length === 6) {
-      const o = parseInt(n.slice(0, 2), 16), i = parseInt(n.slice(2, 4), 16), l = parseInt(n.slice(4, 6), 16);
-      return [o, i, l].some((a) => Number.isNaN(a)) ? null : { r: o, g: i, b: l };
+      const o = parseInt(n.slice(0, 2), 16), i = parseInt(n.slice(2, 4), 16), a = parseInt(n.slice(4, 6), 16);
+      return [o, i, a].some((l) => Number.isNaN(l)) ? null : { r: o, g: i, b: a };
     }
     return null;
   }
   const r = t.match(/rgba?\s*\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
   if (r) {
     const n = parseInt(r[1], 10), o = parseInt(r[2], 10), i = parseInt(r[3], 10);
-    return [n, o, i].some((l) => Number.isNaN(l)) ? null : { r: n, g: o, b: i };
+    return [n, o, i].some((a) => Number.isNaN(a)) ? null : { r: n, g: o, b: i };
   }
   return null;
 }
-function ge(e, t) {
+function ve(e, t) {
   const { r, g: n, b: o } = e;
   return `rgba(${r}, ${n}, ${o}, ${t})`;
 }
-function pr(e) {
+function $r(e) {
   const { r: t, g: r, b: n } = e;
   return (t * 299 + r * 587 + n * 114) / 1e3;
 }
-const A = {
+const N = {
   getVars() {
     const e = typeof getDeviceInfo == "function" ? getDeviceInfo() : { isMobile: !1, isSmallScreen: !1 }, { isMobile: t, isSmallScreen: r } = e, n = localStorage.getItem("preset-transfer-font-size");
     let o = 16;
     try {
-      const T = window.parent && window.parent !== window ? window.parent : window, Ae = T.getComputedStyle(T.document.body).fontSize, Z = parseInt(Ae, 10);
-      !Number.isNaN(Z) && Z > 8 && Z < 40 && (o = Z);
+      const A = window.parent && window.parent !== window ? window.parent : window, je = A.getComputedStyle(A.document.body).fontSize, F = parseInt(je, 10);
+      !Number.isNaN(F) && F > 8 && F < 40 && (o = F);
     } catch {
     }
     const i = n || String(o);
-    let l = dr("--SmartThemeBlurTintColor", "");
-    if (!l || l === "transparent" || l === "rgba(0, 0, 0, 0)")
+    let a = wr("--SmartThemeBlurTintColor", "");
+    if (!a || a === "transparent" || a === "rgba(0, 0, 0, 0)")
       try {
-        const T = window.parent && window.parent !== window ? window.parent : window;
-        l = T.getComputedStyle(T.document.body).backgroundColor || "#111827";
+        const A = window.parent && window.parent !== window ? window.parent : window;
+        a = A.getComputedStyle(A.document.body).backgroundColor || "#111827";
       } catch {
-        l = "#111827";
+        a = "#111827";
       }
-    const a = lt(l) || { r: 17, g: 24, b: 39 }, s = pr(a), d = s < 140;
-    let c = dr("--SmartThemeBodyColor", d ? "#f9fafb" : "#111827"), p = lt(c);
+    const l = ut(a) || { r: 17, g: 24, b: 39 }, s = $r(l), d = s < 140;
+    let c = wr("--SmartThemeBodyColor", d ? "#f9fafb" : "#111827"), p = ut(c);
     if (p) {
-      const T = pr(p);
-      Math.abs(T - s) < 60 && (c = d ? "#f9fafb" : "#111827", p = lt(c));
+      const A = $r(p);
+      Math.abs(A - s) < 60 && (c = d ? "#f9fafb" : "#111827", p = ut(c));
     } else
-      c = d ? "#f9fafb" : "#111827", p = lt(c);
-    const u = c, f = d ? 0.82 : 0.9, m = d ? 0.76 : 0.85, b = d ? 0.62 : 0.75, g = ge(a, f), h = ge(a, m), y = ge(a, b), P = ge(a, d ? 0.55 : 0.25), k = ge(p || a, d ? 0.65 : 0.55), I = d ? 0.5 : 0.35, B = d ? 0.4 : 0.28, O = ge(a, I), _ = ge(a, B);
+      c = d ? "#f9fafb" : "#111827", p = ut(c);
+    const u = c, f = d ? 0.82 : 0.9, g = d ? 0.76 : 0.85, b = d ? 0.62 : 0.75, m = ve(l, f), h = ve(l, g), y = ve(l, b), C = ve(l, d ? 0.55 : 0.25), x = ve(p || l, d ? 0.65 : 0.55), P = d ? 0.5 : 0.35, E = d ? 0.4 : 0.28, j = ve(l, P), _ = ve(l, E);
     return {
       // Theme colors
-      bgColor: g,
+      bgColor: m,
       textColor: u,
-      borderColor: P,
+      borderColor: C,
       inputBg: y,
-      inputBorder: P,
+      inputBorder: C,
       sectionBg: h,
       subBg: y,
-      tipColor: k,
-      accentColor: O,
+      tipColor: x,
+      accentColor: j,
       accentMutedColor: _,
-      dangerColor: O,
+      dangerColor: j,
       // Font sizes
       fontSize: `${i}px`,
       fontSizeSmall: `calc(${i}px * 0.75)`,
@@ -536,1400 +536,15 @@ const A = {
       box-shadow: 0 20px 40px rgba(0,0,0,0.1);
     `;
   }
-}, Vr = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+}, to = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  CommonStyles: A
+  CommonStyles: N
 }, Symbol.toStringTag, { value: "Module" }));
-function cn(e) {
-  var s, d;
-  let t = null;
-  try {
-    t = ((d = (s = z.API).getLoadedPresetName) == null ? void 0 : d.call(s)) ?? null;
-  } catch (c) {
-    console.warn("统一API获取当前预设失败:", c), t = null;
-  }
-  if (!t)
-    try {
-      const c = M();
-      if (c && c.presetManager) {
-        const p = c.presetManager.getCompletionPresetByName("in_use");
-        p && p.name && p.name !== "in_use" && (t = p.name);
-      }
-    } catch (c) {
-      console.warn("从预设管理器获取预设名称失败:", c);
-    }
-  const r = v(), o = r(e === "left" ? "#left-preset" : "#right-preset");
-  if (!t) {
-    alert(
-      `无法获取当前预设名称，请确保已选择预设。
-
-可能的原因：
-1. 当前没有加载任何预设
-2. 预设API不可用
-3. 需要刷新页面重新加载`
-    );
-    return;
-  }
-  if (!(o.find(`option[value="${t}"]`).length > 0)) {
-    alert(`当前预设"${t}"不在可选列表中，可能需要刷新预设列表`);
-    return;
-  }
-  o.val(), o.val(t).trigger("change");
-  const l = r(`#get-current-${e}`), a = l.html();
-  l.html(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="20 6 9 17 4 12"></polyline>
-    </svg>
-  `), setTimeout(() => {
-    l.html(a);
-  }, 1e3);
-}
-function N(e, t) {
-  try {
-    const r = e.presetManager.getCompletionPresetByName(t);
-    if (!r)
-      throw new Error(`预设 "${t}" 不存在`);
-    return r;
-  } catch (r) {
-    throw console.error("从预设管理器获取预设数据失败:", r), r;
-  }
-}
-function X(e) {
-  return !e || !e.prompts || !Array.isArray(e.prompts) ? [] : e.prompts.filter(
-    (t) => t && !t.system_prompt && !t.marker && t.name && t.name.trim() !== ""
-  );
-}
-function Le(e, t = "default") {
-  var l;
-  if (!e || !e.prompts || !Array.isArray(e.prompts))
-    return [];
-  const r = 100001, n = (l = e.prompt_order) == null ? void 0 : l.find((a) => a.character_id === r);
-  if (new Map(n == null ? void 0 : n.order.map((a) => [a.identifier, a.enabled])), t === "show_uninserted") {
-    const a = X(e), s = new Set((n == null ? void 0 : n.order.map((d) => d.identifier)) || []);
-    return a.filter((d) => !s.has(d.identifier)).map((d, c) => ({
-      ...d,
-      enabled: !1,
-      isUninserted: !0,
-      orderIndex: c
-    }));
-  }
-  if (!n)
-    return X(e).map((a) => ({ ...a, enabled: !1 }));
-  const o = [], i = new Map(e.prompts.map((a) => [a.identifier, a]));
-  return n.order.forEach((a) => {
-    if (!(t === "default" && !a.enabled) && i.has(a.identifier)) {
-      const s = i.get(a.identifier);
-      s && !s.system_prompt && !s.marker && s.name && s.name.trim() !== "" && o.push({
-        ...s,
-        enabled: a.enabled,
-        // Always include the enabled status
-        orderIndex: o.length
-      });
-    }
-  }), o;
-}
-function Ps(e, t, r) {
-  if (!e || !t)
-    return [];
-  const n = X(e), o = X(t), i = new Set(n.map((a) => a.name)), l = new Set(o.map((a) => a.name));
-  return r === "left" ? n.filter((a) => !l.has(a.name)).map((a) => ({ ...a, enabled: !1, isNewEntry: !0 })) : r === "right" ? o.filter((a) => !i.has(a.name)).map((a) => ({ ...a, enabled: !1, isNewEntry: !0 })) : [];
-}
-async function Cs(e, t) {
-  try {
-    console.log(`切换到预设: ${t}`);
-    const r = e.presetManager.findPreset(t);
-    if (!r) throw new Error(`无法找到预设: ${t}`);
-    e.presetManager.selectPreset(r), await new Promise((n) => setTimeout(n, 1e3)), console.log(`成功切换到预设: ${t}`);
-  } catch (r) {
-    throw console.error("切换预设失败:", r), r;
-  }
-}
-const Fr = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-  __proto__: null,
-  getNewEntries: Ps,
-  getOrderedPromptEntries: Le,
-  getPresetDataFromManager: N,
-  getPromptEntries: X,
-  setCurrentPreset: cn,
-  switchToPreset: Cs
-}, Symbol.toStringTag, { value: "Module" }));
-let tt = localStorage.getItem("preset-transfer-entry-states-save-world-bindings") !== "false", Hr = localStorage.getItem("preset-transfer-entry-states-group") !== "false";
-function En() {
-  return tt;
-}
-function In(e) {
-  tt = !!e;
-}
-function Mn() {
-  return Hr;
-}
-function An(e) {
-  Hr = !!e;
-}
-let Jt = null, fr = !1, oe = null;
-function nt() {
-  try {
-    if (fr) {
-      console.log("[EntryStates] Hook已安装，跳过");
-      return;
-    }
-    const e = getCurrentApiInfo();
-    if (!e || !e.presetManager) {
-      oe || (oe = setTimeout(() => {
-        oe = null, nt();
-      }, 1e3), console.log("[EntryStates] API信息未就绪，等待后重试Hook"));
-      return;
-    }
-    Jt = e.presetManager.savePreset.bind(e.presetManager), e.presetManager.savePreset = async function(r, n, o = {}) {
-      var i;
-      try {
-        const l = z.API.getPreset(r), a = (l == null ? void 0 : l.extensions) || {};
-        if (!n) {
-          const c = this.getCompletionPresetByName(r);
-          c ? n = c : n = this.getPresetSettings(r);
-        }
-        n.extensions || (n.extensions = {}), a.entryStates && (n.extensions.entryStates = a.entryStates), a.entryGrouping && (n.extensions.entryGrouping = a.entryGrouping), !Object.prototype.hasOwnProperty.call(n.extensions, "regexBindings") && a.regexBindings && (n.extensions.regexBindings = a.regexBindings);
-        const d = await Jt.call(this, r, n, o);
-        try {
-          const c = (i = this.getCompletionPresetByName) == null ? void 0 : i.call(this, r);
-          c && (c.extensions || (c.extensions = {}), a.entryStates && (c.extensions.entryStates = a.entryStates), a.entryGrouping && (c.extensions.entryGrouping = a.entryGrouping), Object.prototype.hasOwnProperty.call(n.extensions, "regexBindings") ? c.extensions.regexBindings = n.extensions.regexBindings : a.regexBindings ? c.extensions.regexBindings = a.regexBindings : delete c.extensions.regexBindings);
-        } catch {
-        }
-        return d;
-      } catch (l) {
-        return console.error("[EntryStates] 覆写 savePreset 失败，回退原始保存逻辑:", l), await Jt.call(this, r, n, o);
-      }
-    }, fr = !0, oe && (clearTimeout(oe), oe = null), console.log("[EntryStates] 预设保存Hook已安装");
-  } catch (e) {
-    console.error("[EntryStates] 安装预设保存Hook失败:", e), oe || (oe = setTimeout(() => {
-      oe = null, nt();
-    }, 1500), console.log("[EntryStates] 将稍后重试安装Hook"));
-  }
-}
-function it(e) {
-  if (!Array.isArray(e)) return [];
-  const t = [], r = /* @__PURE__ */ new Set();
-  return e.forEach((n) => {
-    if (typeof n != "string") return;
-    const o = n.trim();
-    !o || r.has(o) || (r.add(o), t.push(o));
-  }), t;
-}
-function jn(e) {
-  const t = e && typeof e == "object" ? e : {}, r = {
-    enabled: t.enabled !== !1,
-    versions: [],
-    currentVersion: t.currentVersion || null
-  };
-  return Array.isArray(t.versions) && (r.versions = t.versions.map((n) => {
-    if (!n || typeof n != "object") return null;
-    const o = { ...n };
-    return (!o.states || typeof o.states != "object") && (o.states = {}), o.worldBindings = it(o.worldBindings), o;
-  }).filter(Boolean)), r;
-}
-function ue(e) {
-  try {
-    const t = z.API.getPreset(e);
-    if (!t || !t.extensions)
-      return ut();
-    const r = t.extensions.entryStates;
-    return r ? jn(r) : ut();
-  } catch (t) {
-    return console.warn(`获取预设 "${e}" 的条目状态配置失败:`, t), ut();
-  }
-}
-async function st(e, t) {
-  try {
-    const r = jn(t), n = getCurrentApiInfo == null ? void 0 : getCurrentApiInfo();
-    if (t && typeof t == "object" && (t.enabled = r.enabled, t.versions = r.versions, t.currentVersion = r.currentVersion), n && n.presetManager) {
-      const i = n.presetManager.getCompletionPresetByName(e);
-      if (!i) throw new Error(`预设 "${e}" 不存在`);
-      return i.extensions || (i.extensions = {}), i.extensions.entryStates = r, await n.presetManager.savePreset(e, i, { skipUpdate: !1 }), !0;
-    }
-    const o = z.API.getPreset(e);
-    if (!o) throw new Error(`预设 "${e}" 不存在`);
-    return o.extensions || (o.extensions = {}), o.extensions.entryStates = r, await z.API.replacePreset(e, o), !0;
-  } catch (r) {
-    return console.error(`保存预设 "${e}" 的条目状态配置失败:`, r), !1;
-  }
-}
-function ut() {
-  return {
-    enabled: !0,
-    versions: [],
-    currentVersion: null
-  };
-}
-function Lt(e) {
-  try {
-    const t = getCurrentApiInfo();
-    if (!t) return {};
-    const r = N(t, e);
-    if (!r) return {};
-    const n = Le(r, "include_disabled"), o = {};
-    return n.forEach((i) => {
-      i.identifier && (o[i.identifier] = i.enabled === !0);
-    }), o;
-  } catch (t) {
-    return console.error("获取当前条目状态失败:", t), {};
-  }
-}
-async function zs(e, t, r) {
-  try {
-    const n = ue(e), o = n.versions.find((d) => d.id === t);
-    if (!o)
-      throw new Error("状态版本不存在");
-    const i = getCurrentApiInfo();
-    if (!i) throw new Error("无法获取API信息");
-    const l = N(i, e);
-    if (!l) throw new Error("预设不存在");
-    l.prompt_order || (l.prompt_order = []);
-    const a = 100001;
-    let s = l.prompt_order.find((d) => d.character_id === a);
-    return s || (s = { character_id: a, order: [] }, l.prompt_order.push(s)), s.order.forEach((d) => {
-      d.identifier && o.states.hasOwnProperty(d.identifier) && (d.enabled = o.states[d.identifier]);
-    }), await i.presetManager.savePreset(e, l, { skipUpdate: !0 }), n.currentVersion = t, await st(e, n), tt && Object.prototype.hasOwnProperty.call(o, "worldBindings") && r && await r(o.worldBindings), !0;
-  } catch (n) {
-    throw console.error("应用条目状态失败:", n), n;
-  }
-}
-async function Es(e, t, r) {
-  try {
-    const n = Lt(e), o = ue(e);
-    let i = null;
-    tt && r && (i = await r(), i === null && console.warn("[EntryStates] 获取世界书选择失败，已跳过绑定保存"));
-    const l = {
-      id: generateUUID(),
-      name: t,
-      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
-      states: n
-    };
-    if (tt && i !== null && (l.worldBindings = i), o.versions.push(l), o.currentVersion = l.id, await st(e, o))
-      return l;
-    throw new Error("保存失败");
-  } catch (n) {
-    throw console.error("保存条目状态版本失败:", n), n;
-  }
-}
-async function Tn(e, t) {
-  try {
-    const r = ue(e), n = r.versions.findIndex((o) => o.id === t);
-    if (n === -1)
-      throw new Error("版本不存在");
-    return r.versions.splice(n, 1), r.currentVersion === t && (r.currentVersion = null), await st(e, r);
-  } catch (r) {
-    throw console.error("删除条目状态版本失败:", r), r;
-  }
-}
-async function Bn(e, t, r) {
-  try {
-    const n = ue(e), o = n.versions.find((i) => i.id === t);
-    if (!o)
-      throw new Error("版本不存在");
-    return o.name = r, await st(e, n);
-  } catch (n) {
-    throw console.error("重命名条目状态版本失败:", n), n;
-  }
-}
-let ct = null;
-async function Nn() {
-  return ct || (ct = import("/scripts/world-info.js").catch((e) => {
-    throw ct = null, e;
-  })), ct;
-}
-function Gr() {
-  try {
-    const e = v();
-    if (!e) return null;
-    const t = e("#world_info");
-    if (!t.length) return null;
-    const r = t.find("option:selected");
-    if (!r.length) return [];
-    const n = [];
-    return r.each(function() {
-      const o = e(this).text().trim();
-      o && !n.includes(o) && n.push(o);
-    }), it(n);
-  } catch (e) {
-    return console.warn("[EntryStates] 读取界面世界书选择失败:", e), null;
-  }
-}
-async function qr() {
-  const e = Gr();
-  if (Array.isArray(e))
-    return e;
-  try {
-    const t = await Nn(), r = Array.isArray(t.selected_world_info) ? t.selected_world_info : [];
-    return it(r);
-  } catch (t) {
-    return console.warn("[EntryStates] 获取世界书选择失败:", t), null;
-  }
-}
-async function Jr(e) {
-  var u, f, m, b;
-  const t = v(), r = it(Array.isArray(e) ? e : []), n = r.length > 0;
-  let o = null;
-  const i = async () => (o || (o = await Nn()), o), l = () => {
-    if (!t) return [];
-    const g = t("#world_info");
-    return g.length ? g.find("option").map((h, y) => t(y).text().trim()).get().filter(Boolean) : [];
-  };
-  let a = t ? t("#world_info") : null, s = a && a.length ? l() : [];
-  if (n && s.length === 0)
-    try {
-      const g = await i();
-      typeof g.updateWorldInfoList == "function" && await g.updateWorldInfoList(), (!a || !a.length) && (a = t ? t("#world_info") : null), a && a.length ? s = l() : Array.isArray(g.world_names) && (s = g.world_names.slice());
-    } catch (g) {
-      console.warn("[EntryStates] 更新世界书列表失败:", g);
-    }
-  if (!s.length && n)
-    try {
-      const g = await i();
-      Array.isArray(g.world_names) && (s = g.world_names.slice());
-    } catch (g) {
-      console.warn("[EntryStates] 获取世界书列表失败:", g);
-    }
-  const d = new Set(s), c = [], p = [];
-  if (n && r.forEach((g) => {
-    !d.size || d.has(g) ? c.push(g) : p.push(g);
-  }), a && a.length)
-    if (!n)
-      a.val([]).trigger("change");
-    else if (c.length > 0) {
-      const g = [], h = new Set(c);
-      a.find("option").each(function() {
-        const y = t(this).text().trim();
-        h.has(y) && g.push(t(this).val());
-      }), a.val(g).trigger("change");
-    } else p.length === r.length && a.val([]).trigger("change");
-  else {
-    if (!o && (n || !n))
-      try {
-        await i();
-      } catch (g) {
-        return console.warn("[EntryStates] 同步世界书失败:", g), { applied: c, missing: p };
-      }
-    if (!o)
-      return { applied: c, missing: p };
-    n ? c.length > 0 && (o.selected_world_info = c.slice()) : o.selected_world_info = [];
-    try {
-      const g = Q();
-      (u = g == null ? void 0 : g.saveSettingsDebounced) == null || u.call(g), (b = (f = g == null ? void 0 : g.eventSource) == null ? void 0 : f.emit) == null || b.call(f, (m = g.eventTypes) == null ? void 0 : m.WORLDINFO_SETTINGS_UPDATED);
-    } catch (g) {
-      console.warn("[EntryStates] 同步世界书事件失败:", g);
-    }
-  }
-  return { applied: c, missing: p };
-}
-async function On(e, t) {
-  return await zs(e, t, async (n) => {
-    try {
-      const { applied: o, missing: i } = await Jr(n);
-      window.toastr && (i.length && toastr.warning(`世界书未找到: ${i.join("、")}`), o.length ? toastr.success(`已同步世界书: ${o.join("、")}`) : Array.isArray(n) && n.length === 0 && toastr.info("世界书选择已清空"));
-    } catch (o) {
-      console.warn("同步世界书失败:", o), window.toastr && toastr.error("同步世界书失败: " + o.message);
-    }
-  });
-}
-async function Ln(e, t) {
-  return await Es(e, t, async () => {
-    const n = await qr();
-    return n === null && window.toastr && toastr.warning("获取世界书选择失败，已跳过绑定保存"), n;
-  });
-}
-const Kr = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-  __proto__: null,
-  applyEntryStates: On,
-  applyWorldBindings: Jr,
-  deleteEntryStatesVersion: Tn,
-  getCurrentEntryStates: Lt,
-  getCurrentWorldSelection: qr,
-  getDefaultEntryStates: ut,
-  getEntryStatesGroupByPrefix: Mn,
-  getEntryStatesSaveWorldBindings: En,
-  getPresetEntryStates: ue,
-  getWorldInfoModule: Nn,
-  getWorldSelectionFromDom: Gr,
-  hookPresetSaveToProtectExtensions: nt,
-  normalizeEntryStatesConfig: jn,
-  renameEntryStatesVersion: Bn,
-  sanitizeWorldBindings: it,
-  saveCurrentEntryStatesAsVersion: Ln,
-  savePresetEntryStates: st,
-  setEntryStatesGroupByPrefix: An,
-  setEntryStatesSaveWorldBindings: In
-}, Symbol.toStringTag, { value: "Module" }));
-let Te = En(), Ne = Mn();
-function Is() {
-  var o, i;
-  const e = v(), t = e("#openai_api-presets");
-  if (!t.length) return !1;
-  if (e("#st-native-entry-states-panel").length) return !0;
-  e("#st-native-entry-states-styles").length || e("head").append(`
-      <style id="st-native-entry-states-styles">
-        #st-native-entry-states-panel { margin-top: 10px; }
-        #st-native-entry-states-panel .header { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
-        #st-native-entry-states-panel .header .title { font-weight: 600; }
-        #st-native-entry-states-panel .version-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; margin-bottom: 4px; border-radius: 6px; }
-        #st-native-entry-states-panel .version-item:hover { background: rgba(0,0,0,0.05); }
-        #st-native-entry-states-panel .version-name { flex: 1; font-weight: 500; }
-        #st-native-entry-states-panel .version-date { font-size: 11px; opacity: 0.7; }
-        #st-native-entry-states-panel .version-actions { display: flex; gap: 4px; }
-        #st-native-entry-states-panel .current-version { font-weight: 600; }
-      </style>
-    `);
-  const r = `
-    <div id="st-native-entry-states-panel">
-      <div class="header" style="display:flex;align-items:center;gap:4px;">
-        <button id="st-entry-states-toggle" class="menu_button" title="展开/折叠">▼</button>
-        <span class="title">条目状态</span>
-        <div style="flex:1;"></div>
-        <button
-          id="save-current-entry-states"
-          class="menu_button"
-          style="font-size:11px;padding:2px 6px;display:inline-block;white-space:nowrap;"
-          title="保存当前条目状态"
-        >保存</button>
-        <button
-          id="entry-states-group-toggle"
-          class="menu_button"
-          style="font-size:11px;padding:2px 6px;display:inline-block;white-space:nowrap;"
-          title="按名称前缀分组显示"
-        >${Ne ? "分组:开" : "分组:关"}</button>
-        <button
-          id="entry-states-switch"
-          class="menu_button"
-          title="开 / 关闭世界书绑定功能"
-        >${Te ? "保护扩展:开" : "保护扩展:关"}</button>
-      </div>
-      <div class="content" style="display:none;max-height:50vh;overflow:auto;padding:10px;">
-        <div id="st-entry-states-status" style="opacity:.9;">加载中...</div>
-      </div>
-    </div>`;
-  t.append(r), js();
-  const n = (i = (o = z.API).getLoadedPresetName) == null ? void 0 : i.call(o);
-  return n && Se(n), !0;
-}
-function Ms(e) {
-  const t = v();
-  if (!t("#st-native-entry-states-panel").length) return;
-  const n = ue(e), o = Lt(e), i = t("#st-entry-states-status");
-  if (!(n != null && n.versions) || n.versions.length === 0) {
-    i.html('<div style="opacity:0.6;">暂无保存的版本</div>');
-    return;
-  }
-  let l = "";
-  const a = n.versions.slice().sort((s, d) => {
-    const c = new Date(s.createdAt || 0).getTime();
-    return new Date(d.createdAt || 0).getTime() - c;
-  });
-  if (Ne) {
-    const s = {};
-    a.forEach((d) => {
-      const c = (d.name || "").split("_")[0] || "其它";
-      s[c] || (s[c] = []), s[c].push(d);
-    }), Object.keys(s).sort().forEach((d) => {
-      l += `<div style="margin-top:12px;"><strong>${C(d)}</strong></div>`, s[d].forEach((c) => {
-        l += ur(c, o, n.currentVersion);
-      });
-    });
-  } else
-    a.forEach((s) => {
-      l += ur(s, o, n.currentVersion);
-    });
-  i.html(l), As(e);
-}
-function ur(e, t, r) {
-  const n = e.id === r, o = e.createdAt ? new Date(e.createdAt).toLocaleString("zh-CN") : "";
-  return `
-    <div class="version-item ${n ? "current-version" : ""}" data-version-id="${C(e.id)}">
-      <span class="version-name">${C(e.name)}</span>
-      <span class="version-date">${o}</span>
-      <div class="version-actions">
-        <button class="menu_button apply-entry-states" title="应用">▶</button>
-        <button class="menu_button rename-entry-states" title="重命名">✏️</button>
-        <button class="menu_button delete-entry-states" title="删除">🗑️</button>
-      </div>
-    </div>`;
-}
-function As(e) {
-  const t = v();
-  t(".apply-entry-states").off("click").on("click", function() {
-    const r = t(this).closest(".version-item").data("version-id");
-    On(e, r), Se(e);
-  }), t(".rename-entry-states").off("click").on("click", function() {
-    const r = t(this).closest(".version-item").data("version-id"), n = t(this).closest(".version-item").find(".version-name").text(), o = prompt("输入新名称:", n);
-    o && o !== n && (Bn(e, r, o), Se(e));
-  }), t(".delete-entry-states").off("click").on("click", function() {
-    const r = t(this).closest(".version-item").data("version-id"), n = t(this).closest(".version-item").find(".version-name").text();
-    confirm(`确定删除版本 "${n}"?`) && (Tn(e, r), Se(e));
-  });
-}
-function js() {
-  const e = v();
-  e("#st-entry-states-toggle").off("click").on("click", function() {
-    var n, o;
-    const t = e("#st-native-entry-states-panel .content"), r = t.is(":visible");
-    if (t.toggle(), e(this).text(r ? "▶" : "▼"), !r) {
-      const i = (o = (n = z.API).getLoadedPresetName) == null ? void 0 : o.call(n);
-      i && Se(i);
-    }
-  }), e("#save-current-entry-states").off("click").on("click", function() {
-    var n, o;
-    const t = (o = (n = z.API).getLoadedPresetName) == null ? void 0 : o.call(n);
-    if (!t) {
-      alert("请先选择一个预设");
-      return;
-    }
-    const r = prompt("输入版本名称:");
-    r && (Ln(t, r), Se(t));
-  }), e("#entry-states-group-toggle").off("click").on("click", function() {
-    var r, n;
-    Ne = !Ne, An(Ne), e(this).text(Ne ? "分组:开" : "分组:关");
-    const t = (n = (r = z.API).getLoadedPresetName) == null ? void 0 : n.call(r);
-    t && Se(t);
-  }), e("#entry-states-switch").off("click").on("click", function() {
-    Te = !Te, In(Te), e(this).text(Te ? "保护扩展:开" : "保护扩展:关"), Te && nt();
-  });
-}
-function Se(e) {
-  Ms(e);
-}
-let Yr = localStorage.getItem("preset-transfer-regex-binding-enabled") !== "false";
-const Ts = 2, Xr = "preset-transfer-regex-baseline-v2";
-let ve = null;
-const Bs = {
-  GLOBAL: "global",
-  // 全局正则，永不禁用
-  EXCLUSIVE: "exclusive"
-  // 专属正则，可被多个预设设置，切换时智能管理
-};
-function Ns() {
-  if (ve) return ve;
-  try {
-    const e = localStorage.getItem(Xr), t = e ? JSON.parse(e) : {};
-    ve = t && typeof t == "object" ? t : {};
-  } catch {
-    ve = {};
-  }
-  return ve;
-}
-function Os(e) {
-  ve = e && typeof e == "object" ? e : {};
-  try {
-    localStorage.setItem(Xr, JSON.stringify(ve));
-  } catch {
-  }
-}
-function U(e) {
-  return String(e ?? "");
-}
-function De(e) {
-  const t = {
-    bound: [],
-    // [{ id: string, enabled: boolean }]
-    exclusive: [],
-    // legacy: array of ids
-    states: {}
-    // { [id]: boolean }
-  };
-  if (!e) return t;
-  const r = (n, o) => {
-    const i = U(n);
-    if (!i) return;
-    const l = !!o, a = t.bound.findIndex((s) => U(s == null ? void 0 : s.id) === i);
-    a >= 0 ? t.bound[a].enabled = l : t.bound.push({ id: i, enabled: l }), t.states[i] = l;
-  };
-  return Array.isArray(e.bound) ? e.bound.forEach((n) => {
-    n && typeof n == "object" && r(n.id, n.enabled);
-  }) : Array.isArray(e.items) ? e.items.forEach((n) => {
-    n && typeof n == "object" && r(n.id, n.enabled);
-  }) : Array.isArray(e.exclusive) && e.exclusive.forEach((n) => r(n, !0)), e.states && typeof e.states == "object" && Object.entries(e.states).forEach(([n, o]) => {
-    U(n) in t.states && r(n, !!o);
-  }), t.exclusive = t.bound.map((n) => U(n.id)), t;
-}
-function F(e) {
-  var t;
-  try {
-    try {
-      const o = M == null ? void 0 : M(), i = o == null ? void 0 : o.presetManager;
-      if (i && typeof i.getCompletionPresetByName == "function") {
-        const l = i.getCompletionPresetByName(e);
-        if ((t = l == null ? void 0 : l.extensions) != null && t.regexBindings)
-          return De(l.extensions.regexBindings);
-        if (l)
-          return se();
-      }
-    } catch {
-    }
-    const r = z.API.getPreset(e);
-    if (!r || !r.extensions)
-      return se();
-    const n = r.extensions.regexBindings;
-    return n ? De(n) : se();
-  } catch (r) {
-    return console.warn(`获取预设 "${e}" 的正则绑定配置失败:`, r), se();
-  }
-}
-function Qr(e) {
-  const t = JSON.parse(JSON.stringify(e));
-  return t.prompts && Array.isArray(t.prompts) && (t.prompts = t.prompts.filter((r) => r != null)), t.prompt_order && Array.isArray(t.prompt_order) && (t.prompt_order = t.prompt_order.filter((r) => r != null).map((r) => r && r.order && Array.isArray(r.order) ? {
-    ...r,
-    order: r.order.filter((n) => n != null)
-  } : r)), t;
-}
-async function Dn(e, t) {
-  try {
-    const r = De(t), n = {
-      version: Ts,
-      bound: r.bound,
-      // Keep legacy field for backwards compatibility / exports.
-      exclusive: r.exclusive
-    }, o = M == null ? void 0 : M();
-    if (o && o.presetManager) {
-      const l = o.presetManager.getCompletionPresetByName(e);
-      if (!l) throw new Error(`Preset "${e}" not found`);
-      l.extensions || (l.extensions = {}), l.extensions.regexBindings = n, await o.presetManager.savePreset(e, l, { skipUpdate: !1 });
-      const a = z.API.getPreset(e);
-      return a && (a.extensions || (a.extensions = {}), a.extensions.regexBindings = n), !0;
-    }
-    const i = z.API.getPreset(e);
-    if (!i) throw new Error(`Preset "${e}" not found`);
-    i.extensions || (i.extensions = {}), i.extensions.regexBindings = n;
-    try {
-      return await z.API.replacePreset(e, i), !0;
-    } catch (l) {
-      console.warn("Failed to replace preset directly, retrying with cleaned data:", l);
-      const a = Qr(i);
-      return a.extensions.regexBindings = n, await z.API.replacePreset(e, a), console.log("Preset saved successfully with cleaned data"), !0;
-    }
-  } catch (r) {
-    return console.error(`Failed to save regex bindings for preset "${e}":`, r), !1;
-  }
-}
-function se() {
-  return De(null);
-}
-function He() {
-  try {
-    return z.API.getTavernRegexes({ scope: "global", enable_state: "all" }) || [];
-  } catch (e) {
-    return console.error("获取正则列表失败:", e), [];
-  }
-}
-function Zr(e, t, { fromBindings: r, toBindings: n } = {}) {
-  try {
-    const o = r != null ? De(r) : e ? F(e) : se(), i = n != null ? De(n) : F(t), l = new Set((o.exclusive || []).map(U)), a = new Set((i.exclusive || []).map(U)), s = /* @__PURE__ */ new Map();
-    i.bound.forEach((f) => {
-      s.set(U(f.id), !!f.enabled);
-    });
-    const d = /* @__PURE__ */ new Set([...l, ...a]);
-    try {
-      const f = M == null ? void 0 : M(), m = f == null ? void 0 : f.presetNames;
-      Array.isArray(m) && m.forEach((b) => {
-        const g = b === t && n != null ? i : b === e && r != null ? o : F(b);
-        ((g == null ? void 0 : g.exclusive) || []).forEach((h) => d.add(U(h)));
-      });
-    } catch {
-    }
-    const c = i.bound.filter((f) => !!f.enabled).map((f) => U(f.id)), p = i.bound.filter((f) => !f.enabled).map((f) => U(f.id)), u = Array.from(l).filter((f) => !a.has(f));
-    return {
-      toEnable: c,
-      toDisable: p,
-      toRestore: u,
-      fromBindings: o,
-      toBindings: i,
-      fromIds: l,
-      toIds: a,
-      desiredById: s,
-      allBoundIds: d
-    };
-  } catch (o) {
-    return console.error("分析正则变化失败:", o), {
-      toEnable: [],
-      toDisable: [],
-      toRestore: [],
-      fromBindings: se(),
-      toBindings: se(),
-      fromIds: /* @__PURE__ */ new Set(),
-      toIds: /* @__PURE__ */ new Set(),
-      desiredById: /* @__PURE__ */ new Map(),
-      allBoundIds: /* @__PURE__ */ new Set()
-    };
-  }
-}
-async function Re(e, t, r = {}) {
-  try {
-    const { fromIds: n, toIds: o, desiredById: i, toBindings: l, allBoundIds: a } = Zr(
-      e,
-      t,
-      r
-    );
-    if (((a == null ? void 0 : a.size) || 0) === 0 && ((n == null ? void 0 : n.size) || 0) === 0)
-      return !0;
-    const s = He(), d = new Map(s.map((m) => [U(m.id), m])), c = Ns();
-    a.forEach((m) => {
-      if (Object.prototype.hasOwnProperty.call(c, m)) return;
-      const b = d.get(m);
-      b && (c[m] = !!b.enabled);
-    });
-    const p = new Set(Array.from(n).filter((m) => !a.has(m))), u = (m) => (m.forEach((b) => {
-      const g = U(b.id);
-      if (a.has(g)) {
-        b.enabled = i.has(g) ? !!i.get(g) : !1;
-        return;
-      }
-      p.has(g) && Object.prototype.hasOwnProperty.call(c, g) && (b.enabled = !!c[g]);
-    }), m), f = await z.API.updateTavernRegexesWith(u, { scope: "global" });
-    return Array.isArray(f) && f.forEach((m) => {
-      const b = U(m.id);
-      a.has(b) || (c[b] = !!m.enabled);
-    }), Os(c), !0;
-  } catch (n) {
-    return console.error("切换正则失败:", n), window.toastr ? toastr.error("正则切换失败: " + n.message) : console.error("正则切换失败:", n.message), !1;
-  }
-}
-function Ls(e, t, r) {
-  const n = v();
-  if (n("#regex-switching-feedback").remove(), e.length === 0 && t.length === 0)
-    return;
-  localStorage.getItem("preset-transfer-font-size");
-  const i = n(`
-    <div id="regex-switching-feedback" style="
-      --pt-font-size: ${A.getVars().fontSize};
-      position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 10002;
-      background: rgba(0, 0, 0, 0.85); color: white; padding: 10px 20px;
-      border-radius: 6px; font-size: calc(var(--pt-font-size) * 0.8125); font-weight: 500;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    ">
-      ✅ 已开启绑定正则
-    </div>
-  `);
-  n("body").append(i);
-}
-function Ds() {
-  const e = v();
-  setTimeout(() => {
-    e("#regex-switching-feedback").fadeOut(300, function() {
-      e(this).remove();
-    });
-  }, 1e3);
-}
-function Ee() {
-  return Yr;
-}
-function eo(e) {
-  Yr = e;
-}
-const to = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-  __proto__: null,
-  REGEX_BINDING_TYPES: Bs,
-  analyzeRegexChanges: Zr,
-  getAllAvailableRegexes: He,
-  getDefaultRegexBindings: se,
-  getPresetRegexBindings: F,
-  getRegexBindingEnabled: Ee,
-  hideRegexSwitchingFeedback: Ds,
-  minimalCleanPresetData: Qr,
-  savePresetRegexBindings: Dn,
-  setRegexBindingEnabled: eo,
-  showRegexSwitchingFeedback: Ls,
-  switchPresetRegexes: Re
-}, Symbol.toStringTag, { value: "Module" }));
-let le = En(), ye = Mn();
-function no() {
-  var o, i;
-  const e = v(), t = e("#openai_api-presets");
-  if (!t.length) return !1;
-  if (e("#st-native-entry-states-panel").length) return !0;
-  e("#st-native-entry-states-styles").length || e("head").append(`
-      <style id="st-native-entry-states-styles">
-        /* 简化样式 - 跟随酒馆美化主题 */
-        #st-native-entry-states-panel { margin-top: 10px; }
-        #st-native-entry-states-panel .header { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
-        #st-native-entry-states-panel .header .title { font-weight: 600; }
-        #st-native-entry-states-panel .version-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; margin-bottom: 4px; border-radius: 6px; }
-        #st-native-entry-states-panel .version-item:hover { background: rgba(0,0,0,0.05); }
-        #st-native-entry-states-panel .version-name { flex: 1; font-weight: 500; }
-        #st-native-entry-states-panel .version-date { font-size: 11px; opacity: 0.7; }
-        #st-native-entry-states-panel .version-actions { display: flex; gap: 4px; }
-        #st-native-entry-states-panel .current-version { font-weight: 600; }
-      </style>
-    `);
-  const r = `
-    <div id="st-native-entry-states-panel">
-      <div class="header" style="display: flex; align-items: center; gap: 4px;">
-        <button id="st-entry-states-toggle" class="menu_button" title="展开/折叠">▶</button>
-        <span class="title">条目状态</span>
-        <div style="flex:1;"></div>
-        <button id="save-current-entry-states" class="menu_button" style="font-size: 11px; padding: 2px 6px; display: inline-block; white-space: nowrap;" title="保存当前条目状态">保存</button>
-        <button id="entry-states-group-toggle" class="menu_button" style="font-size: 11px; padding: 2px 6px; display: inline-block; white-space: nowrap;" title="按名称前缀分组显示">${ye ? "分组:开" : "分组:关"}</button>
-        <button id="entry-states-switch" class="menu_button" title="开启/关闭世界书绑定功能">${le ? "●" : "○"}</button>
-      </div>
-      <div class="content" style="display:none; max-height:50vh; overflow:auto; padding:10px;">
-        <div id="st-entry-states-status" style="opacity: .9;">加载中...</div>
-      </div>
-    </div>`;
-  t.append(r), ro();
-  const n = (i = (o = z.API).getLoadedPresetName) == null ? void 0 : i.call(o);
-  return n && Pe(n), !0;
-}
-function pe(e) {
-  const r = v()("#st-native-entry-states-panel");
-  if (!r.length) return;
-  const n = ue(e), o = Lt(e), i = Object.keys(o).length, l = Object.values(o).filter(Boolean).length, a = (d) => Array.isArray(d) ? d.length === 0 ? '<div class="version-world" style="font-size: 12px; opacity: 0.75;">世界书: 无</div>' : `<div class="version-world" style="font-size: 12px; opacity: 0.75;">世界书: ${d.map((p) => C(p)).join("、")}</div>` : '<div class="version-world" style="font-size: 12px; opacity: 0.75;">世界书: 未保存</div>';
-  let s = `
-    <div style="margin-bottom: 12px; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 6px;">
-      <div style="font-weight: 600; margin-bottom: 4px;">当前状态</div>
-      <div style="font-size: 12px; opacity: 0.8;">
-        共 ${i} 个条目，已开启 ${l} 个
-      </div>
-    </div>
-  `;
-  if (n.versions.length === 0)
-    s += `
-      <div style="text-align: center; padding: 20px; opacity: 0.6;">
-        <div>暂无保存的状态版本</div>
-        <div style="font-size: 11px; margin-top: 4px;">点击"保存"按钮保存当前状态</div>
-      </div>
-    `;
-  else {
-    s += '<div style="margin-bottom: 8px; font-weight: 600;">已保存的状态版本</div>';
-    const d = (c) => {
-      const p = c.id === n.currentVersion, u = new Date(c.createdAt).toLocaleDateString(), f = Object.keys(c.states).length, m = Object.values(c.states).filter(Boolean).length, b = a(c.worldBindings);
-      return `
-        <div class="version-item ${p ? "current-version" : ""}" data-version-id="${c.id}" style="display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:6px; background: rgba(0,0,0,0.03); margin-bottom:6px;">
-          <div style="flex: 1;">
-            <div class="version-name">${C(c.name)}</div>
-            <div class="version-date" style="opacity:.8; font-size:12px;">${u} · ${m}/${f} 开启</div>
-            ${b}
-          </div>
-          <div class="version-actions" style="display:flex; gap:6px;">
-            <button class="menu_button apply-version-btn" style="font-size: 10px; padding: 1px 4px;" title="应用此状态">应用</button>
-            <button class="menu_button rename-version-btn" style="font-size: 10px; padding: 1px 4px;" title="重命名">✏️</button>
-            <button class="menu_button delete-version-btn" style="font-size: 10px; padding: 1px 4px;" title="删除">🗑️</button>
-          </div>
-        </div>`;
-    };
-    if (ye) {
-      const c = (u) => {
-        const f = (u || "").match(/^(【[^】]+】|[^-\[\]_.:：]+[-\[\]_.:：])/);
-        let m = f ? f[1].replace(/[-\[\]_.:：]$/, "").replace(/^【|】$/g, "") : "未分组";
-        return m = (m || "未分组").replace(/['"\\]/g, "").trim(), m.length ? m : "未分组";
-      }, p = /* @__PURE__ */ new Map();
-      n.versions.forEach((u) => {
-        const f = c(u.name || "");
-        p.has(f) || p.set(f, []), p.get(f).push(u);
-      }), s += '<div id="es-groups">';
-      for (const [u, f] of p.entries())
-        s += `
-          <div class="es-group" data-group="${C(u)}">
-            <div class="es-group-title" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:6px 8px;">
-              <span class="es-group-toggle" style="width:16px; text-align:center;">▶</span>
-              <span class="es-group-name" style="flex:1;">${C(u)}</span>
-              <span class="es-group-count" style="opacity:.7; font-size:12px;">${f.length}</span>
-            </div>
-            <div class="es-group-content" style="display:none;">`, f.forEach((m) => {
-          s += d(m);
-        }), s += "</div></div>";
-      s += "</div>";
-    } else
-      n.versions.forEach((c) => {
-        s += d(c);
-      });
-  }
-  r.find(".content").html(s);
-}
-function Rn(e) {
-  const t = v(), r = t("#st-native-entry-states-panel");
-  r.length && (r.off("click", ".es-group-title").on("click", ".es-group-title", function() {
-    const o = t(this).closest(".es-group").find(".es-group-content").first(), i = t(this).find(".es-group-toggle"), l = !o.is(":visible");
-    o.slideToggle(120), i.text(l ? "▼" : "▶");
-  }), r.off("click", ".apply-version-btn").on("click", ".apply-version-btn", async function(n) {
-    var l, a;
-    n.stopPropagation();
-    const o = t(this).closest(".version-item").data("version-id"), i = (a = (l = z.API).getLoadedPresetName) == null ? void 0 : a.call(l);
-    if (!i) {
-      window.toastr && toastr.error("请先选择一个预设");
-      return;
-    }
-    try {
-      await On(i, o), Pe(i), pe(i), window.toastr && toastr.success("状态已应用");
-    } catch (s) {
-      console.error("应用状态失败:", s), window.toastr && toastr.error("应用状态失败: " + s.message);
-    }
-  }), r.off("click", ".rename-version-btn").on("click", ".rename-version-btn", async function(n) {
-    var s, d;
-    n.stopPropagation();
-    const o = t(this).closest(".version-item").data("version-id"), i = t(this).closest(".version-item").find(".version-name").text(), l = (d = (s = z.API).getLoadedPresetName) == null ? void 0 : d.call(s), a = prompt("请输入新名称:", i);
-    if (!(!a || a === i))
-      try {
-        await Bn(l, o, a), pe(l), window.toastr && toastr.success("重命名成功");
-      } catch (c) {
-        console.error("重命名失败:", c), window.toastr && toastr.error("重命名失败: " + c.message);
-      }
-  }), r.off("click", ".delete-version-btn").on("click", ".delete-version-btn", async function(n) {
-    var a, s;
-    n.stopPropagation();
-    const o = t(this).closest(".version-item").data("version-id"), i = t(this).closest(".version-item").find(".version-name").text(), l = (s = (a = z.API).getLoadedPresetName) == null ? void 0 : s.call(a);
-    if (confirm(`确定要删除状态版本"${i}"吗？`))
-      try {
-        await Tn(l, o), pe(l), Pe(l), window.toastr && toastr.success("删除成功");
-      } catch (d) {
-        console.error("删除失败:", d), window.toastr && toastr.error("删除失败: " + d.message);
-      }
-  }));
-}
-function ro() {
-  const e = v(), t = e("#st-native-entry-states-panel");
-  t.length && (e("#st-entry-states-toggle").off("click").on("click", function() {
-    var o, i;
-    const r = t.find(".content"), n = r.is(":visible");
-    if (r.slideToggle(150), e(this).text(n ? "▶" : "▼"), !n)
-      try {
-        const l = (i = (o = z.API).getLoadedPresetName) == null ? void 0 : i.call(o);
-        l ? (pe(l), Rn(l)) : t.find("#st-entry-states-status").text("未检测到当前预设");
-      } catch (l) {
-        console.error("[EntryStatesPanel] 展开面板失败:", l), window.toastr && toastr.error("打开状态管理界面失败: " + l.message);
-      }
-  }), e("#save-current-entry-states").off("click").on("click", async function() {
-    var r, n;
-    try {
-      const o = (n = (r = z.API).getLoadedPresetName) == null ? void 0 : n.call(r);
-      if (!o) {
-        window.toastr && toastr.error("请先选择一个预设");
-        return;
-      }
-      const i = prompt("请输入状态版本名称:", "新状态版本");
-      if (!i) return;
-      await Ln(o, i), Pe(o), pe(o), window.toastr && toastr.success("状态已保存");
-    } catch (o) {
-      console.error("保存状态失败:", o), window.toastr && toastr.error("保存状态失败: " + o.message);
-    }
-  }), e("#entry-states-group-toggle").off("click").on("click", function() {
-    var n, o;
-    ye = !ye, An(ye), localStorage.setItem("preset-transfer-entry-states-group", ye), e(this).text(ye ? "分组:开" : "分组:关");
-    const r = (o = (n = z.API).getLoadedPresetName) == null ? void 0 : o.call(n);
-    r && pe(r);
-  }), e("#entry-states-switch").off("click").on("click", function() {
-    le = !le, In(le), localStorage.setItem("preset-transfer-entry-states-save-world-bindings", le), e(this).text(le ? "●" : "○"), window.toastr && toastr.info(le ? "已开启世界书绑定功能，将在保存与应用时同步" : "已关闭世界书绑定功能，将忽略世界书同步");
-  }));
-}
-function Pe(e) {
-  try {
-    const r = v()("#st-native-entry-states-panel");
-    if (!r.length) return;
-    const n = ue(e), o = Array.isArray(n.versions) ? n.versions.length : 0;
-    r.find("#st-entry-states-status").text(`预设: ${e}（已保存 ${o} 个状态版本）`), r.find("#entry-states-switch").text(le ? "●" : "○");
-  } catch (t) {
-    console.warn("更新条目状态管理面板失败:", t);
-  }
-}
-function Dt() {
-  var o, i;
-  const e = v(), t = e("#openai_api-presets");
-  if (!t.length) return !1;
-  if (e("#st-native-regex-panel").length) return !0;
-  e("#st-native-regex-styles").length || e("head").append(`
-      <style id="st-native-regex-styles">
-        /* 简化样式 - 跟随酒馆美化主题 */
-        #st-native-regex-panel { margin-top: 10px; }
-        #st-native-regex-panel .header { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
-        #st-native-regex-panel .header .title { font-weight: 600; }
-        #st-native-regex-panel .rb-group { margin-bottom: 8px; }
-        #st-native-regex-panel .rb-group-title { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 6px 10px; user-select: none; }
-        #st-native-regex-panel .rb-group-toggle { width: 16px; text-align: center; }
-        #st-native-regex-panel .rb-group-name { flex: 1; }
-        #st-native-regex-panel .rb-group-count { opacity: 0.7; font-size: 12px; }
-        #st-native-regex-panel .rb-group-content.collapsed { display: none; }
-        #st-native-regex-panel .rb-label { display: flex; align-items: center; gap: 8px; padding: 6px 10px; }
-        #st-native-regex-panel .rb-label .name { flex: 1; }
-        #st-native-regex-panel .rb-label .badge { padding: 2px 6px; border-radius: 3px; font-size: 11px; white-space: nowrap; }
-        #st-native-regex-panel .rb-label.unbound .badge { opacity: 0.6; }
-        #st-native-regex-panel .rb-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
-        #st-native-regex-panel .rb-toolbar input { flex: 1; min-width: 160px; }
-        #st-native-regex-panel .rb-toolbar button, #st-native-regex-panel .rb-group-batch-btn { white-space: nowrap; }
-        /* 预设正则列表（仅显示已绑定项，用于控制开关） */
-        #st-native-regex-panel .preset-regex-toolbar { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
-        #st-native-regex-panel .preset-regex-toolbar input { flex: 1; min-width: 160px; }
-        #st-native-regex-panel .preset-regex-list .pr-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 6px; }
-        #st-native-regex-panel .preset-regex-list .pr-row:hover { background: rgba(0,0,0,0.05); }
-        #st-native-regex-panel .preset-regex-list .pr-name { flex: 1; }
-        #st-native-regex-panel .preset-regex-list .pr-state { opacity: 0.7; font-size: 12px; min-width: 4em; text-align: right; }
-        #st-native-regex-panel .preset-regex-list .pr-toggle-wrap { display: flex; align-items: center; }
-        #st-native-regex-panel .preset-regex-list input.pr-toggle { display: none !important; }
-        #st-native-regex-panel .preset-regex-list .pr-toggle-off { cursor: pointer; opacity: 0.5; filter: grayscale(0.5); transition: opacity var(--animation-duration-2x) ease-in-out; }
-        #st-native-regex-panel .preset-regex-list .pr-toggle-off:hover { opacity: 1; filter: none; }
-        #st-native-regex-panel .preset-regex-list .pr-toggle-on { cursor: pointer; }
-        #st-native-regex-panel .preset-regex-list .pr-toggle:checked ~ .pr-toggle-on { display: inline-block; }
-        #st-native-regex-panel .preset-regex-list .pr-toggle:checked ~ .pr-toggle-off { display: none; }
-        #st-native-regex-panel .preset-regex-list .pr-toggle:not(:checked) ~ .pr-toggle-on { display: none; }
-        #st-native-regex-panel .preset-regex-list .pr-toggle:not(:checked) ~ .pr-toggle-off { display: inline-block; }
-        #st-native-regex-panel .preset-regex-empty { opacity: 0.75; padding: 10px; }
-
-        /* 绑定管理弹窗复用同一套布局（不再出现竖排/无法折叠） */
-        #pt-preset-regex-binding-modal {
-          position: fixed;
-          inset: 0;
-          z-index: 10050;
-          background: rgba(0, 0, 0, 0.55);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
-          width: 100vw;
-          height: 100vh;
-          height: 100dvh;
-          overflow: auto;
-          overscroll-behavior: contain;
-          -webkit-overflow-scrolling: touch;
-        }
-        #pt-preset-regex-binding-modal .inner {
-          width: min(1000px, 96vw);
-          max-height: 80vh;
-          max-height: 80dvh;
-          max-height: min(80dvh, 900px);
-          overflow: hidden;
-          background: var(--pt-modal-bg);
-          color: var(--pt-modal-text);
-          border: 1px solid var(--pt-modal-border);
-          border-radius: 12px;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-        }
-        #pt-preset-regex-binding-modal .header {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 12px;
-          border-bottom: 1px solid var(--pt-modal-border);
-        }
-        #pt-preset-regex-binding-modal .header .title {
-          flex: 1;
-          min-width: 0;
-          font-weight: 600;
-        }
-        #pt-preset-regex-binding-modal .content {
-          max-height: calc(80vh - 54px);
-          max-height: calc(80dvh - 54px);
-          max-height: calc(min(80dvh, 900px) - 54px);
-          overflow: auto;
-          padding: 10px;
-          -webkit-overflow-scrolling: touch;
-        }
-        @media (max-width: 640px), (max-height: 560px) {
-          #pt-preset-regex-binding-modal {
-            align-items: flex-start;
-            padding-top: 12px;
-            padding-top: calc(12px + env(safe-area-inset-top));
-            padding-bottom: 12px;
-            padding-bottom: calc(12px + env(safe-area-inset-bottom));
-            padding-left: 12px;
-            padding-right: 12px;
-          }
-          #pt-preset-regex-binding-modal .inner {
-            width: 100%;
-            max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-          }
-          #pt-preset-regex-binding-modal .content {
-            max-height: calc(100dvh - 24px - 54px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-          }
-        }
-        #pt-preset-regex-binding-modal .rb-group { margin-bottom: 8px; }
-        #pt-preset-regex-binding-modal .rb-group-title { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 6px 10px; user-select: none; }
-        #pt-preset-regex-binding-modal .rb-group-toggle { width: 16px; text-align: center; }
-        #pt-preset-regex-binding-modal .rb-group-name { flex: 1; }
-        #pt-preset-regex-binding-modal .rb-group-count { opacity: 0.7; font-size: 12px; }
-        #pt-preset-regex-binding-modal .rb-group-content.collapsed { display: none; }
-        #pt-preset-regex-binding-modal .rb-label { display: flex; align-items: center; gap: 8px; padding: 6px 10px; }
-        #pt-preset-regex-binding-modal .rb-label .name { flex: 1; }
-        #pt-preset-regex-binding-modal .rb-label .badge { padding: 2px 6px; border-radius: 3px; font-size: 11px; white-space: nowrap; }
-        #pt-preset-regex-binding-modal .rb-label.unbound .badge { opacity: 0.6; }
-        #pt-preset-regex-binding-modal .rb-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
-        #pt-preset-regex-binding-modal .rb-toolbar input { flex: 1; min-width: 160px; }
-        #pt-preset-regex-binding-modal .rb-toolbar button, #pt-preset-regex-binding-modal .rb-group-batch-btn { white-space: nowrap; }
-        /* 隐藏滚动条 */
-        #st-native-regex-panel .content::-webkit-scrollbar { display: none; }
-        #st-native-regex-panel .content { scrollbar-width: none; -ms-overflow-style: none; }
-      </style>
-    `);
-  const r = `
-    <div id="st-native-regex-panel">
-      <div class="header" style="display: flex; align-items: center; gap: 4px;">
-        <button id="st-regex-toggle" class="menu_button" title="展开/折叠">▶</button>
-        <span class="title">预设正则</span>
-        <div style="flex:1;"></div>
-        <button id="preset-regex-manage" class="menu_button" style="font-size: 11px; padding: 2px 6px; display: inline-block; white-space: nowrap;" title="选择要绑定到当前预设的正则">绑定管理</button>
-        <button id="export-preset-bundle" class="menu_button" style="font-size: 11px; padding: 2px 6px; display: inline-block; white-space: nowrap;" title="导出预设+正则包">导出预设</button>
-        <button id="import-preset-bundle" class="menu_button" style="font-size: 11px; padding: 2px 6px; display: inline-block; white-space: nowrap;" title="导入预设+正则包">导入预设</button>
-        <input type="file" id="import-preset-bundle-file" accept=".json" style="display: none;">
-        <button id="regex-binding-switch" class="menu_button" title="开启/关闭正则绑定功能">${Ee() ? "●" : "○"}</button>
-      </div>
-      <div class="content" style="display:none; max-height:50vh; overflow:auto; padding:10px;">
-        <div id="st-regex-binding-status" style="opacity: .9;">加载中...</div>
-        <div class="preset-regex-toolbar">
-          <input id="preset-regex-search" class="text_pole" placeholder="搜索当前预设绑定的正则..." />
-        </div>
-        <div class="preset-regex-list" id="preset-regex-list"></div>
-      </div>
-    </div>`;
-  t.append(r), oo();
-  const n = (i = (o = z.API).getLoadedPresetName) == null ? void 0 : i.call(o);
-  return n && Ce(n), !0;
-}
-function _e(e) {
-  const r = v()("#st-native-regex-panel");
-  if (!r.length) return;
-  const n = F(e), o = He(), i = new Map(o.map((c, p) => [String(c.id), p])), l = new Map(o.map((c) => [String(c.id), c])), a = (r.find("#preset-regex-search").val() || "").toLowerCase(), d = (Array.isArray(n.bound) ? n.bound.slice() : []).filter((c) => c && c.id != null).map((c) => ({ id: String(c.id), enabled: !!c.enabled })).filter((c) => l.has(c.id)).sort((c, p) => (i.get(c.id) ?? 1e9) - (i.get(p.id) ?? 1e9)).filter((c) => {
-    if (!a) return !0;
-    const p = l.get(c.id);
-    return ((p == null ? void 0 : p.script_name) || String(c.id)).toLowerCase().includes(a);
-  }).map((c) => {
-    const p = l.get(c.id), u = C((p == null ? void 0 : p.script_name) || String(c.id)), f = p != null && p.enabled ? "已启用" : "未启用";
-    return `
-        <div class="pr-row" data-id="${C(c.id)}">
-          <label class="pr-toggle-wrap checkbox flex-container" title="启用/禁用（仅影响该预设）">
-            <input type="checkbox" class="pr-toggle" ${c.enabled ? "checked" : ""} />
-            <span class="pr-toggle-on fa-solid fa-toggle-on fa-lg" title="点击禁用"></span>
-            <span class="pr-toggle-off fa-solid fa-toggle-off fa-lg" title="点击启用"></span>
-          </label>
-          <span class="pr-name">${u}</span>
-          <span class="pr-state">${f}</span>
-        </div>`;
-  }).join("");
-  r.find("#preset-regex-list").html(d || '<div class="preset-regex-empty">当前预设未绑定任何正则。</div>');
-}
-function Wn(e) {
-  const t = v(), r = t("#st-native-regex-panel");
-  if (!r.length) return;
-  const n = te(() => _e(e), 250);
-  r.find("#preset-regex-search").off("input").on("input", n), r.find("#preset-regex-list").off("change", ".pr-toggle").on("change", ".pr-toggle", async function() {
-    const o = t(this).closest(".pr-row"), i = String(o.data("id")), l = t(this).is(":checked"), a = F(e), s = {
-      bound: (a.bound || []).map((p) => ({ id: p.id, enabled: p.enabled }))
-    }, d = s.bound.findIndex((p) => String(p.id) === i);
-    if (d >= 0 && (s.bound[d].enabled = l), !await Dn(e, s)) {
-      window.toastr && toastr.error("保存失败"), _e(e);
-      return;
-    }
-    if (Ee())
-      try {
-        await Re(e, e, { fromBindings: a, toBindings: s }), await new Promise((p) => setTimeout(p, 100));
-      } catch (p) {
-        console.warn("应用预设正则开关失败:", p);
-      }
-    _e(e);
-  });
-}
-function Un(e, t) {
-  const r = v(), n = t && t.length ? t : r("#pt-preset-regex-binding-modal");
-  if (!n.length) return;
-  const o = F(e), i = He(), l = renderRegexListComponent({ regexes: i, bindings: o });
-  n.find(".content").html(l.html);
-}
-function Vn(e, t, { onSaved: r } = {}) {
-  const n = v(), o = t && t.length ? t : n("#pt-preset-regex-binding-modal");
-  if (!o.length) return;
-  const i = o.find("#rb-groups");
-  i.off("click", ".rb-group-title").on("click", ".rb-group-title", function(s) {
-    if (n(s.target).closest(".rb-group-batch-btn").length) return;
-    const d = n(this), c = d.next(".rb-group-content"), p = d.find(".rb-group-toggle"), u = c.hasClass("collapsed");
-    c.toggleClass("collapsed", !u), p.text(u ? "▼" : "▶");
-  }), i.off("click", ".rb-group-batch-btn").on("click", ".rb-group-batch-btn", function(s) {
-    var m;
-    s.preventDefault(), s.stopPropagation();
-    const c = n(this).closest(".rb-group").find(".regex-row"), p = [
-      { fn: (b) => b.find(".rb-exclusive").prop("checked", !0) },
-      { fn: (b) => b.find(".rb-exclusive").prop("checked", !1) }
-    ], u = window.prompt("1=全选绑定, 2=全取消绑定"), f = { 1: 0, 2: 1 }[(m = u == null ? void 0 : u.trim) == null ? void 0 : m.call(u)] ?? -1;
-    f >= 0 && (p[f].fn(c), c.find(".rb-label").each(function() {
-      const b = n(this).find(".rb-exclusive").is(":checked");
-      n(this).toggleClass("bound", b).toggleClass("unbound", !b).find(".badge").text(b ? "已绑定" : "未绑定").toggleClass("menu_button", b);
-    }));
-  }), i.off("change", ".rb-exclusive").on("change", ".rb-exclusive", function() {
-    const s = n(this).closest(".rb-label"), d = n(this).is(":checked");
-    s.toggleClass("bound", d).toggleClass("unbound", !d).find(".badge").text(d ? "已绑定" : "未绑定").toggleClass("menu_button", d);
-  });
-  const l = () => {
-    const s = (o.find("#rb-search").val() || "").toLowerCase(), d = o.find("#rb-filter").val();
-    o.find("#rb-groups .rb-group").each(function() {
-      let c = !1;
-      n(this).find(".regex-row").each(function() {
-        const p = n(this).find(".name").text().toLowerCase(), u = n(this).find(".rb-exclusive").is(":checked"), b = (!s || p.includes(s)) && (d === "all" || d === "bound" && u || d === "unbound" && !u);
-        n(this).toggle(b), c = c || b;
-      }), n(this).toggle(c);
-    });
-  }, a = te(l, 300);
-  o.find("#rb-search").off("input").on("input", a), o.find("#rb-filter").off("change").on("change", l), o.find("#rb-save").off("click").on("click", async function() {
-    try {
-      const s = F(e), d = s != null && s.states && typeof s.states == "object" ? s.states : {}, c = [];
-      o.find("#rb-groups .regex-row").each(function() {
-        const f = String(n(this).data("id"));
-        if (!n(this).find(".rb-exclusive").is(":checked")) return;
-        const b = Object.prototype.hasOwnProperty.call(d, f) ? !!d[f] : !0;
-        c.push({ id: f, enabled: b });
-      });
-      const p = { bound: c };
-      if (await Dn(e, p)) {
-        if (Ce(e), Ee())
-          try {
-            await Re(e, e, { fromBindings: s, toBindings: p }), await new Promise((f) => setTimeout(f, 100)), window.toastr && toastr.success("正则绑定配置已保存并生效");
-          } catch (f) {
-            console.error("应用正则绑定失败:", f), window.toastr && toastr.warning("正则绑定配置已保存，但应用失败: " + f.message);
-          }
-        else
-          window.toastr && toastr.info("已保存（正则绑定功能当前为关闭状态，未立即生效）");
-        Un(e, o), Vn(e, o, { onSaved: r }), typeof r == "function" && r();
-      } else
-        window.toastr && toastr.error("保存失败");
-    } catch (s) {
-      console.error("保存绑定失败:", s), window.toastr && toastr.error("保存失败: " + s.message);
-    }
-  });
-}
-function Fn(e) {
-  const t = v(), r = A.getVars();
-  t("#pt-preset-regex-binding-modal").remove();
-  const n = t(`
-    <div id="pt-preset-regex-binding-modal" style="
-      --pt-modal-bg: ${r.bgColor};
-      --pt-modal-text: ${r.textColor};
-      --pt-modal-border: ${r.borderColor};
-    ">
-      <div class="inner">
-        <div class="header">
-          <div style="flex:1; font-weight: 600;">绑定管理：${C(e)}</div>
-          <button id="pt-preset-regex-binding-save" class="menu_button" style="white-space:nowrap;">保存</button>
-          <button id="pt-preset-regex-binding-close" class="menu_button" style="white-space:nowrap;">关闭</button>
-        </div>
-        <div class="content"></div>
-      </div>
-    </div>
-  `);
-  t("body").append(n), n.on("click", function(o) {
-    o.target === this && t(this).remove();
-  }), n.find("#pt-preset-regex-binding-save").on("click", () => n.find("#rb-save").trigger("click")), n.find("#pt-preset-regex-binding-close").on("click", () => n.remove()), Un(e, n), Vn(e, n, {
-    onSaved: () => {
-      Ce(e), _e(e);
-    }
-  }), n.find("#rb-save").hide();
-}
-function oo() {
-  const e = v(), t = e("#st-native-regex-panel");
-  t.length && (e("#export-preset-bundle").off("click").on("click", async function() {
-    var r, n;
-    try {
-      const o = (n = (r = z.API).getLoadedPresetName) == null ? void 0 : n.call(r);
-      if (!o) {
-        window.toastr && toastr.error("请先选择一个预设");
-        return;
-      }
-      await exportPresetBundle(o);
-    } catch (o) {
-      console.error("导出预设包失败:", o), window.toastr && toastr.error("导出失败: " + o.message);
-    }
-  }), e("#import-preset-bundle").off("click").on("click", function() {
-    e("#import-preset-bundle-file").trigger("click");
-  }), e("#import-preset-bundle-file").off("change").on("change", async function(r) {
-    const n = r.target.files[0];
-    if (n) {
-      try {
-        await importPresetBundle(n);
-      } catch (o) {
-        console.error("导入预设包失败:", o), window.toastr && toastr.error("导入失败: " + o.message);
-      }
-      e(this).val("");
-    }
-  }), e("#st-regex-toggle").off("click").on("click", function() {
-    var o, i;
-    const r = t.find(".content"), n = r.is(":visible");
-    if (r.slideToggle(150), e(this).text(n ? "▶" : "▼"), !n)
-      try {
-        const l = (i = (o = z.API).getLoadedPresetName) == null ? void 0 : i.call(o);
-        l ? Ce(l) : t.find("#st-regex-binding-status").text("未检测到当前预设");
-      } catch (l) {
-        console.error("[RegexPanel] 展开面板失败:", l), window.toastr && toastr.error("打开绑定界面失败: " + l.message);
-      }
-  }), e("#preset-regex-manage").off("click").on("click", function() {
-    var r, n;
-    try {
-      const o = (n = (r = z.API).getLoadedPresetName) == null ? void 0 : n.call(r);
-      if (!o) {
-        window.toastr && toastr.error("请先选择一个预设");
-        return;
-      }
-      Fn(o);
-    } catch (o) {
-      console.error("打开绑定管理失败:", o);
-    }
-  }), e("#regex-binding-switch").off("click").on("click", function() {
-    var n, o;
-    const r = !Ee();
-    eo(r), localStorage.setItem("preset-transfer-regex-binding-enabled", r), e(this).text(r ? "●" : "○");
-    try {
-      const i = (o = (n = z.API).getLoadedPresetName) == null ? void 0 : o.call(n);
-      if (i)
-        if (r)
-          Re(null, i).catch(() => {
-          });
-        else {
-          const l = F(i);
-          Re(i, null, {
-            fromBindings: l,
-            toBindings: se()
-          }).catch(() => {
-          });
-        }
-    } catch {
-    }
-    window.toastr && toastr.info(`正则绑定功能已${r ? "开启" : "关闭"}`);
-  }));
-}
-function Ce(e) {
-  try {
-    const r = v()("#st-native-regex-panel");
-    if (!r.length) return;
-    const n = F(e), o = Array.isArray(n.bound) ? n.bound.length : Array.isArray(n.exclusive) ? n.exclusive.length : 0;
-    r.find("#st-regex-binding-status").text(`预设: ${e}（已绑定 ${o} 个正则）`), r.find("#regex-binding-switch").text(Ee() ? "●" : "○");
-    try {
-      _e(e), Wn(e);
-    } catch {
-    }
-  } catch (t) {
-    console.warn("更新原生正则面板失败:", t);
-  }
-}
-function he() {
-  nt();
-  let e = 0;
-  const t = () => {
-    e++;
-    const r = no(), n = Dt();
-    r && n || e < 10 && setTimeout(t, 500);
-  };
-  t();
-}
-const io = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-  __proto__: null,
-  bindNativeEntryStatesMainPanelEvents: ro,
-  bindNativeEntryStatesPanelEvents: Rn,
-  bindNativePresetRegexPanelEvents: Wn,
-  bindNativeRegexBindingPanelEvents: Vn,
-  bindNativeRegexPanelEvents: oo,
-  ensureNativeEntryStatesPanelInjected: no,
-  ensureNativeRegexPanelInjected: Dt,
-  initNativeRegexPanelIntegration: he,
-  openPresetRegexBindingManager: Fn,
-  renderNativeEntryStatesContent: pe,
-  renderNativePresetRegexContent: _e,
-  renderNativeRegexBindingContent: Un,
-  updateNativeEntryStatesPanel: Pe,
-  updateNativeRegexPanel: Ce
-}, Symbol.toStringTag, { value: "Module" }));
-function Hn(e, t, r) {
-  const n = A.getVars(), o = `
+function Fn(e, t, r) {
+  const n = N.getVars(), o = `
         #preset-transfer-modal {
             --pt-font-size: ${n.fontSize};
-            ${A.getModalBaseStyles({ maxWidth: "1000px" })}
+            ${N.getModalBaseStyles({ maxWidth: "1000px" })}
             align-items: ${n.isMobile ? "flex-start" : "center"};
             ${n.isMobile ? "padding-top: 20px;" : ""}
         }
@@ -2120,14 +735,16 @@ function Hn(e, t, r) {
             font-size: ${e ? "calc(var(--pt-font-size) * 0.9375)" : "calc(var(--pt-font-size) * 0.875)"};
         }
         #preset-transfer-modal .search-input-wrapper input[type="text"] {
-            padding-right: ${e ? "80px" : "70px"};
+            padding-right: ${e ? "56px" : "54px"};
         }
-        #preset-transfer-modal .search-content-toggle {
+        #preset-transfer-modal .pt-search-settings-btn {
             right: ${e ? "12px" : "10px"};
-            color: ${n.tipColor}; font-size: ${e ? "calc(var(--pt-font-size) * 0.75)" : "calc(var(--pt-font-size) * 0.6875)"};
+            width: ${e ? "38px" : "34px"};
+            height: ${e ? "34px" : "30px"};
         }
-        #preset-transfer-modal .search-content-toggle input[type="checkbox"] {
-            ${e ? "transform: scale(0.9);" : "transform: scale(0.8);"}
+        #preset-transfer-modal .pt-search-settings-popover {
+            right: ${e ? "12px" : "10px"};
+            font-size: ${e ? "calc(var(--pt-font-size) * 0.8125)" : "calc(var(--pt-font-size) * 0.75)"};
         }
         #preset-transfer-modal .selection-controls {
             display: ${e ? "grid" : "flex"};
@@ -2242,10 +859,10 @@ function Hn(e, t, r) {
         #preset-transfer-modal #close-modal { ${e ? "" : "min-width: 90px;"} }
     `, i = $("#preset-transfer-styles");
   i.length ? i.text(o) : $("head").append(`<style id="preset-transfer-styles">${o}</style>`);
-  const l = document.createElement("link");
-  l.rel = "stylesheet", l.href = "./scripts/extensions/third-party/preset-transfer/src/styles/styles-application.css", document.querySelector(`link[href="${l.href}"]`) || document.head.appendChild(l);
-  const a = $("#preset-transfer-modal");
-  a.length && (a[0].style.cssText = `
+  const a = document.createElement("link");
+  a.rel = "stylesheet", a.href = "./scripts/extensions/third-party/preset-transfer/src/styles/styles-application.css", document.querySelector(`link[href="${a.href}"]`) || document.head.appendChild(a);
+  const l = $("#preset-transfer-modal");
+  l.length && (l[0].style.cssText = `
        --pt-accent-color: ${n.accentColor};
        --pt-accent-color-muted: ${n.accentMutedColor || n.accentColor};
        --pt-danger-color: ${n.accentColor};
@@ -2260,23 +877,136 @@ function Hn(e, t, r) {
        --pt-entry-active-shadow: rgba(0,0,0,0.05);
        --pt-input-focus-border: ${n.inputBorder};
        --pt-input-focus-shadow: rgba(0, 0, 0, 0.18);
-   `), Is(), Dt();
+   `);
 }
-const so = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const no = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  applyStyles: Hn
+  applyStyles: Fn
 }, Symbol.toStringTag, { value: "Module" }));
-function Rs(e) {
+function $n(e) {
+  var s, d;
+  let t = null;
+  try {
+    t = ((d = (s = M.API).getLoadedPresetName) == null ? void 0 : d.call(s)) ?? null;
+  } catch (c) {
+    console.warn("统一API获取当前预设失败:", c), t = null;
+  }
+  if (!t)
+    try {
+      const c = B();
+      if (c && c.presetManager) {
+        const p = c.presetManager.getCompletionPresetByName("in_use");
+        p && p.name && p.name !== "in_use" && (t = p.name);
+      }
+    } catch (c) {
+      console.warn("从预设管理器获取预设名称失败:", c);
+    }
+  const r = v(), o = r(e === "left" ? "#left-preset" : "#right-preset");
+  if (!t) {
+    alert(
+      `无法获取当前预设名称，请确保已选择预设。
+
+可能的原因：
+1. 当前没有加载任何预设
+2. 预设API不可用
+3. 需要刷新页面重新加载`
+    );
+    return;
+  }
+  if (!(o.find(`option[value="${t}"]`).length > 0)) {
+    alert(`当前预设"${t}"不在可选列表中，可能需要刷新预设列表`);
+    return;
+  }
+  o.val(), o.val(t).trigger("change");
+  const a = r(`#get-current-${e}`), l = a.html();
+  a.html(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+  `), setTimeout(() => {
+    a.html(l);
+  }, 1e3);
+}
+function O(e, t) {
+  try {
+    const r = e.presetManager.getCompletionPresetByName(t);
+    if (!r)
+      throw new Error(`预设 "${t}" 不存在`);
+    return r;
+  } catch (r) {
+    throw console.error("从预设管理器获取预设数据失败:", r), r;
+  }
+}
+function ee(e) {
+  return !e || !e.prompts || !Array.isArray(e.prompts) ? [] : e.prompts.filter(
+    (t) => t && !t.system_prompt && !t.marker && t.name && t.name.trim() !== ""
+  );
+}
+function We(e, t = "default") {
+  var a;
+  if (!e || !e.prompts || !Array.isArray(e.prompts))
+    return [];
+  const r = 100001, n = (a = e.prompt_order) == null ? void 0 : a.find((l) => l.character_id === r);
+  if (new Map(n == null ? void 0 : n.order.map((l) => [l.identifier, l.enabled])), t === "show_uninserted") {
+    const l = ee(e), s = new Set((n == null ? void 0 : n.order.map((d) => d.identifier)) || []);
+    return l.filter((d) => !s.has(d.identifier)).map((d, c) => ({
+      ...d,
+      enabled: !1,
+      isUninserted: !0,
+      orderIndex: c
+    }));
+  }
+  if (!n)
+    return ee(e).map((l) => ({ ...l, enabled: !1 }));
+  const o = [], i = new Map(e.prompts.map((l) => [l.identifier, l]));
+  return n.order.forEach((l) => {
+    if (!(t === "default" && !l.enabled) && i.has(l.identifier)) {
+      const s = i.get(l.identifier);
+      s && !s.system_prompt && !s.marker && s.name && s.name.trim() !== "" && o.push({
+        ...s,
+        enabled: l.enabled,
+        // Always include the enabled status
+        orderIndex: o.length
+      });
+    }
+  }), o;
+}
+function ta(e, t, r) {
+  if (!e || !t)
+    return [];
+  const n = ee(e), o = ee(t), i = new Set(n.map((l) => l.name)), a = new Set(o.map((l) => l.name));
+  return r === "left" ? n.filter((l) => !a.has(l.name)).map((l) => ({ ...l, enabled: !1, isNewEntry: !0 })) : r === "right" ? o.filter((l) => !i.has(l.name)).map((l) => ({ ...l, enabled: !1, isNewEntry: !0 })) : [];
+}
+async function na(e, t) {
+  try {
+    console.log(`切换到预设: ${t}`);
+    const r = e.presetManager.findPreset(t);
+    if (!r) throw new Error(`无法找到预设: ${t}`);
+    e.presetManager.selectPreset(r), await new Promise((n) => setTimeout(n, 1e3)), console.log(`成功切换到预设: ${t}`);
+  } catch (r) {
+    throw console.error("切换预设失败:", r), r;
+  }
+}
+const ro = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  getNewEntries: ta,
+  getOrderedPromptEntries: We,
+  getPresetDataFromManager: O,
+  getPromptEntries: ee,
+  setCurrentPreset: $n,
+  switchToPreset: na
+}, Symbol.toStringTag, { value: "Module" }));
+function ra(e) {
   return e.hasOwnProperty("injection_order") || e.hasOwnProperty("injection_trigger");
 }
-function ao(e) {
+function oo(e) {
   const t = {};
   return e.hasOwnProperty("injection_order") && (t.injection_order = e.injection_order), e.hasOwnProperty("injection_trigger") && (t.injection_trigger = Array.isArray(e.injection_trigger) ? [...e.injection_trigger] : []), t;
 }
-function lo(e, t) {
-  return t.hasOwnProperty("injection_order") ? e.injection_order = t.injection_order : e.hasOwnProperty("injection_order") || (e.injection_order = L.injection_order), t.hasOwnProperty("injection_trigger") ? e.injection_trigger = [...t.injection_trigger] : e.hasOwnProperty("injection_trigger") || (e.injection_trigger = [...L.injection_trigger]), e;
+function io(e, t) {
+  return t.hasOwnProperty("injection_order") ? e.injection_order = t.injection_order : e.hasOwnProperty("injection_order") || (e.injection_order = R.injection_order), t.hasOwnProperty("injection_trigger") ? e.injection_trigger = [...t.injection_trigger] : e.hasOwnProperty("injection_trigger") || (e.injection_trigger = [...R.injection_trigger]), e;
 }
-function co(e, t = null) {
+function so(e, t = null) {
   t || (t = {
     identifier: e.identifier,
     name: e.name,
@@ -2287,15 +1017,15 @@ function co(e, t = null) {
     injection_depth: e.injection_depth,
     forbid_overrides: e.forbid_overrides || !1
   });
-  const r = ao(e);
-  return lo(t, r);
+  const r = oo(e);
+  return io(t, r);
 }
-function po(e) {
-  return e.map((t) => co(t));
+function ao(e) {
+  return e.map((t) => so(t));
 }
-function fo(e, t = {}) {
+function lo(e, t = {}) {
   return {
-    identifier: e.identifier || ee(),
+    identifier: e.identifier || ne(),
     name: e.name || "",
     role: e.role || "system",
     content: e.content || "",
@@ -2303,35 +1033,35 @@ function fo(e, t = {}) {
     injection_position: e.injection_position,
     injection_depth: e.injection_depth ?? 4,
     forbid_overrides: e.forbid_overrides || !1,
-    injection_order: t.order ?? L.injection_order,
-    injection_trigger: t.triggers ? [...t.triggers] : [...L.injection_trigger]
+    injection_order: t.order ?? R.injection_order,
+    injection_trigger: t.triggers ? [...t.triggers] : [...R.injection_trigger]
   };
 }
-function Ws(e) {
+function oa(e) {
   return e.slice().sort((t, r) => {
-    const n = t.injection_order ?? L.injection_order, o = r.injection_order ?? L.injection_order;
+    const n = t.injection_order ?? R.injection_order, o = r.injection_order ?? R.injection_order;
     return n - o;
   });
 }
-function ne(e) {
+function oe(e) {
   const t = { ...e };
-  return t.hasOwnProperty("injection_order") || (t.injection_order = L.injection_order), t.hasOwnProperty("injection_trigger") || (t.injection_trigger = [...L.injection_trigger]), t;
+  return t.hasOwnProperty("injection_order") || (t.injection_order = R.injection_order), t.hasOwnProperty("injection_trigger") || (t.injection_trigger = [...R.injection_trigger]), t;
 }
-function uo(e) {
-  return e.map((t) => ne(t));
+function co(e) {
+  return e.map((t) => oe(t));
 }
-const go = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const po = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  applyNewVersionFields: lo,
-  batchTransferWithNewFields: po,
-  createEntryWithNewFields: fo,
-  ensureAllEntriesHaveNewFields: uo,
-  ensureNewVersionFields: ne,
-  extractNewVersionFields: ao,
-  hasNewVersionFields: Rs,
-  sortEntriesByOrder: Ws,
-  transferEntryWithNewFields: co
-}, Symbol.toStringTag, { value: "Module" })), mo = {
+  applyNewVersionFields: io,
+  batchTransferWithNewFields: ao,
+  createEntryWithNewFields: lo,
+  ensureAllEntriesHaveNewFields: co,
+  ensureNewVersionFields: oe,
+  extractNewVersionFields: oo,
+  hasNewVersionFields: ra,
+  sortEntriesByOrder: oa,
+  transferEntryWithNewFields: so
+}, Symbol.toStringTag, { value: "Module" })), uo = {
   // 批量修改角色
   changeRole(e, t) {
     return e.map((r) => ({ ...r, role: t }));
@@ -2365,11 +1095,11 @@ ${t}`
     return e.map((o) => {
       let i = o.content;
       if (n) {
-        const l = new RegExp(escapeRegExp(t), "g");
-        i = i.replace(l, r);
+        const a = new RegExp(escapeRegExp(t), "g");
+        i = i.replace(a, r);
       } else {
-        const l = new RegExp(escapeRegExp(t), "gi");
-        i = i.replace(l, r);
+        const a = new RegExp(escapeRegExp(t), "gi");
+        i = i.replace(a, r);
       }
       return {
         ...o,
@@ -2386,8 +1116,8 @@ ${t}`
   },
   // 显示批量编辑对话框
   showBatchEditDialog(e, t) {
-    const r = v(), n = A.getVars();
-    q(), r("#batch-edit-modal").remove();
+    const r = v(), n = N.getVars();
+    Y(), r("#batch-edit-modal").remove();
     const o = `
       <div id="batch-edit-modal" style="--pt-font-size: ${n.fontSize}; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; height: calc(var(--pt-vh, 1vh) * 100); background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px); z-index: 10002; display: flex; align-items: center; justify-content: center; padding: ${n.margin}; padding-top: calc(${n.margin} + env(safe-area-inset-top)); padding-bottom: calc(${n.margin} + env(safe-area-inset-bottom));">
         <div style="background: ${n.bgColor}; border-radius: ${n.borderRadius}; padding: ${n.padding}; max-width: 600px; width: 100%; max-height: ${n.maxHeight}; max-height: 80dvh; max-height: calc(var(--pt-vh, 1vh) * 80); overflow-y: auto; color: ${n.textColor}; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
@@ -2493,75 +1223,75 @@ ${t}`
     let r = [...e];
     return t.role && (r = this.changeRole(r, t.role)), t.depth !== null && (r = this.adjustDepth(r, t.depth)), t.enabled !== null && (r = this.toggleEnabled(r, t.enabled)), t.prefix && (r = this.addPrefix(r, t.prefix)), t.suffix && (r = this.addSuffix(r, t.suffix)), t.findText && t.replaceText !== void 0 && (r = this.findReplace(r, t.findText, t.replaceText, t.caseSensitive)), t.renamePattern && (r = this.batchRename(r, t.renamePattern)), r;
   }
-}, ho = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+}, fo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  BatchEditor: mo
+  BatchEditor: uo
 }, Symbol.toStringTag, { value: "Module" }));
-function Us(e) {
+function ia(e) {
   const t = v(), r = [];
   return t(`#${e}-entries-list .entry-checkbox:checked`).each(function() {
     const n = t(this).closest(".entry-item"), o = parseInt(n.data("index")), i = n.data("identifier");
-    let l;
-    e === "left" ? l = window.leftEntries || [] : e === "right" ? l = window.rightEntries || [] : e === "single" && (l = window.singleEntries || []);
     let a;
-    i && (a = l.find((s) => s.identifier === i)), !a && !isNaN(o) && o >= 0 && o < l.length && (a = l[o]), a && r.push(a);
+    e === "left" ? a = window.leftEntries || [] : e === "right" ? a = window.rightEntries || [] : e === "single" && (a = window.singleEntries || []);
+    let l;
+    i && (l = a.find((s) => s.identifier === i)), !l && !isNaN(o) && o >= 0 && o < a.length && (l = a[o]), l && r.push(l);
   }), r;
 }
-function Ie(e) {
+function Me(e) {
   const t = v();
   return e === "left" ? t("#left-preset").val() : e === "right" ? t("#right-preset").val() : e === "single" ? window.singlePresetName || t("#left-preset").val() || t("#right-preset").val() : null;
 }
-async function Vs(e, t, r, n) {
+async function sa(e, t, r, n) {
   try {
-    const o = Ie(e);
+    const o = Me(e);
     if (!o) {
       alert("无法确定目标预设");
       return;
     }
-    const i = mo.applyBatchModifications(t, r), l = N(n, o), a = l.prompts || [];
+    const i = uo.applyBatchModifications(t, r), a = O(n, o), l = a.prompts || [];
     i.forEach((s) => {
-      const d = a.findIndex((c) => c.identifier === s.identifier);
-      d >= 0 && (a[d] = s);
-    }), await n.presetManager.savePreset(o, l), window.toastr ? toastr.success(`已对 ${t.length} 个条目应用批量修改`) : alert(`已对 ${t.length} 个条目应用批量修改`), W(n);
+      const d = l.findIndex((c) => c.identifier === s.identifier);
+      d >= 0 && (l[d] = s);
+    }), await n.presetManager.savePreset(o, a), window.toastr ? toastr.success(`已对 ${t.length} 个条目应用批量修改`) : alert(`已对 ${t.length} 个条目应用批量修改`), L(n);
   } catch (o) {
     console.error("批量修改失败:", o), window.toastr ? toastr.error("批量修改失败: " + o.message) : alert("批量修改失败: " + o.message);
   }
 }
-const bo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const go = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  applyBatchModificationsToSide: Vs,
-  getPresetNameForSide: Ie,
-  getSelectedEntriesForSide: Us
+  applyBatchModificationsToSide: sa,
+  getPresetNameForSide: Me,
+  getSelectedEntriesForSide: ia
 }, Symbol.toStringTag, { value: "Module" }));
-function xo(e, t = "default") {
+function mo(e, t = "default") {
   var r;
   try {
-    const n = M();
+    const n = B();
     if (!n) return [];
-    const o = N(n, e);
+    const o = O(n, e);
     if (!o) return [];
     if (!o.prompts || !Array.isArray(o.prompts))
       return [];
-    const i = 100001, l = (r = o.prompt_order) == null ? void 0 : r.find((d) => d.character_id === i);
-    if (!l)
-      return X(o);
-    const a = [], s = new Map(o.prompts.map((d) => [d.identifier, d]));
-    return l.order.forEach((d) => {
+    const i = 100001, a = (r = o.prompt_order) == null ? void 0 : r.find((d) => d.character_id === i);
+    if (!a)
+      return ee(o);
+    const l = [], s = new Map(o.prompts.map((d) => [d.identifier, d]));
+    return a.order.forEach((d) => {
       const c = s.get(d.identifier);
       if (c && !c.system_prompt && !c.marker && c.name && c.name.trim() !== "") {
         const p = {
           ...c,
           enabled: d.enabled,
-          orderIndex: a.length
+          orderIndex: l.length
         };
-        t === "default" && !d.enabled && (p.hiddenInDefaultMode = !0), a.push(p);
+        t === "default" && !d.enabled && (p.hiddenInDefaultMode = !0), l.push(p);
       }
-    }), t === "default" ? a.filter((d) => !d.hiddenInDefaultMode) : a;
+    }), t === "default" ? l.filter((d) => !d.hiddenInDefaultMode) : l;
   } catch (n) {
     return console.error("获取目标提示词列表失败:", n), [];
   }
 }
-function vo(e) {
+function ho(e) {
   e.prompt_order || (e.prompt_order = []);
   const t = 100001;
   let r = e.prompt_order.find((n) => n.character_id === t);
@@ -2583,89 +1313,89 @@ function vo(e) {
     ]
   }, e.prompt_order.push(r)), r;
 }
-function Fs(e) {
+function aa(e) {
   return e.map((t) => ({
     ...t,
     ptKey: (t == null ? void 0 : t.name) || ""
   }));
 }
-async function Hs(e, t, r, n, o, i = "default") {
-  const l = N(e, t);
-  if (!l) throw new Error("无法获取目标预设数据");
-  l.prompts || (l.prompts = []);
-  const a = vo(l), s = {
+async function la(e, t, r, n, o, i = "default") {
+  const a = O(e, t);
+  if (!a) throw new Error("无法获取目标预设数据");
+  a.prompts || (a.prompts = []);
+  const l = ho(a), s = {
     ...r,
-    identifier: et(l, r.identifier || ee()),
-    injection_order: r.injection_order ?? L.injection_order,
-    injection_trigger: Array.isArray(r.injection_trigger) ? [...r.injection_trigger] : [...L.injection_trigger],
+    identifier: nt(a, r.identifier || ne()),
+    injection_order: r.injection_order ?? R.injection_order,
+    injection_trigger: Array.isArray(r.injection_trigger) ? [...r.injection_trigger] : [...R.injection_trigger],
     forbid_overrides: r.forbid_overrides || !1,
     system_prompt: r.system_prompt || !1,
     marker: r.marker || !1
   };
-  delete s.isNewEntry, l.prompts.push(s);
+  delete s.isNewEntry, a.prompts.push(s);
   const d = { identifier: s.identifier, enabled: !!o };
   if (n === "top")
-    a.order.unshift(d);
+    l.order.unshift(d);
   else if (typeof n == "string" && n.startsWith("after-")) {
-    const c = parseInt(n.replace("after-", ""), 10), p = xo(t, "include_disabled");
+    const c = parseInt(n.replace("after-", ""), 10), p = mo(t, "include_disabled");
     if (c >= 0 && c < p.length) {
-      const u = p[c], f = a.order.findIndex((m) => m.identifier === u.identifier);
-      f !== -1 ? a.order.splice(f + 1, 0, d) : a.order.push(d);
+      const u = p[c], f = l.order.findIndex((g) => g.identifier === u.identifier);
+      f !== -1 ? l.order.splice(f + 1, 0, d) : l.order.push(d);
     } else
-      a.order.push(d);
+      l.order.push(d);
   } else
-    a.order.push(d);
-  await e.presetManager.savePreset(t, l);
+    l.order.push(d);
+  await e.presetManager.savePreset(t, a);
 }
-async function Gs(e, t, r, n, o, i, l = "default") {
-  const a = N(e, t), s = N(e, r);
-  if (!a || !s) throw new Error("无法获取预设数据");
+async function ca(e, t, r, n, o, i, a = "default") {
+  const l = O(e, t), s = O(e, r);
+  if (!l || !s) throw new Error("无法获取预设数据");
   s.prompts || (s.prompts = []);
-  const d = vo(s), c = new Map(s.prompts.map((f, m) => [f.name, m])), p = [];
-  if (po(n).forEach((f) => {
+  const d = ho(s), c = new Map(s.prompts.map((f, g) => [f.name, g])), p = [];
+  if (ao(n).forEach((f) => {
     if (c.has(f.name)) {
-      const m = c.get(f.name), b = s.prompts[m].identifier;
-      s.prompts[m] = {
-        ...s.prompts[m],
+      const g = c.get(f.name), b = s.prompts[g].identifier;
+      s.prompts[g] = {
+        ...s.prompts[g],
         ...f,
         identifier: b,
-        injection_order: f.injection_order ?? L.injection_order,
-        injection_trigger: Array.isArray(f.injection_trigger) ? [...f.injection_trigger] : [...L.injection_trigger]
+        injection_order: f.injection_order ?? R.injection_order,
+        injection_trigger: Array.isArray(f.injection_trigger) ? [...f.injection_trigger] : [...R.injection_trigger]
       }, d.order.find((h) => h.identifier === b) || d.order.push({ identifier: b, enabled: !!i });
     } else {
-      const m = {
+      const g = {
         ...f,
-        identifier: et(s, f.identifier || ee()),
-        injection_order: f.injection_order ?? L.injection_order,
-        injection_trigger: Array.isArray(f.injection_trigger) ? [...f.injection_trigger] : [...L.injection_trigger]
+        identifier: nt(s, f.identifier || ne()),
+        injection_order: f.injection_order ?? R.injection_order,
+        injection_trigger: Array.isArray(f.injection_trigger) ? [...f.injection_trigger] : [...R.injection_trigger]
       };
-      s.prompts.push(m), p.push({ identifier: m.identifier, enabled: !!i });
+      s.prompts.push(g), p.push({ identifier: g.identifier, enabled: !!i });
     }
   }), p.length > 0)
     if (o === "top")
       d.order.unshift(...p);
     else if (typeof o == "string" && o.startsWith("after-")) {
-      const f = parseInt(o.replace("after-", ""), 10), m = xo(r, "include_disabled");
-      if (f >= 0 && f < m.length) {
-        const b = m[f], g = d.order.findIndex((h) => h.identifier === b.identifier);
-        g !== -1 ? d.order.splice(g + 1, 0, ...p) : d.order.push(...p);
+      const f = parseInt(o.replace("after-", ""), 10), g = mo(r, "include_disabled");
+      if (f >= 0 && f < g.length) {
+        const b = g[f], m = d.order.findIndex((h) => h.identifier === b.identifier);
+        m !== -1 ? d.order.splice(m + 1, 0, ...p) : d.order.push(...p);
       } else
         d.order.push(...p);
     } else
       d.order.push(...p);
   await e.presetManager.savePreset(r, s);
 }
-async function qs(e, t, r) {
-  const n = N(e, t);
+async function da(e, t, r) {
+  const n = O(e, t);
   if (!n) throw new Error("无法获取源预设数据");
   n.prompts || (n.prompts = []), n.prompt_order || (n.prompt_order = []);
   const o = 100001;
   let i = n.prompt_order.find((s) => s.character_id === o);
   i || (i = { character_id: o, order: [] }, n.prompt_order.push(i));
-  const l = new Set(r.map((s) => s.name)), a = new Set(r.map((s) => s.identifier));
-  n.prompts = n.prompts.filter((s) => !(s && s.name && l.has(s.name))), i.order = i.order.filter((s) => !a.has(s.identifier)), await e.presetManager.savePreset(t, n);
+  const a = new Set(r.map((s) => s.name)), l = new Set(r.map((s) => s.identifier));
+  n.prompts = n.prompts.filter((s) => !(s && s.name && a.has(s.name))), i.order = i.order.filter((s) => !l.has(s.identifier)), await e.presetManager.savePreset(t, n);
 }
-function Js() {
+function pa() {
   return {
     id: "preset",
     ui: {
@@ -2685,11 +1415,11 @@ function Js() {
       return Array.isArray(e == null ? void 0 : e.presetNames) ? e.presetNames.slice() : [];
     },
     async getEntries(e, t, r) {
-      const n = N(e, t), o = uo(Le(n, r));
-      return Fs(o);
+      const n = O(e, t), o = co(We(n, r));
+      return aa(o);
     },
     async transfer(e, t) {
-      return await Gs(
+      return await ca(
         e,
         t.sourceContainer,
         t.targetContainer,
@@ -2700,10 +1430,10 @@ function Js() {
       );
     },
     async deleteEntries(e, t) {
-      return await qs(e, t.container, t.entries);
+      return await da(e, t.container, t.entries);
     },
     async insertEntry(e, t) {
-      return await Hs(
+      return await la(
         e,
         t.container,
         t.entry,
@@ -2714,18 +1444,18 @@ function Js() {
     }
   };
 }
-let Kt = null;
-async function at() {
-  return Kt || (Kt = import("/scripts/world-info.js")), await Kt;
+let ln = null;
+async function lt() {
+  return ln || (ln = import("/scripts/world-info.js")), await ln;
 }
-function gr(e) {
+function kr(e) {
   return Array.isArray(e) ? e.map((t) => String(t ?? "").trim()).filter(Boolean).sort((t, r) => t.localeCompare(r)).join("|") : "";
 }
-function dn(e) {
-  const t = String((e == null ? void 0 : e.comment) ?? "").trim(), r = gr(e == null ? void 0 : e.key), n = gr(e == null ? void 0 : e.keysecondary);
+function kn(e) {
+  const t = String((e == null ? void 0 : e.comment) ?? "").trim(), r = kr(e == null ? void 0 : e.key), n = kr(e == null ? void 0 : e.keysecondary);
   return `${t}||${r}||${n}`;
 }
-function Ks(e) {
+function ua(e) {
   switch (Number(e)) {
     case 0:
       return "角色定义之前";
@@ -2745,18 +1475,18 @@ function Ks(e) {
       return String(e ?? "");
   }
 }
-function Ys(e, t) {
+function fa(e, t) {
   const r = Number((e == null ? void 0 : e.order) ?? 0), n = Number((t == null ? void 0 : t.order) ?? 0);
   if (r !== n) return n - r;
   const o = Number((e == null ? void 0 : e.uid) ?? 0), i = Number((t == null ? void 0 : t.uid) ?? 0);
   return o - i;
 }
-async function Xs() {
-  const e = await at();
+async function ga() {
+  const e = await lt();
   return typeof e.updateWorldInfoList == "function" && await e.updateWorldInfoList(), Array.isArray(e.world_names) ? e.world_names.slice() : [];
 }
-async function kt(e) {
-  const t = await at();
+async function Ot(e) {
+  const t = await lt();
   if (typeof t.loadWorldInfo != "function")
     throw new Error("World Info module missing loadWorldInfo");
   const r = await t.loadWorldInfo(e);
@@ -2764,76 +1494,76 @@ async function kt(e) {
     throw new Error(`无法加载世界书: ${e}`);
   return r;
 }
-async function yo(e, t) {
-  const r = await at();
+async function bo(e, t) {
+  const r = await lt();
   if (typeof r.saveWorldInfo != "function")
     throw new Error("World Info module missing saveWorldInfo");
   await r.saveWorldInfo(e, t, !0);
 }
-function Qs(e, t) {
+function ma(e, t) {
   const r = e != null && e.entries && typeof e.entries == "object" ? e.entries : {}, n = Object.values(r).filter(Boolean), o = t === "include_disabled" ? n : n.filter((i) => !i.disable);
-  return o.sort(Ys), o.map((i) => {
-    const l = dn(i);
+  return o.sort(fa), o.map((i) => {
+    const a = kn(i);
     return {
-      identifier: String(i.uid ?? ee()),
+      identifier: String(i.uid ?? ne()),
       name: String(i.comment ?? ""),
       content: String(i.content ?? ""),
       enabled: !i.disable,
-      ptKey: l,
+      ptKey: a,
       raw: i,
-      role: ta(i),
-      injection_position: Ks(i.position),
+      role: xa(i),
+      injection_position: ua(i.position),
       injection_depth: Number(i.depth ?? 0),
       injection_order: Number(i.order ?? 0),
       injection_trigger: Array.isArray(i.triggers) ? i.triggers.map(String) : []
     };
   });
 }
-function Zs(e) {
+function ha(e) {
   const t = e != null && e.entries && typeof e.entries == "object" ? e.entries : {}, r = new Set(Object.values(t).map((o) => Number(o == null ? void 0 : o.uid)).filter(Number.isFinite));
   let n = 0;
   for (; r.has(n); ) n += 1;
   return n;
 }
-function ea(e) {
+function ba(e) {
   const t = JSON.parse(JSON.stringify(e ?? {}));
   return delete t.uid, t;
 }
-function ta(e) {
+function xa(e) {
   return e != null && e.constant ? "常驻" : Array.isArray(e == null ? void 0 : e.key) && e.key.map((r) => String(r ?? "").trim()).filter(Boolean).length > 0 ? "关键词" : "无关键词";
 }
-async function na(e, t, r, n, o) {
-  const i = await kt(t), l = await kt(r);
-  (!l.entries || typeof l.entries != "object") && (l.entries = {});
-  const a = /* @__PURE__ */ new Map();
-  for (const u of Object.values(l.entries))
-    u && a.set(dn(u), Number(u.uid));
-  const s = i != null && i.entries && typeof i.entries == "object" ? i.entries : {}, d = new Map(Object.values(s).filter(Boolean).map((u) => [String(u.uid), u])), c = await at(), p = typeof c.getFreeWorldEntryUid == "function" ? c.getFreeWorldEntryUid : null;
+async function va(e, t, r, n, o) {
+  const i = await Ot(t), a = await Ot(r);
+  (!a.entries || typeof a.entries != "object") && (a.entries = {});
+  const l = /* @__PURE__ */ new Map();
+  for (const u of Object.values(a.entries))
+    u && l.set(kn(u), Number(u.uid));
+  const s = i != null && i.entries && typeof i.entries == "object" ? i.entries : {}, d = new Map(Object.values(s).filter(Boolean).map((u) => [String(u.uid), u])), c = await lt(), p = typeof c.getFreeWorldEntryUid == "function" ? c.getFreeWorldEntryUid : null;
   for (const u of n) {
     const f = (u == null ? void 0 : u.raw) ?? d.get(String(u.identifier));
     if (!f) continue;
-    const m = dn(f), b = a.get(m), g = ea(f);
-    if (o && (g.disable = !1), Number.isFinite(b))
-      l.entries[String(b)] = { uid: b, ...g };
+    const g = kn(f), b = l.get(g), m = ba(f);
+    if (o && (m.disable = !1), Number.isFinite(b))
+      a.entries[String(b)] = { uid: b, ...m };
     else {
-      const h = p ? p(l) : Zs(l);
-      l.entries[String(h)] = { uid: h, ...g }, a.set(m, h);
+      const h = p ? p(a) : ha(a);
+      a.entries[String(h)] = { uid: h, ...m }, l.set(g, h);
     }
   }
-  await yo(r, l);
+  await bo(r, a);
 }
-async function ra(e, t, r) {
-  var l;
-  const n = await kt(t);
+async function ya(e, t, r) {
+  var a;
+  const n = await Ot(t);
   (!n.entries || typeof n.entries != "object") && (n.entries = {});
-  const o = await at(), i = typeof o.deleteWorldInfoEntry == "function" ? o.deleteWorldInfoEntry : null;
-  for (const a of r) {
-    const s = ((l = a == null ? void 0 : a.raw) == null ? void 0 : l.uid) ?? Number(a == null ? void 0 : a.identifier);
+  const o = await lt(), i = typeof o.deleteWorldInfoEntry == "function" ? o.deleteWorldInfoEntry : null;
+  for (const l of r) {
+    const s = ((a = l == null ? void 0 : l.raw) == null ? void 0 : a.uid) ?? Number(l == null ? void 0 : l.identifier);
     Number.isFinite(s) && (i ? await i(n, s, { silent: !0 }) : delete n.entries[String(s)]);
   }
-  await yo(t, n);
+  await bo(t, n);
 }
-function oa() {
+function wa() {
   return {
     id: "worldbook",
     ui: {
@@ -2850,14 +1580,14 @@ function oa() {
       supportsBatchDeleteContainers: !0
     },
     async listContainers(e) {
-      return await Xs();
+      return await ga();
     },
     async getEntries(e, t, r) {
-      const n = await kt(t);
-      return Qs(n, r);
+      const n = await Ot(t);
+      return ma(n, r);
     },
     async transfer(e, t) {
-      return await na(
+      return await va(
         e,
         t.sourceContainer,
         t.targetContainer,
@@ -2866,11 +1596,11 @@ function oa() {
       );
     },
     async deleteEntries(e, t) {
-      return await ra(e, t.container, t.entries);
+      return await ya(e, t.container, t.entries);
     }
   };
 }
-class wo {
+class xo {
   /**
    * @param {import('./types.js').TransferAdapter} adapter
    */
@@ -2922,23 +1652,23 @@ class wo {
     return await this.adapter.insertEntry(t, r);
   }
 }
-const St = Object.freeze({
-  preset: Js(),
-  worldbook: oa()
+const Lt = Object.freeze({
+  preset: pa(),
+  worldbook: wa()
 });
-let _t = "preset", $o = new wo(St[_t]);
-function ia(e) {
-  if (!Object.prototype.hasOwnProperty.call(St, e))
+let Dt = "preset", vo = new xo(Lt[Dt]);
+function $a(e) {
+  if (!Object.prototype.hasOwnProperty.call(Lt, e))
     throw new Error(`Unknown transfer adapter: ${e}`);
-  _t = e, $o = new wo(St[_t]);
+  Dt = e, vo = new xo(Lt[Dt]);
 }
-function re() {
-  return St[_t];
+function D() {
+  return Lt[Dt];
 }
-function Ge() {
-  return $o;
+function be() {
+  return vo;
 }
-function sa(e) {
+function ka(e) {
   const t = /^(.+?)\s*(?:\(副本\s*(\d*)\))?$/, r = e.match(t);
   if (r) {
     const n = r[1], o = r[2] ? parseInt(r[2]) + 1 : 1;
@@ -2946,26 +1676,26 @@ function sa(e) {
   }
   return `${e} (副本)`;
 }
-function pn() {
+function Sn() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
-let Yt = null;
-async function aa() {
-  return Yt || (Yt = import("/scripts/world-info.js")), await Yt;
+let cn = null;
+async function Sa() {
+  return cn || (cn = import("/scripts/world-info.js")), await cn;
 }
-function la(e) {
+function Pa(e) {
   const t = e != null && e.entries && typeof e.entries == "object" ? e.entries : {}, r = new Set(Object.values(t).map((o) => Number(o == null ? void 0 : o.uid)).filter(Number.isFinite));
   let n = 0;
   for (; r.has(n); ) n += 1;
   return n;
 }
-function ca(e) {
+function _a(e) {
   const t = JSON.parse(JSON.stringify(e ?? {}));
   return delete t.uid, t;
 }
-async function da(e, t) {
+async function Ca(e, t) {
   var p;
-  const r = v(), n = ae(e), o = Ie(e), i = r("#auto-enable-entry").prop("checked");
+  const r = v(), n = le(e), o = Me(e), i = r("#auto-enable-entry").prop("checked");
   if (n.length === 0) {
     alert("请选择要复制的条目");
     return;
@@ -2974,43 +1704,43 @@ async function da(e, t) {
     alert("无法确定目标世界书");
     return;
   }
-  const l = await aa();
-  if (typeof l.loadWorldInfo != "function" || typeof l.saveWorldInfo != "function")
+  const a = await Sa();
+  if (typeof a.loadWorldInfo != "function" || typeof a.saveWorldInfo != "function")
     throw new Error("World Info module missing loadWorldInfo/saveWorldInfo");
-  const a = await l.loadWorldInfo(o);
-  if (!a || typeof a != "object")
+  const l = await a.loadWorldInfo(o);
+  if (!l || typeof l != "object")
     throw new Error(`无法加载世界书: ${o}`);
-  (!a.entries || typeof a.entries != "object") && (a.entries = {});
-  const s = typeof l.getFreeWorldEntryUid == "function" ? l.getFreeWorldEntryUid : null, d = new Set(Object.values(a.entries).map((u) => String((u == null ? void 0 : u.comment) ?? ""))), c = (u) => {
-    const f = String(u ?? "").trim(), m = f ? `${f} 副本` : "副本";
-    if (!d.has(m))
-      return d.add(m), m;
+  (!l.entries || typeof l.entries != "object") && (l.entries = {});
+  const s = typeof a.getFreeWorldEntryUid == "function" ? a.getFreeWorldEntryUid : null, d = new Set(Object.values(l.entries).map((u) => String((u == null ? void 0 : u.comment) ?? ""))), c = (u) => {
+    const f = String(u ?? "").trim(), g = f ? `${f} 副本` : "副本";
+    if (!d.has(g))
+      return d.add(g), g;
     let b = 2;
-    for (; d.has(`${m}${b}`); )
+    for (; d.has(`${g}${b}`); )
       b += 1;
-    const g = `${m}${b}`;
-    return d.add(g), g;
+    const m = `${g}${b}`;
+    return d.add(m), m;
   };
   for (const u of n) {
-    const f = ((p = u == null ? void 0 : u.raw) == null ? void 0 : p.uid) ?? Number(u == null ? void 0 : u.identifier), m = (u == null ? void 0 : u.raw) ?? (Number.isFinite(f) ? a.entries[String(f)] : null);
-    if (!m) continue;
-    const b = ca(m);
+    const f = ((p = u == null ? void 0 : u.raw) == null ? void 0 : p.uid) ?? Number(u == null ? void 0 : u.identifier), g = (u == null ? void 0 : u.raw) ?? (Number.isFinite(f) ? l.entries[String(f)] : null);
+    if (!g) continue;
+    const b = _a(g);
     b.comment = c(b.comment ?? ""), i && (b.disable = !1);
-    const g = s ? s(a) : la(a);
-    a.entries[String(g)] = { uid: g, ...b };
+    const m = s ? s(l) : Pa(l);
+    l.entries[String(m)] = { uid: m, ...b };
   }
-  await l.saveWorldInfo(o, a, !0), W(t);
+  await a.saveWorldInfo(o, l, !0), L(t);
 }
-async function gt(e, t) {
-  if (re().id === "worldbook") {
+async function xt(e, t) {
+  if (D().id === "worldbook") {
     try {
-      await da(e, t);
+      await Ca(e, t);
     } catch (i) {
       console.error("复制失败:", i), alert("复制失败: " + i.message);
     }
     return;
   }
-  const n = ae(e), o = Ie(e);
+  const n = le(e), o = Me(e);
   if (n.length === 0) {
     alert("请选择要复制的条目");
     return;
@@ -3020,42 +1750,42 @@ async function gt(e, t) {
     return;
   }
   try {
-    const i = N(t, o);
+    const i = O(t, o);
     i.prompts || (i.prompts = []);
-    const l = Rt(i), a = new Map(l.order.map((d, c) => [d.identifier, c])), s = n.map((d) => ({
+    const a = Qt(i), l = new Map(a.order.map((d, c) => [d.identifier, c])), s = n.map((d) => ({
       entry: d,
-      orderIndex: a.get(d.identifier)
+      orderIndex: l.get(d.identifier)
     })).filter((d) => d.orderIndex !== void 0).sort((d, c) => c.orderIndex - d.orderIndex);
     for (const { entry: d, orderIndex: c } of s) {
       const p = {
         ...d,
-        identifier: pn(),
+        identifier: Sn(),
         name: d.name + "副本"
       };
-      i.prompts.push(p), l.order.splice(c + 1, 0, {
+      i.prompts.push(p), a.order.splice(c + 1, 0, {
         identifier: p.identifier,
         enabled: !0
       });
     }
     for (const d of n)
-      if (a.get(d.identifier) === void 0) {
+      if (l.get(d.identifier) === void 0) {
         const c = {
           ...d,
-          identifier: pn(),
+          identifier: Sn(),
           name: d.name + "副本"
         };
-        i.prompts.push(c), l.order.push({
+        i.prompts.push(c), a.order.push({
           identifier: c.identifier,
           enabled: !0
         });
       }
-    await t.presetManager.savePreset(o, i), console.log(`成功复制 ${n.length} 个条目`), W(t);
+    await t.presetManager.savePreset(o, i), console.log(`成功复制 ${n.length} 个条目`), L(t);
   } catch (i) {
     console.error("复制失败:", i), alert("复制失败: " + i.message);
   }
 }
-function ko(e, t) {
-  const r = v(), n = ae(e), o = Ie(e);
+function yo(e, t) {
+  const r = v(), n = le(e), o = Me(e);
   if (n.length === 0) {
     alert("请选择要移动的条目");
     return;
@@ -3073,41 +1803,41 @@ function ko(e, t) {
     `移动模式已激活！请点击${e === "single" ? "预设" : e === "left" ? "左侧" : "右侧"}面板中的条目来选择插入位置。`
   ), r(`#${e}-side, #${e}-container`).addClass("move-target");
 }
-async function So(e, t, r, n, o) {
-  const i = N(e, t);
+async function wo(e, t, r, n, o) {
+  const i = O(e, t);
   i.prompts || (i.prompts = []);
-  const l = Rt(i), a = new Set(r.map((c) => c.identifier));
-  l.order = l.order.filter((c) => !a.has(c.identifier));
+  const a = Qt(i), l = new Set(r.map((c) => c.identifier));
+  a.order = a.order.filter((c) => !l.has(c.identifier));
   let s;
   if (o === "top")
     s = 0;
   else if (o === "bottom")
-    s = l.order.length;
+    s = a.order.length;
   else {
-    const c = l.order.findIndex((p) => p.identifier === n);
-    s = c >= 0 ? c + 1 : l.order.length;
+    const c = a.order.findIndex((p) => p.identifier === n);
+    s = c >= 0 ? c + 1 : a.order.length;
   }
   const d = r.map((c) => ({
     identifier: c.identifier,
     enabled: !0
   }));
-  l.order.splice(s, 0, ...d), await e.presetManager.savePreset(t, i), console.log(
+  a.order.splice(s, 0, ...d), await e.presetManager.savePreset(t, i), console.log(
     `成功移动 ${r.length} 个条目到${o === "top" ? "顶部" : o === "bottom" ? "底部" : "指定位置"}`
-  ), W(e);
+  ), L(e);
 }
-async function fn(e, t, r, n) {
+async function Pn(e, t, r, n) {
   const o = v();
-  let i, l;
-  window.moveMode ? (i = window.moveMode.selectedEntries, l = window.moveMode.presetName) : (i = ae(t), l = Ie(t));
+  let i, a;
+  window.moveMode ? (i = window.moveMode.selectedEntries, a = window.moveMode.presetName) : (i = le(t), a = Me(t));
   try {
-    await So(e, l, i, r, n);
-  } catch (a) {
-    console.error("移动失败:", a), alert("移动失败: " + a.message);
+    await wo(e, a, i, r, n);
+  } catch (l) {
+    console.error("移动失败:", l), alert("移动失败: " + l.message);
   } finally {
     window.moveMode = null, o(".move-target").removeClass("move-target");
   }
 }
-async function _o(e, t, r, n, o, i) {
+async function $o(e, t, r, n, o, i) {
   try {
     if (!r) {
       console.warn("executeMoveToPositionWithEntries: missing presetName, skip move.");
@@ -3117,22 +1847,22 @@ async function _o(e, t, r, n, o, i) {
       console.warn("executeMoveToPositionWithEntries: no entries to move.");
       return;
     }
-    await So(e, r, n, o, i);
-  } catch (l) {
-    console.error("移动失败:", l), window.toastr ? toastr.error("移动失败: " + l.message) : alert("移动失败: " + l.message);
+    await wo(e, r, n, o, i);
+  } catch (a) {
+    console.error("移动失败:", a), window.toastr ? toastr.error("移动失败: " + a.message) : alert("移动失败: " + a.message);
   }
 }
-const Po = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const ko = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  executeMoveToPosition: fn,
-  executeMoveToPositionWithEntries: _o,
-  generateCopyName: sa,
-  generateIdentifier: pn,
-  simpleCopyEntries: gt,
-  startMoveMode: ko
+  executeMoveToPosition: Pn,
+  executeMoveToPositionWithEntries: $o,
+  generateCopyName: ka,
+  generateIdentifier: Sn,
+  simpleCopyEntries: xt,
+  startMoveMode: yo
 }, Symbol.toStringTag, { value: "Module" }));
-async function Gn(e, t, r, n, o, i = "default") {
-  await Ge().insertEntry(e, {
+async function Vn(e, t, r, n, o, i = "default") {
+  await be().insertEntry(e, {
     container: t,
     entry: r,
     insertPosition: n,
@@ -3140,31 +1870,31 @@ async function Gn(e, t, r, n, o, i = "default") {
     displayMode: i
   });
 }
-async function qn(e, t, r, n, o, i, l = "default") {
-  await Ge().transfer(e, {
+async function Gn(e, t, r, n, o, i, a = "default") {
+  await be().transfer(e, {
     sourceContainer: t,
     targetContainer: r,
     entries: n,
     insertPosition: o,
     autoEnable: i,
-    displayMode: l
+    displayMode: a
   });
 }
-async function Co(e, t, r) {
-  await Ge().deleteEntries(e, { container: t, entries: r });
+async function So(e, t, r) {
+  await be().deleteEntries(e, { container: t, entries: r });
 }
-const zo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Po = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  performDelete: Co,
-  performInsertNewEntry: Gn,
-  performTransfer: qn
+  performDelete: So,
+  performInsertNewEntry: Vn,
+  performTransfer: Gn
 }, Symbol.toStringTag, { value: "Module" }));
-let Xt = null;
-async function Eo() {
-  return Xt || (Xt = import("/scripts/world-info.js")), await Xt;
+let dn = null;
+async function _o() {
+  return dn || (dn = import("/scripts/world-info.js")), await dn;
 }
-async function pa(e) {
-  const t = await Eo();
+async function Ea(e) {
+  const t = await _o();
   if (typeof t.loadWorldInfo != "function")
     throw new Error("World Info module missing loadWorldInfo");
   const r = await t.loadWorldInfo(e);
@@ -3172,47 +1902,47 @@ async function pa(e) {
     throw new Error(`无法加载世界书: ${e}`);
   return r;
 }
-async function fa(e, t) {
-  const r = await Eo();
+async function za(e, t) {
+  const r = await _o();
   if (typeof r.saveWorldInfo != "function")
     throw new Error("World Info module missing saveWorldInfo");
   await r.saveWorldInfo(e, t, !0);
 }
-function Qt(e) {
+function pn(e) {
   return String(e ?? "").split(/[\n,，;；|]/g).map((r) => r.trim()).filter(Boolean);
 }
-function mr(e) {
+function Sr(e) {
   return Array.isArray(e) ? e.map((t) => String(t ?? "").trim()).filter(Boolean).join(`
 `) : "";
 }
-function ua(e, t, r) {
+function Co(e, t, r) {
   var b;
-  const n = v(), { isMobile: o, isSmallScreen: i } = G();
-  q(), n("#pt-worldbook-edit-modal").remove(), n("#pt-worldbook-edit-modal-styles").remove();
-  const l = ((b = r == null ? void 0 : r.raw) == null ? void 0 : b.uid) ?? Number(r == null ? void 0 : r.identifier);
-  if (!Number.isFinite(l)) {
+  const n = v(), { isMobile: o, isSmallScreen: i } = K();
+  Y(), n("#pt-worldbook-edit-modal").remove(), n("#pt-worldbook-edit-modal-styles").remove();
+  const a = ((b = r == null ? void 0 : r.raw) == null ? void 0 : b.uid) ?? Number(r == null ? void 0 : r.identifier);
+  if (!Number.isFinite(a)) {
     alert("无法识别世界书条目的 UID，无法编辑");
     return;
   }
-  const a = (r == null ? void 0 : r.raw) ?? {}, s = String(a.comment ?? (r == null ? void 0 : r.name) ?? "").trim() || "未命名条目", d = A.getVars(), c = `
+  const l = (r == null ? void 0 : r.raw) ?? {}, s = String(l.comment ?? (r == null ? void 0 : r.name) ?? "").trim() || "未命名条目", d = N.getVars(), c = `
     <div id="pt-worldbook-edit-modal">
       <div class="pt-wi-edit-content">
         <div class="pt-wi-edit-header">
           <h2>编辑世界书条目</h2>
           <div class="pt-wi-subtitle">
-            <span>世界书: ${C(String(t ?? ""))}</span>
-            <span>UID: ${l}</span>
+            <span>世界书: ${I(String(t ?? ""))}</span>
+            <span>UID: ${a}</span>
           </div>
         </div>
 
         <div class="pt-wi-top-row">
           <div class="pt-wi-current-entry">
             <div class="pt-wi-current-label">当前世界书条目</div>
-            <div class="pt-wi-current-value" title="${C(s)}">${C(s)}</div>
+            <div class="pt-wi-current-value" title="${I(s)}">${I(s)}</div>
           </div>
           <label class="pt-wi-toggle">
             <span>启用</span>
-            <input type="checkbox" id="pt-wi-enabled" ${a.disable ? "" : "checked"}>
+            <input type="checkbox" id="pt-wi-enabled" ${l.disable ? "" : "checked"}>
           </label>
         </div>
 
@@ -3220,12 +1950,12 @@ function ua(e, t, r) {
           <div class="pt-wi-row">
             <label class="pt-wi-label">触发策略</label>
             <div class="pt-wi-inline">
-              <label class="pt-wi-inline-check"><input type="checkbox" id="pt-wi-constant" ${a.constant ? "checked" : ""}> 常驻</label>
+              <label class="pt-wi-inline-check"><input type="checkbox" id="pt-wi-constant" ${l.constant ? "checked" : ""}> 常驻</label>
               <select id="pt-wi-selective-logic" title="当存在次关键词(keysecondary)时的匹配逻辑；常驻时无效">
-                <option value="0" ${Number(a.selectiveLogic ?? 0) === 0 ? "selected" : ""} title="AND_ANY">与任意</option>
-                <option value="3" ${Number(a.selectiveLogic ?? 0) === 3 ? "selected" : ""} title="AND_ALL">与所有</option>
-                <option value="1" ${Number(a.selectiveLogic ?? 0) === 1 ? "selected" : ""} title="NOT_ALL">非所有</option>
-                <option value="2" ${Number(a.selectiveLogic ?? 0) === 2 ? "selected" : ""} title="NOT_ANY">非任意</option>
+                <option value="0" ${Number(l.selectiveLogic ?? 0) === 0 ? "selected" : ""} title="AND_ANY">与任意</option>
+                <option value="3" ${Number(l.selectiveLogic ?? 0) === 3 ? "selected" : ""} title="AND_ALL">与所有</option>
+                <option value="1" ${Number(l.selectiveLogic ?? 0) === 1 ? "selected" : ""} title="NOT_ALL">非所有</option>
+                <option value="2" ${Number(l.selectiveLogic ?? 0) === 2 ? "selected" : ""} title="NOT_ANY">非任意</option>
               </select>
               <span class="pt-wi-hint" title="没有填写次关键词(keysecondary)时，这个选项不会影响触发">次关键词为空时无效</span>
             </div>
@@ -3233,46 +1963,46 @@ function ua(e, t, r) {
 
           <div class="pt-wi-row">
             <label class="pt-wi-label" for="pt-wi-comment">标题/注释</label>
-            <input type="text" id="pt-wi-comment" value="${C(String(a.comment ?? (r == null ? void 0 : r.name) ?? ""))}" placeholder="用于显示/判重的注释...">
+            <input type="text" id="pt-wi-comment" value="${I(String(l.comment ?? (r == null ? void 0 : r.name) ?? ""))}" placeholder="用于显示/判重的注释...">
           </div>
 
           <div class="pt-wi-row">
             <label class="pt-wi-label" for="pt-wi-key">主关键词 (key)</label>
-            <textarea id="pt-wi-key" rows="3" placeholder="每行一个关键词，或用逗号分隔">${C(mr(a.key))}</textarea>
+            <textarea id="pt-wi-key" rows="3" placeholder="每行一个关键词，或用逗号分隔">${I(Sr(l.key))}</textarea>
           </div>
 
           <div class="pt-wi-row">
             <label class="pt-wi-label" for="pt-wi-keysecondary">次关键词 (keysecondary)</label>
-            <textarea id="pt-wi-keysecondary" rows="3" placeholder="每行一个关键词，或用逗号分隔">${C(mr(a.keysecondary))}</textarea>
+            <textarea id="pt-wi-keysecondary" rows="3" placeholder="每行一个关键词，或用逗号分隔">${I(Sr(l.keysecondary))}</textarea>
           </div>
 
           <div class="pt-wi-row">
             <label class="pt-wi-label" for="pt-wi-content">内容</label>
-            <textarea id="pt-wi-content" rows="${o ? 10 : 12}" placeholder="世界书条目内容...">${C(String(a.content ?? (r == null ? void 0 : r.content) ?? ""))}</textarea>
+            <textarea id="pt-wi-content" rows="${o ? 10 : 12}" placeholder="世界书条目内容...">${I(String(l.content ?? (r == null ? void 0 : r.content) ?? ""))}</textarea>
           </div>
 
           <div class="pt-wi-grid">
             <div class="pt-wi-row">
               <label class="pt-wi-label" for="pt-wi-position">插入位置</label>
               <select id="pt-wi-position">
-                <option value="0" ${Number(a.position ?? 0) === 0 ? "selected" : ""}>角色定义之前</option>
-                <option value="1" ${Number(a.position ?? 0) === 1 ? "selected" : ""}>角色定义之后</option>
-                <option value="2" ${Number(a.position ?? 0) === 2 ? "selected" : ""}>作者注释之前</option>
-                <option value="3" ${Number(a.position ?? 0) === 3 ? "selected" : ""}>作者注释之后</option>
-                <option value="5" ${Number(a.position ?? 0) === 5 ? "selected" : ""}>↑EM</option>
-                <option value="6" ${Number(a.position ?? 0) === 6 ? "selected" : ""}>↓EM</option>
-                <option value="4" ${Number(a.position ?? 0) === 4 ? "selected" : ""}>@D (按深度)</option>
+                <option value="0" ${Number(l.position ?? 0) === 0 ? "selected" : ""}>角色定义之前</option>
+                <option value="1" ${Number(l.position ?? 0) === 1 ? "selected" : ""}>角色定义之后</option>
+                <option value="2" ${Number(l.position ?? 0) === 2 ? "selected" : ""}>作者注释之前</option>
+                <option value="3" ${Number(l.position ?? 0) === 3 ? "selected" : ""}>作者注释之后</option>
+                <option value="5" ${Number(l.position ?? 0) === 5 ? "selected" : ""}>↑EM</option>
+                <option value="6" ${Number(l.position ?? 0) === 6 ? "selected" : ""}>↓EM</option>
+                <option value="4" ${Number(l.position ?? 0) === 4 ? "selected" : ""}>@D (按深度)</option>
               </select>
             </div>
 
             <div class="pt-wi-row">
               <label class="pt-wi-label" for="pt-wi-order">顺序 (order)</label>
-              <input type="number" id="pt-wi-order" value="${C(String(a.order ?? 100))}" step="1">
+              <input type="number" id="pt-wi-order" value="${I(String(l.order ?? 100))}" step="1">
             </div>
 
             <div class="pt-wi-row">
               <label class="pt-wi-label" for="pt-wi-depth">深度 (depth)</label>
-              <input type="number" id="pt-wi-depth" value="${C(String(a.depth ?? 4))}" step="1">
+              <input type="number" id="pt-wi-depth" value="${I(String(l.depth ?? 4))}" step="1">
             </div>
           </div>
         </div>
@@ -3288,7 +2018,7 @@ function ua(e, t, r) {
   const p = `
     #pt-worldbook-edit-modal {
       --pt-font-size: ${d.fontSize};
-      ${A.getModalBaseStyles()}
+      ${N.getModalBaseStyles()}
       align-items: ${d.isMobile ? "flex-start" : "center"};
       ${d.isMobile ? "padding-top: 20px;" : ""}
     }
@@ -3299,7 +2029,7 @@ function ua(e, t, r) {
     }
 
     #pt-worldbook-edit-modal .pt-wi-edit-content {
-      ${A.getModalContentStyles()}
+      ${N.getModalContentStyles()}
       max-width: ${i ? "95vw" : d.isMobile ? "90vw" : d.maxWidth};
       width: ${i ? "95vw" : d.isMobile ? "90vw" : "90%"};
       max-height: ${d.isMobile ? "90vh" : "85vh"};
@@ -3338,8 +2068,8 @@ function ua(e, t, r) {
 
     #pt-worldbook-edit-modal .pt-wi-top-row {
       display: flex;
-      flex-direction: ${i ? "column" : "row"};
-      align-items: ${i ? "stretch" : "center"};
+      flex-direction: row;
+      align-items: center;
       justify-content: space-between;
       gap: ${d.gap};
       padding: ${d.paddingSmall};
@@ -3354,6 +2084,7 @@ function ua(e, t, r) {
       display: flex;
       flex-direction: column;
       gap: 4px;
+      flex: 1 1 auto;
     }
 
     #pt-worldbook-edit-modal .pt-wi-current-label {
@@ -3374,11 +2105,12 @@ function ua(e, t, r) {
     #pt-worldbook-edit-modal .pt-wi-toggle {
       display: inline-flex;
       align-items: center;
-      justify-content: ${i ? "flex-end" : "flex-start"};
+      justify-content: flex-start;
       gap: 8px;
       font-weight: 800;
       color: ${d.textColor};
       white-space: nowrap;
+      flex: 0 0 auto;
     }
 
     #pt-worldbook-edit-modal .pt-wi-toggle input {
@@ -3497,8 +2229,8 @@ function ua(e, t, r) {
     }
   `;
   n("head").append(`<style id="pt-worldbook-edit-modal-styles">${p}</style>`), n("#pt-wi-comment").on("input", function() {
-    const g = String(n(this).val() ?? "").trim() || "未命名条目";
-    n("#pt-worldbook-edit-modal .pt-wi-current-value").text(g).attr("title", g);
+    const m = String(n(this).val() ?? "").trim() || "未命名条目";
+    n("#pt-worldbook-edit-modal .pt-wi-current-value").text(m).attr("title", m);
   });
   const u = () => {
     const h = Number(n("#pt-wi-position").val()) === 4;
@@ -3506,60 +2238,128 @@ function ua(e, t, r) {
   };
   n("#pt-wi-position").on("change", u), u();
   const f = () => {
-    const g = n("#pt-wi-constant").is(":checked"), h = Qt(n("#pt-wi-keysecondary").val()).length > 0;
-    n("#pt-wi-selective-logic").prop("disabled", g || !h);
+    const m = n("#pt-wi-constant").is(":checked"), h = pn(n("#pt-wi-keysecondary").val()).length > 0;
+    n("#pt-wi-selective-logic").prop("disabled", m || !h);
   };
   n("#pt-wi-constant").on("change", f), n("#pt-wi-keysecondary").on("input", f), f();
-  const m = () => {
+  const g = () => {
     n("#pt-worldbook-edit-modal").remove(), n("#pt-worldbook-edit-modal-styles").remove(), n(document).off("keydown.pt-worldbook-edit");
   };
-  n("#pt-wi-cancel").on("click", m), n("#pt-worldbook-edit-modal").on("click", function(g) {
-    g.target === this && m();
-  }), n(document).on("keydown.pt-worldbook-edit", function(g) {
-    g.key === "Escape" && m();
+  n("#pt-wi-cancel").on("click", g), n("#pt-worldbook-edit-modal").on("click", function(m) {
+    m.target === this && g();
+  }), n(document).on("keydown.pt-worldbook-edit", function(m) {
+    m.key === "Escape" && g();
   }), n("#pt-wi-save").on("click", async function() {
-    const g = n(this), h = g.text();
-    g.prop("disabled", !0).text("保存中...");
+    const m = n(this), h = m.text();
+    m.prop("disabled", !0).text("保存中...");
     try {
-      const y = await pa(t);
+      const y = await Ea(t);
       (!y.entries || typeof y.entries != "object") && (y.entries = {});
-      const S = y.entries[String(l)];
-      if (!S)
-        throw new Error(`未找到 UID=${l} 的条目`);
-      const P = n("#pt-wi-enabled").is(":checked"), x = n("#pt-wi-constant").is(":checked"), w = Number(n("#pt-wi-selective-logic").val());
-      S.disable = !P, S.constant = x, S.selective = !0, Number.isFinite(w) && (S.selectiveLogic = w), S.comment = String(n("#pt-wi-comment").val() ?? ""), S.key = Qt(n("#pt-wi-key").val()), S.keysecondary = Qt(n("#pt-wi-keysecondary").val()), S.content = String(n("#pt-wi-content").val() ?? "");
-      const k = Number(n("#pt-wi-position").val()), I = Number(n("#pt-wi-order").val()), B = Number(n("#pt-wi-depth").val()), O = k === 4;
-      if (Number.isFinite(k) && (S.position = k), Number.isFinite(I) && (S.order = I), Number.isFinite(B) && (S.depth = B), O) {
-        const _ = Number.isFinite(Number(a.role)) ? Number(a.role) : 0, E = Number.isFinite(Number(S.role)) ? Number(S.role) : _;
-        S.role = E;
+      const w = y.entries[String(a)];
+      if (!w)
+        throw new Error(`未找到 UID=${a} 的条目`);
+      const C = n("#pt-wi-enabled").is(":checked"), S = n("#pt-wi-constant").is(":checked"), k = Number(n("#pt-wi-selective-logic").val());
+      w.disable = !C, w.constant = S, w.selective = !0, Number.isFinite(k) && (w.selectiveLogic = k), w.comment = String(n("#pt-wi-comment").val() ?? ""), w.key = pn(n("#pt-wi-key").val()), w.keysecondary = pn(n("#pt-wi-keysecondary").val()), w.content = String(n("#pt-wi-content").val() ?? "");
+      const x = Number(n("#pt-wi-position").val()), P = Number(n("#pt-wi-order").val()), E = Number(n("#pt-wi-depth").val()), j = x === 4;
+      if (Number.isFinite(x) && (w.position = x), Number.isFinite(P) && (w.order = P), Number.isFinite(E) && (w.depth = E), j) {
+        const _ = Number.isFinite(Number(l.role)) ? Number(l.role) : 0, z = Number.isFinite(Number(w.role)) ? Number(w.role) : _;
+        w.role = z;
       } else
-        S.role = null;
-      await fa(t, y), m(), await W(e);
+        w.role = null;
+      await za(t, y), g(), await L(e);
     } catch (y) {
       console.error("保存世界书条目失败:", y), alert("保存失败: " + y.message);
     } finally {
-      g.prop("disabled", !1).text(h);
+      m.prop("disabled", !1).text(h);
     }
   });
 }
-async function un(e, t, r) {
-  const n = v(), o = re(), i = ae(t), l = n(`#${r}-preset`).val();
+let un = null;
+async function Ia() {
+  return un || (un = import("/scripts/world-info.js")), await un;
+}
+function Ma(e) {
+  const t = e != null && e.entries && typeof e.entries == "object" ? e.entries : {}, r = new Set(Object.values(t).map((o) => Number(o == null ? void 0 : o.uid)).filter(Number.isFinite));
+  let n = 0;
+  for (; r.has(n); ) n += 1;
+  return n;
+}
+function Aa(e) {
+  try {
+    if (typeof structuredClone == "function") return structuredClone(e);
+  } catch {
+  }
+  return JSON.parse(JSON.stringify(e));
+}
+async function vt(e, t) {
+  const r = v(), n = D();
+  if ((n == null ? void 0 : n.id) !== "worldbook") {
+    Eo(e, t);
+    return;
+  }
+  let o;
+  if (t === "single" ? o = window.singlePresetName || r("#left-preset").val() || r("#right-preset").val() : o = r(`#${t}-preset`).val(), !o) {
+    alert("请先选择世界书");
+    return;
+  }
+  const i = r("#auto-enable-entry").prop("checked");
+  try {
+    const a = await Ia();
+    if (typeof a.loadWorldInfo != "function")
+      throw new Error("World Info module missing loadWorldInfo");
+    if (typeof a.saveWorldInfo != "function")
+      throw new Error("World Info module missing saveWorldInfo");
+    const l = await a.loadWorldInfo(o);
+    (!l.entries || typeof l.entries != "object") && (l.entries = {});
+    let s = null;
+    if (typeof a.createWorldInfoEntry == "function" && (s = a.createWorldInfoEntry(o, l)), !s || !Number.isFinite(Number(s.uid))) {
+      const d = typeof a.getFreeWorldEntryUid == "function" ? a.getFreeWorldEntryUid : null, c = d ? d(l) : Ma(l);
+      if (!Number.isInteger(c))
+        throw new Error("无法为新条目分配 UID");
+      const p = a.newWorldInfoEntryTemplate && typeof a.newWorldInfoEntryTemplate == "object" ? a.newWorldInfoEntryTemplate : {
+        key: [],
+        keysecondary: [],
+        comment: "",
+        content: "",
+        constant: !1,
+        selective: !0,
+        selectiveLogic: 0,
+        order: 100,
+        position: 0,
+        disable: !1,
+        depth: 4,
+        triggers: []
+      };
+      s = { uid: c, ...Aa(p) }, l.entries[String(c)] = s;
+    }
+    i || (s.disable = !0), await a.saveWorldInfo(o, l, !0), await L(e), Co(e, o, {
+      identifier: String(s.uid),
+      name: String(s.comment ?? ""),
+      content: String(s.content ?? ""),
+      raw: s
+    });
+  } catch (a) {
+    console.error("新建世界书条目失败:", a), alert("新建世界书条目失败: " + a.message);
+  }
+}
+async function _n(e, t, r) {
+  const n = v(), o = D(), i = le(t), a = n(`#${r}-preset`).val();
   if (i.length === 0) {
     alert("请至少选择一个条目进行转移");
     return;
   }
-  if (!l) {
+  if (!a) {
     alert("请选择目标预设");
     return;
   }
   if (!o.capabilities.supportsInsertPosition) {
-    const a = n(`#${t}-preset`).val(), s = n(`#${r}-display-mode`).val(), d = n("#auto-enable-entry").prop("checked");
+    const l = n(`#${t}-preset`).val(), s = n(`#${r}-display-mode`).val(), d = n("#auto-enable-entry").prop("checked");
     try {
-      if (await qn(e, a, l, i, null, d, s), n("#auto-close-modal").prop("checked")) {
+      if (await Gn(e, l, a, i, null, d, s), n("#auto-close-modal").prop("checked")) {
         n("#preset-transfer-modal").remove();
         return;
       }
-      await W(e);
+      await L(e);
     } catch (c) {
       console.error("转移失败:", c), alert("转移失败: " + c.message);
     }
@@ -3572,7 +2372,7 @@ async function un(e, t, r) {
     selectedEntries: i
   }, alert(`转移模式已激活！请点击${r === "left" ? "左侧" : "右侧"}面板中的条目来选择插入位置。`), n(`#${r}-side`).addClass("transfer-target"), n(`#${t}-side`).addClass("transfer-source");
 }
-function ga(e, t) {
+function Eo(e, t) {
   const r = v();
   let n;
   if (t === "single" ? n = window.singlePresetName : n = r(`#${t}-preset`).val(), !n) {
@@ -3585,30 +2385,37 @@ function ga(e, t) {
     presetName: n
   }, alert(`新建模式已激活！请点击${t === "single" ? "当前" : t === "left" ? "左侧" : "右侧"}面板中的条目来选择插入位置。`), r(`#${t}-side`).addClass("new-entry-target");
 }
-async function Pt(e, t, r, n) {
-  const o = v(), i = window.transferMode.selectedEntries, l = o(`#${t}-preset`).val(), a = o(`#${r}-preset`).val(), s = o(`#${r}-display-mode`).val();
+async function Rt(e, t, r, n) {
+  var d;
+  const o = v(), i = window.transferMode.selectedEntries, a = ((d = window.transferMode) == null ? void 0 : d.sourceContainer) || (t ? o(`#${t}-preset`).val() : "");
+  let l, s;
+  r === "single" ? (l = window.singlePresetName, s = o("#single-display-mode").val()) : (l = o(`#${r}-preset`).val(), s = o(`#${r}-display-mode`).val());
   try {
-    let d;
-    typeof n == "string" ? d = n : d = `after-${n}`;
-    const c = o("#auto-enable-entry").prop("checked");
-    if (await qn(e, l, a, i, d, c, s), console.log(`成功转移 ${i.length} 个条目`), o("#auto-close-modal").prop("checked")) {
+    if (!a)
+      throw new Error("请选择源预设");
+    if (!l)
+      throw new Error("请选择目标预设");
+    let c;
+    typeof n == "string" ? c = n : c = `after-${n}`;
+    const p = o("#auto-enable-entry").prop("checked");
+    if (await Gn(e, a, l, i, c, p, s), console.log(`成功转移 ${i.length} 个条目`), o("#auto-close-modal").prop("checked")) {
       o("#preset-transfer-modal").remove();
       return;
     }
-    W(e);
-  } catch (d) {
-    console.error("转移失败:", d), alert("转移失败: " + d.message);
+    L(e);
+  } catch (c) {
+    console.error("转移失败:", c), alert("转移失败: " + c.message);
   } finally {
     window.transferMode = null, o(".transfer-target, .transfer-source").removeClass("transfer-target transfer-source");
   }
 }
-function gn(e, t, r) {
+function Cn(e, t, r) {
   const n = v();
   let o, i;
   t === "single" ? (o = window.singlePresetName, i = n("#single-display-mode").val()) : (o = window.newEntryMode.presetName, i = n(`#${t}-display-mode`).val());
-  let l;
-  typeof r == "string" ? l = r : l = `after-${r}`;
-  const a = {
+  let a;
+  typeof r == "string" ? a = r : a = `after-${r}`;
+  const l = {
     name: "新提示词",
     content: "",
     role: "system",
@@ -3618,42 +2425,42 @@ function gn(e, t, r) {
     forbid_overrides: !1,
     system_prompt: !1,
     marker: !1,
-    injection_order: L.injection_order,
-    injection_trigger: [...L.injection_trigger],
+    injection_order: R.injection_order,
+    injection_trigger: [...R.injection_trigger],
     isNewEntry: !0
   };
   window.newEntryMode = null, n(".new-entry-target").removeClass("new-entry-target");
   const s = n("#auto-enable-entry").prop("checked");
-  createEditEntryModal(e, o, a, l, s, t, null, i);
+  createEditEntryModal(e, o, l, a, s, t, null, i);
 }
-async function mn(e, t, r, n, o) {
+async function En(e, t, r, n, o) {
   try {
-    const i = getPresetDataFromManager(e, r), l = i.prompts.findIndex(
+    const i = getPresetDataFromManager(e, r), a = i.prompts.findIndex(
       (d) => d && d.name === o && !d.system_prompt && !d.marker
     );
-    if (l === -1)
+    if (a === -1)
       throw new Error(`在预设 "${r}" 中未找到目标条目 "${o}"`);
-    const a = i.prompts[l].identifier, s = ensureNewVersionFields(n);
-    i.prompts[l] = {
+    const l = i.prompts[a].identifier, s = ensureNewVersionFields(n);
+    i.prompts[a] = {
       ...s,
-      identifier: a
-    }, await e.presetManager.savePreset(r, i), W(e), $("#compare-modal").remove(), showCompareModal(e);
+      identifier: l
+    }, await e.presetManager.savePreset(r, i), L(e), $("#compare-modal").remove(), showCompareModal(e);
   } catch (i) {
     console.error("覆盖条目失败:", i), alert("覆盖条目失败: " + i.message);
   }
 }
-function hn(e, t, r, n, o = !1) {
-  const i = getPresetDataFromManager(e, t), a = getPromptEntries(i).findIndex((s) => s.name === n);
-  if (a === -1) {
+function zn(e, t, r, n, o = !1) {
+  const i = getPresetDataFromManager(e, t), l = getPromptEntries(i).findIndex((s) => s.name === n);
+  if (l === -1) {
     alert("条目未找到");
     return;
   }
-  createEditEntryModal(e, t, r, null, !1, null, a, "default", o);
+  createEditEntryModal(e, t, r, null, !1, null, l, "default", o);
 }
-function mt(e, t) {
-  const r = v(), n = re(), o = ae(t);
-  let i, l, a;
-  if (t === "single" ? (i = window.singlePresetName, l = window.singleEntries, a = r("#single-display-mode").val()) : (i = r(`#${t}-preset`).val(), l = t === "left" ? window.leftEntries : window.rightEntries, a = r(`#${t}-display-mode`).val()), !i) {
+function yt(e, t) {
+  const r = v(), n = D(), o = le(t);
+  let i, a, l;
+  if (t === "single" ? (i = window.singlePresetName, a = window.singleEntries, l = r("#single-display-mode").val()) : (i = r(`#${t}-preset`).val(), a = t === "left" ? window.leftEntries : window.rightEntries, l = r(`#${t}-display-mode`).val()), !i) {
     alert("请先选择预设");
     return;
   }
@@ -3662,42 +2469,43 @@ function mt(e, t) {
       alert("世界书条目编辑目前仅支持单条编辑，请只选择一个条目");
       return;
     }
-    ua(e, i, o[0]);
+    Co(e, i, o[0]);
     return;
   }
   if (o.length === 0) {
     alert("请选择要编辑的条目");
     return;
   } else if (o.length === 1) {
-    const s = o[0], d = l.findIndex((c) => c.name === s.name && c.content === s.content);
-    createEditEntryModal(e, i, s, null, !1, t, d, a);
+    const s = o[0], d = a.findIndex((c) => c.name === s.name && c.content === s.content);
+    createEditEntryModal(e, i, s, null, !1, t, d, l);
   } else
     BatchEditor.showBatchEditDialog(o, (s) => {
       applyBatchModificationsToSide(t, o, s, e);
     });
 }
-const Io = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const zo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  copyEntryBetweenPresets: mn,
-  editEntryInPreset: hn,
-  editSelectedEntry: mt,
-  executeNewEntryAtPosition: gn,
-  executeTransferToPosition: Pt,
-  startNewEntryMode: ga,
-  startTransferMode: un
+  copyEntryBetweenPresets: En,
+  createNewWorldbookEntry: vt,
+  editEntryInPreset: zn,
+  editSelectedEntry: yt,
+  executeNewEntryAtPosition: Cn,
+  executeTransferToPosition: Rt,
+  startNewEntryMode: Eo,
+  startTransferMode: _n
 }, Symbol.toStringTag, { value: "Module" }));
-function ma() {
+function ja() {
   const e = v(), t = e("#left-preset").val(), r = e("#right-preset").val(), n = t && r && t !== r;
   e("#compare-entries").prop("disabled", !n);
 }
-function Mo(e, t) {
+function Io(e, t) {
   const r = (i) => i || "relative", n = r(e), o = r(t);
   return n === "relative" && o === "relative" ? !1 : n !== o;
 }
-function Ct(e, t) {
+function Wt(e, t) {
   const r = v();
-  q(), r("#confirm-dialog-modal").remove();
-  const n = A.getVars(), o = `
+  Y(), r("#confirm-dialog-modal").remove();
+  const n = N.getVars(), o = `
     <div id="confirm-dialog-modal" style="--pt-font-size:${n.fontSize};position:fixed;top:0;left:0;width:100vw;height:100vh;height:100dvh;height:calc(var(--pt-vh, 1vh) * 100);background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);z-index:10010;display:flex;align-items:center;justify-content:center;padding:20px;padding-top:calc(20px + env(safe-area-inset-top));padding-bottom:calc(20px + env(safe-area-inset-bottom));animation:pt-fadeIn .2s ease-out">
         <div style="background:${n.bgColor};border-radius:16px;padding:24px;max-width:400px;width:90%;color:${n.textColor};box-shadow:0 10px 30px rgba(0,0,0,0.15);border:1px solid ${n.borderColor};animation:pt-slideUp .2s ease-out">
             <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid ${n.borderColor}">
@@ -3714,31 +2522,31 @@ function Ct(e, t) {
     r(this).prop("disabled", !0).text("处理中..."), t(), r("#confirm-dialog-modal").remove();
   }), r("#confirm-dialog-cancel").on("click", () => r("#confirm-dialog-modal").remove());
 }
-function Ao(e, t) {
-  const r = ne(e), n = ne(t), o = (d) => d || "relative", i = o(r.injection_position), l = o(n.injection_position), a = i === "relative" && l === "relative" ? !1 : i !== l, s = JSON.stringify([...r.injection_trigger || []].sort()) !== JSON.stringify([...n.injection_trigger || []].sort());
-  return r.content !== n.content || r.role !== n.role || a || r.injection_depth !== n.injection_depth || r.forbid_overrides !== n.forbid_overrides || r.injection_order !== n.injection_order || s;
+function Mo(e, t) {
+  const r = oe(e), n = oe(t), o = (d) => d || "relative", i = o(r.injection_position), a = o(n.injection_position), l = i === "relative" && a === "relative" ? !1 : i !== a, s = JSON.stringify([...r.injection_trigger || []].sort()) !== JSON.stringify([...n.injection_trigger || []].sort());
+  return r.content !== n.content || r.role !== n.role || l || r.injection_depth !== n.injection_depth || r.forbid_overrides !== n.forbid_overrides || r.injection_order !== n.injection_order || s;
 }
-const jo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Ao = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  isEntryDifferent: Ao,
-  shouldHighlightPositionDifference: Mo,
-  showConfirmDialog: Ct,
-  updateCompareButton: ma
+  isEntryDifferent: Mo,
+  shouldHighlightPositionDifference: Io,
+  showConfirmDialog: Wt,
+  updateCompareButton: ja
 }, Symbol.toStringTag, { value: "Module" }));
-function Jn(e) {
+function Hn(e) {
   const t = v();
-  q();
+  Y();
   const r = t("#left-preset").val(), n = t("#right-preset").val();
   if (!r || !n || r === n) {
     alert("请选择两个不同的预设进行比较");
     return;
   }
   try {
-    const o = N(e, r), i = N(e, n), l = X(o), a = X(i), s = [];
-    if (l.forEach((d) => {
-      const c = a.find((p) => p.name === d.name);
+    const o = O(e, r), i = O(e, n), a = ee(o), l = ee(i), s = [];
+    if (a.forEach((d) => {
+      const c = l.find((p) => p.name === d.name);
       if (c) {
-        const p = Ao(d, c);
+        const p = Mo(d, c);
         s.push({
           name: d.name,
           left: d,
@@ -3750,13 +2558,13 @@ function Jn(e) {
       alert("两个预设中没有同名条目可以比较");
       return;
     }
-    Kn(e, r, n, s);
+    qn(e, r, n, s);
   } catch (o) {
     console.error("比较失败:", o), alert("比较失败: " + o.message);
   }
 }
-function Kn(e, t, r, n) {
-  const o = v(), { isMobile: i, isSmallScreen: l, isPortrait: a } = G();
+function qn(e, t, r, n) {
+  const o = v(), { isMobile: i, isSmallScreen: a, isPortrait: l } = K();
   o("#compare-modal").remove();
   const s = n.filter((p) => p.isDifferent);
   n.filter((p) => !p.isDifferent);
@@ -3781,7 +2589,7 @@ function Kn(e, t, r, n) {
                         ${s.length > 0 ? `
                         <h3>差异条目</h3>
                         <div class="compare-entries">
-                            ${s.map((p) => To(p, t, r)).join("")}
+                            ${s.map((p) => jo(p, t, r)).join("")}
                         </div>
                     ` : `
                         <div class="no-diff-message">
@@ -3802,10 +2610,10 @@ function Kn(e, t, r, n) {
   }), c.find(".compare-action-btn").each(function() {
     const p = v()(this), u = p.text().replace(/[⬅➡]/g, "").trim();
     p.text(u);
-  }), o("#compare-modal").data({ apiInfo: e, leftPreset: t, rightPreset: r, commonEntries: n }), Bo(), No(e, t, r, n);
+  }), o("#compare-modal").data({ apiInfo: e, leftPreset: t, rightPreset: r, commonEntries: n }), To(), Bo(e, t, r, n);
 }
-function bn(e, t, r, n) {
-  const o = ne(r), i = ne(n), l = o.content || "", a = i.content || "", s = JSON.stringify([...o.injection_trigger || []].sort()) !== JSON.stringify([...i.injection_trigger || []].sort());
+function In(e, t, r, n) {
+  const o = oe(r), i = oe(n), a = o.content || "", l = i.content || "", s = JSON.stringify([...o.injection_trigger || []].sort()) !== JSON.stringify([...i.injection_trigger || []].sort());
   return `
     <div class="compare-side ${e}-side">
         <h5>${t}</h5>
@@ -3816,7 +2624,7 @@ function bn(e, t, r, n) {
             </div>
             <div class="detail-row">
                 <span class="label">位置:</span>
-                <span class="value ${Mo(o.injection_position, i.injection_position) ? "different" : ""}">${o.injection_position || "relative"}</span>
+                <span class="value ${Io(o.injection_position, i.injection_position) ? "different" : ""}">${o.injection_position || "relative"}</span>
             </div>
             <div class="detail-row">
                 <span class="label">深度:</span>
@@ -3832,14 +2640,14 @@ function bn(e, t, r, n) {
             </div>
             <div class="detail-row">
                 <span class="label">内容:</span>
-                <div class="content-preview ${l !== a ? "different" : ""}">
-                    ${l !== a ? Br(a, l) : C(l)}
+                <div class="content-preview ${a !== l ? "different" : ""}">
+                    ${a !== l ? qr(l, a) : I(a)}
                 </div>
             </div>
         </div>
     </div>`;
 }
-function To(e, t, r) {
+function jo(e, t, r) {
   return `
     <div class="compare-entry">
         <div class="compare-entry-header">
@@ -3854,19 +2662,19 @@ function To(e, t, r) {
             ` : ""}
         </div>
         <div class="compare-sides">
-            ${bn("left", t, e.left, e.right)}
-            ${bn("right", r, e.right, e.left)}
+            ${In("left", t, e.left, e.right)}
+            ${In("right", r, e.right, e.left)}
         </div>
     </div>
   `;
 }
-function Bo(e, t, r) {
-  const n = v(), o = A.getVars(), i = document.createElement("link");
+function To(e, t, r) {
+  const n = v(), o = N.getVars(), i = document.createElement("link");
   i.rel = "stylesheet", i.href = "./scripts/extensions/third-party/preset-transfer/src/styles/compare-modal.css", document.querySelector(`link[href="${i.href}"]`) || document.head.appendChild(i);
-  const l = `
+  const a = `
         #compare-modal {
             --pt-font-size: ${o.fontSize};
-            ${A.getModalBaseStyles({ maxWidth: o.maxWidthLarge })}
+            ${N.getModalBaseStyles({ maxWidth: o.maxWidthLarge })}
             align-items: ${o.isMobile ? "flex-start" : "center"};
             ${o.isMobile ? "padding-top: 20px;" : ""}
         }
@@ -4011,60 +2819,60 @@ function Bo(e, t, r) {
             font-size: ${o.fontSizeMedium};
         }
     `;
-  n("#compare-modal-styles").length || n("head").append(`<style id="compare-modal-styles">${l}</style>`);
+  n("#compare-modal-styles").length || n("head").append(`<style id="compare-modal-styles">${a}</style>`);
 }
-function No(e, t, r, n) {
+function Bo(e, t, r, n) {
   const o = v(), i = o("#compare-modal");
   try {
-    const l = i.find(".compare-modal-header"), a = l.children().first(), s = a.find(".close-compare-btn").first(), d = a.find("span").first(), c = a.find("h2").first(), p = l.find(".compare-info").first();
+    const a = i.find(".compare-modal-header"), l = a.children().first(), s = l.find(".close-compare-btn").first(), d = l.find("span").first(), c = l.find("h2").first(), p = a.find(".compare-info").first();
   } catch {
   }
   if (o("#close-compare-header").on("click", () => i.remove()), o(".compare-action-btn").on("click", function() {
-    const l = o(this).data("action"), a = o(this).data("entry-name"), s = n.find((d) => d.name === a);
+    const a = o(this).data("action"), l = o(this).data("entry-name"), s = n.find((d) => d.name === l);
     if (s)
-      switch (l) {
+      switch (a) {
         case "copy-left-to-right":
-          Ct(
-            `确定要用 <b>${t}</b> 的条目 "<b>${a}</b>" 覆盖 <b>${r}</b> 中的同名条目吗？此操作不可撤销。`,
-            () => mn(e, t, r, s.left, a)
+          Wt(
+            `确定要用 <b>${t}</b> 的条目 "<b>${l}</b>" 覆盖 <b>${r}</b> 中的同名条目吗？此操作不可撤销。`,
+            () => En(e, t, r, s.left, l)
           );
           break;
         case "copy-right-to-left":
-          Ct(
-            `确定要用 <b>${r}</b> 的条目 "<b>${a}</b>" 覆盖 <b>${t}</b> 中的同名条目吗？此操作不可撤销。`,
-            () => mn(e, r, t, s.right, a)
+          Wt(
+            `确定要用 <b>${r}</b> 的条目 "<b>${l}</b>" 覆盖 <b>${t}</b> 中的同名条目吗？此操作不可撤销。`,
+            () => En(e, r, t, s.right, l)
           );
           break;
         case "edit-left":
-          i.hide(), hn(e, t, s.left, a, !0);
+          i.hide(), zn(e, t, s.left, l, !0);
           break;
         case "edit-right":
-          i.hide(), hn(e, r, s.right, a, !0);
+          i.hide(), zn(e, r, s.right, l, !0);
           break;
       }
-  }), i.on("click", (l) => l.target === i[0] && i.remove()), o(document).on("keydown.compare-modal", (l) => {
-    l.key === "Escape" && (i.remove(), o(document).off("keydown.compare-modal"));
-  }), G().isMobile) {
-    const l = o("body").css("overflow");
-    o("body").css("overflow", "hidden"), i.on("remove", () => o("body").css("overflow", l));
+  }), i.on("click", (a) => a.target === i[0] && i.remove()), o(document).on("keydown.compare-modal", (a) => {
+    a.key === "Escape" && (i.remove(), o(document).off("keydown.compare-modal"));
+  }), K().isMobile) {
+    const a = o("body").css("overflow");
+    o("body").css("overflow", "hidden"), i.on("remove", () => o("body").css("overflow", a));
   }
   i.css("display", "flex");
 }
-function Oo() {
+function No() {
   const e = v(), t = e("#left-preset").val(), r = e("#right-preset").val(), n = e("#compare-entries");
   n.length && (t && r && t !== r ? n.prop("disabled", !1).removeClass("disabled") : n.prop("disabled", !0).addClass("disabled"));
 }
-const Lo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Oo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  applyCompareModalStyles: Bo,
-  bindCompareModalEvents: No,
-  createCompareDetailHtml: bn,
-  createCompareEntryHtml: To,
-  createCompareModal: Kn,
-  showCompareModal: Jn,
-  updateCompareButton: Oo
+  applyCompareModalStyles: To,
+  bindCompareModalEvents: Bo,
+  createCompareDetailHtml: In,
+  createCompareEntryHtml: jo,
+  createCompareModal: qn,
+  showCompareModal: Hn,
+  updateCompareButton: No
 }, Symbol.toStringTag, { value: "Module" }));
-function hr() {
+function Pr() {
   return `
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pt-icon pt-icon-get-current">
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -4073,7 +2881,7 @@ function hr() {
     </svg>
   `;
 }
-function br() {
+function _r() {
   return `
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pt-icon pt-icon-preview">
       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -4081,7 +2889,7 @@ function br() {
     </svg>
   `;
 }
-function ha() {
+function Ta() {
   return `
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pt-icon pt-icon-create-new">
       <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -4089,52 +2897,87 @@ function ha() {
     </svg>
   `;
 }
-function ht(e) {
+function fn() {
+  return `
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pt-icon pt-icon-gear">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </svg>
+  `;
+}
+function wt(e) {
   const t = v(), r = t(`#${e}-entries-list .entry-checkbox`).length, n = t(`#${e}-entries-list .entry-checkbox:checked`).length;
   t(`#${e}-selection-count`).text(`已选择 ${n}/${r}`), t(`#${e}-edit`).prop("disabled", n === 0), t(`#${e}-delete`).prop("disabled", n === 0), t(`#${e}-copy`).prop("disabled", n === 0), e === "left" ? t("#transfer-to-right").prop("disabled", n === 0 || !t("#right-preset").val()) : e === "right" ? t("#transfer-to-left").prop("disabled", n === 0 || !t("#left-preset").val()) : e === "single" && t(`#${e}-move`).prop("disabled", n === 0);
 }
-function J() {
-  v()("#single-container").is(":visible") ? ht("single") : (ht("left"), ht("right"));
+function X() {
+  v()("#single-container").is(":visible") ? wt("single") : (wt("left"), wt("right"));
 }
-const Do = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Lo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  updatePanelButtons: ht,
-  updateSelectionCount: J
+  updatePanelButtons: wt,
+  updateSelectionCount: X
 }, Symbol.toStringTag, { value: "Module" }));
-async function W(e) {
+async function Jn(e) {
+  const t = v(), r = D();
+  if ((r == null ? void 0 : r.id) !== "worldbook") return;
+  const n = window.ptWorldbookPickTarget;
+  if (!n || !n.apiInfo || !n.sourceContainer || !Array.isArray(n.entries) || n.entries.length === 0)
+    return;
+  let o = "", i = "default";
+  if (e === "left" ? (o = t("#left-preset").val(), i = t("#left-display-mode").val() || "default") : e === "right" ? (o = t("#right-preset").val(), i = t("#right-display-mode").val() || "default") : e === "single" && (o = window.singlePresetName, i = t("#single-display-mode").val() || "default"), !o) {
+    window.toastr && toastr.warning("请选择目标世界书");
+    return;
+  }
+  try {
+    const a = t("#auto-enable-entry").prop("checked");
+    await be().transfer(n.apiInfo, {
+      sourceContainer: n.sourceContainer,
+      targetContainer: o,
+      entries: n.entries,
+      insertPosition: null,
+      autoEnable: a,
+      displayMode: i
+    }), await L(n.apiInfo), window.toastr && toastr.success(`已转移到目标世界书: ${o}`);
+  } catch (a) {
+    console.error("世界书转移失败:", a), window.toastr && toastr.error("转移失败: " + a.message);
+  } finally {
+    window.ptWorldbookPickTarget = null, t("#left-side, #right-side").removeClass("transfer-target");
+  }
+}
+async function L(e) {
   const t = v(), r = t("#left-preset").val(), n = t("#right-preset").val();
   if (!r && !n) {
     alert("请至少选择一个预设");
     return;
   }
-  r && !n || !r && n ? await Ro(e, r || n) : await Wo(e, r, n);
+  r && !n || !r && n ? await Do(e, r || n) : await Ro(e, r, n);
 }
-async function Ro(e, t) {
+async function Do(e, t) {
   const r = v(), n = r("#single-display-mode").val();
   try {
-    const o = re(), i = await Ge().getEntries(e, t, n);
-    window.singleEntries = i, window.singlePresetData = null, window.singlePresetName = t, Oe(i, "single"), r("#single-preset-title").text(`预设管理: ${t}`), r("#dual-container").hide(), r("#single-container").show(), r("#entries-container").show(), r("#single-preset-title").text(`${o.ui.containerLabel}管理: ${t}`), r(".search-section").show(), r(".left-search-section").hide(), r(".left-search-container").hide(), r(".right-search-container").hide(), J(), window.transferMode = null, window.newEntryMode = null;
+    const o = D(), i = await be().getEntries(e, t, n);
+    window.singleEntries = i, window.singlePresetData = null, window.singlePresetName = t, Oe(i, "single"), r("#single-preset-title").text(`预设管理: ${t}`), r("#dual-container").hide(), r("#single-container").show(), r("#entries-container").show(), r("#single-preset-title").text(`${o.ui.containerLabel}管理: ${t}`), r(".search-section").show(), r(".left-search-section").hide(), r(".left-search-container").hide(), r(".right-search-container").hide(), X(), window.transferMode = null, window.newEntryMode = null;
   } catch (o) {
     console.error("加载条目失败:", o), alert("加载条目失败: " + o.message);
   }
 }
-async function Wo(e, t, r) {
+async function Ro(e, t, r) {
   const n = v(), o = n("#left-display-mode").val(), i = n("#right-display-mode").val();
   try {
-    const l = re(), a = Ge();
+    const a = D(), l = be();
     if (t) {
-      const s = await a.getEntries(e, t, o);
+      const s = await l.getEntries(e, t, o);
       window.leftEntries = s, window.leftPresetData = null, Oe(s, "left"), n("#left-preset-title").text(`左侧预设: ${t}`);
     } else
       window.leftEntries = [], window.leftPresetData = null, Oe([], "left"), n("#left-preset-title").text("左侧预设: 未选择");
     if (r) {
-      const s = await a.getEntries(e, r, i);
+      const s = await l.getEntries(e, r, i);
       window.rightEntries = s, window.rightPresetData = null, Oe(s, "right"), n("#right-preset-title").text(`右侧预设: ${r}`);
     } else
       window.rightEntries = [], window.rightPresetData = null, Oe([], "right"), n("#right-preset-title").text("右侧预设: 未选择");
-    n("#single-container").hide(), n("#dual-container").show(), n("#entries-container").show(), t ? n("#left-preset-title").text(`左侧${l.ui.containerLabel}: ${t}`) : n("#left-preset-title").text(`左侧${l.ui.containerLabel}: 未选择`), r ? n("#right-preset-title").text(`右侧${l.ui.containerLabel}: ${r}`) : n("#right-preset-title").text(`右侧${l.ui.containerLabel}: 未选择`), n(".search-section").hide(), n(".left-search-section").hide(), n(".left-search-container").show(), n(".right-search-container").show(), J(), l.capabilities.supportsCompare && Oo(), window.transferMode = null, window.newEntryMode = null;
-  } catch (l) {
-    console.error("加载条目失败:", l), alert("加载条目失败: " + l.message);
+    n("#single-container").hide(), n("#dual-container").show(), n("#entries-container").show(), t ? n("#left-preset-title").text(`左侧${a.ui.containerLabel}: ${t}`) : n("#left-preset-title").text(`左侧${a.ui.containerLabel}: 未选择`), r ? n("#right-preset-title").text(`右侧${a.ui.containerLabel}: ${r}`) : n("#right-preset-title").text(`右侧${a.ui.containerLabel}: 未选择`), n(".search-section").hide(), n(".left-search-section").hide(), n(".left-search-container").show(), n(".right-search-container").show(), X(), a.capabilities.supportsCompare && No(), window.transferMode = null, window.newEntryMode = null;
+  } catch (a) {
+    console.error("加载条目失败:", a), alert("加载条目失败: " + a.message);
   }
 }
 function Oe(e, t) {
@@ -4143,24 +2986,24 @@ function Oe(e, t) {
     console.error(`条目列表容器 "${n}" 未找到`);
     return;
   }
-  const i = A.getVars(), { isMobile: l, isSmallScreen: a } = i, s = (c, p) => `
-   <div class="entry-item position-item" data-position="${c}" data-side="${t}" style="border-color: ${i.borderColor}; background: ${i.sectionBg}; transition: all 0.3s ease; cursor: pointer; position: relative; display: flex; align-items: center; padding: ${a ? "12px 10px" : l ? "14px 12px" : "12px 14px"}; margin-bottom: ${l ? "8px" : "6px"}; border: 2px dashed ${i.borderColor}; border-radius: 8px; min-height: ${l ? "50px" : "40px"};">
+  const i = N.getVars(), { isMobile: a, isSmallScreen: l } = i, s = (c, p) => `
+   <div class="entry-item position-item" data-position="${c}" data-side="${t}" style="border-color: ${i.borderColor}; background: ${i.sectionBg}; transition: all 0.3s ease; cursor: pointer; position: relative; display: flex; align-items: center; padding: ${l ? "12px 10px" : a ? "14px 12px" : "12px 14px"}; margin-bottom: ${a ? "8px" : "6px"}; border: 2px dashed ${i.borderColor}; border-radius: 8px; min-height: ${a ? "50px" : "40px"};">
        <div style="flex: 1; text-align: center;">
-           <div class="entry-name" style="font-weight: 600; color: ${i.textColor}; font-size: ${a ? "13px" : l ? "14px" : "13px"}; line-height: 1.3;">${p}</div>
+           <div class="entry-name" style="font-weight: 600; color: ${i.textColor}; font-size: ${l ? "13px" : a ? "14px" : "13px"}; line-height: 1.3;">${p}</div>
        </div>
    </div>`, d = [
     s("top", "📍 插入到顶部"),
     ...e.length === 0 ? [
-      `<div style="color: ${i.tipColor}; text-align: center; padding: ${l ? "30px 15px" : "40px 20px"}; font-size: ${l ? "14px" : "13px"}; font-weight: 500;"><div style="font-size: calc(var(--pt-font-size) * 3); margin-bottom: 15px; opacity: 0.3;">📭</div><div>没有条目</div></div>`
+      `<div style="color: ${i.tipColor}; text-align: center; padding: ${a ? "30px 15px" : "40px 20px"}; font-size: ${a ? "14px" : "13px"}; font-weight: 500;"><div style="font-size: calc(var(--pt-font-size) * 3); margin-bottom: 15px; opacity: 0.3;">📭</div><div>没有条目</div></div>`
     ] : e.map(
       (c, p) => {
         var u;
         return `
-         <div class="entry-item" data-index="${p}" data-side="${t}" data-identifier="${c.identifier}" style="border-color: ${i.inputBorder}; background: ${i.inputBg}; transition: all 0.3s ease; cursor: pointer; position: relative; display: flex; align-items: center; padding: ${a ? "8px 6px" : l ? "8px 8px" : "12px 14px"}; margin-bottom: 6px; border: 1px solid ${i.inputBorder}; border-radius: 8px; min-height: ${l ? "32px" : "40px"};">
-             <input type="checkbox" class="entry-checkbox" style="margin-right: ${l ? "8px" : "10px"}; width: 14px; height: 14px; accent-color: ${i.accentColor}; cursor: pointer; position: relative; z-index: 10;">
-             <div style="flex: 1; ${l ? "min-width: 0;" : ""}">
-                 <div class="entry-name" style="font-weight: 600; color: ${i.textColor}; font-size: ${a || l ? "11px" : "13px"}; word-break: break-word; line-height: 1.2;">${c.name}${c.isUninserted ? ' <span style="color: ${vars.accentColor}; font-size: calc(var(--pt-font-size) * 0.625);">🔸未插入</span>' : ""}</div>
-                 ${l ? "" : `<div class="entry-details" style="font-size: ${i.fontSizeSmall}; color: ${i.tipColor}; line-height: 1.4; margin-top: 2px;">
+         <div class="entry-item" data-index="${p}" data-side="${t}" data-identifier="${c.identifier}" style="border-color: ${i.inputBorder}; background: ${i.inputBg}; transition: all 0.3s ease; cursor: pointer; position: relative; display: flex; align-items: center; padding: ${l ? "8px 6px" : a ? "8px 8px" : "12px 14px"}; margin-bottom: 6px; border: 1px solid ${i.inputBorder}; border-radius: 8px; min-height: ${a ? "32px" : "40px"};">
+             <input type="checkbox" class="entry-checkbox" style="margin-right: ${a ? "8px" : "10px"}; width: 14px; height: 14px; accent-color: ${i.accentColor}; cursor: pointer; position: relative; z-index: 10;">
+             <div style="flex: 1; ${a ? "min-width: 0;" : ""}">
+                 <div class="entry-name" style="font-weight: 600; color: ${i.textColor}; font-size: ${l || a ? "11px" : "13px"}; word-break: break-word; line-height: 1.2;">${c.name}${c.isUninserted ? ' <span style="color: ${vars.accentColor}; font-size: calc(var(--pt-font-size) * 0.625);">🔸未插入</span>' : ""}</div>
+                 ${a ? "" : `<div class="entry-details" style="font-size: ${i.fontSizeSmall}; color: ${i.tipColor}; line-height: 1.4; margin-top: 2px;">
                      <span>👤 ${c.role || "system"}</span>
                      <span style="margin-left: 8px;">📍 ${c.injection_position || "relative"}</span>
                      <span style="margin-left: 8px;">🔢 ${c.injection_depth ?? 4}</span>
@@ -4169,7 +3012,7 @@ function Oe(e, t) {
                  </div>`}
              </div>
              <button class="create-here-btn" data-entry-index="${p}" data-entry-side="${t}" title="在此处新建">
-                 ${ha()}
+                 ${Ta()}
              </button>
          </div>`;
       }
@@ -4179,58 +3022,67 @@ function Oe(e, t) {
   o.html(d), o.find(".entry-details").each(function() {
     const c = r(this), p = c.find("span");
     if (p.length < 5) return;
-    const u = (S) => p.eq(S).text().trim().replace(/^\S+\s+/, "").trim(), f = u(0) || "system", m = u(1) || "relative", b = u(2) || "4", g = u(3) || "100", y = u(4) || "无";
-    c.text(`${f} | ${m} | ${b} | ${g} | ${y}`);
+    const u = (w) => p.eq(w).text().trim().replace(/^\S+\s+/, "").trim(), f = u(0) || "system", g = u(1) || "relative", b = u(2) || "4", m = u(3) || "100", y = u(4) || "无";
+    c.text(`${f} | ${g} | ${b} | ${m} | ${y}`);
   }), setTimeout(() => {
-    const c = R().$, p = c(n);
+    const c = U().$, p = c(n);
     p.off("change", ".entry-checkbox").on("change", ".entry-checkbox", () => {
-      J();
-    }), p.off("click", ".entry-item").on("click", ".entry-item", function(u) {
+      X();
+    }), p.off("click", ".entry-item").on("click", ".entry-item", async function(u) {
       if (!c(u.target).is(".entry-checkbox") && !c(u.target).is(".create-here-btn")) {
         u.preventDefault();
-        const f = c(this), m = f.data("side");
-        if (f.hasClass("position-item")) {
-          const g = f.data("position");
-          window.transferMode && window.transferMode.toSide === m ? Pt(window.transferMode.apiInfo, window.transferMode.fromSide, m, g) : window.newEntryMode && window.newEntryMode.side === m ? gn(window.newEntryMode.apiInfo, m, g) : window.moveMode && window.moveMode.side === m && fn(window.moveMode.apiInfo, m, null, g);
+        const f = c(this), g = f.data("side"), b = D();
+        if (window.ptWorldbookPickTarget && (b == null ? void 0 : b.id) === "worldbook") {
+          u.stopPropagation(), await Jn(g);
           return;
         }
-        if (window.transferMode && window.transferMode.toSide === m) {
-          const g = parseInt(f.data("index")), h = f.data("identifier"), y = r(`#${m}-preset`).val(), P = Ze(y, "include_disabled").findIndex((x) => x.identifier === h);
-          Pt(
+        if (f.hasClass("position-item")) {
+          const h = f.data("position");
+          window.transferMode && (window.transferMode.toSide === g || window.transferMode.toSide === "any") ? Rt(window.transferMode.apiInfo, window.transferMode.fromSide, g, h) : window.newEntryMode && window.newEntryMode.side === g ? Cn(window.newEntryMode.apiInfo, g, h) : window.moveMode && window.moveMode.side === g && Pn(window.moveMode.apiInfo, g, null, h);
+          return;
+        }
+        if (window.transferMode && (window.transferMode.toSide === g || window.transferMode.toSide === "any")) {
+          const h = parseInt(f.data("index")), y = f.data("identifier"), w = D();
+          let C = h;
+          if ((w == null ? void 0 : w.id) !== "worldbook") {
+            const S = g === "single" ? window.singlePresetName : r(`#${g}-preset`).val();
+            C = et(S, "include_disabled").findIndex((x) => x.identifier === y), C < 0 && (C = h);
+          }
+          Rt(
             window.transferMode.apiInfo,
             window.transferMode.fromSide,
-            m,
-            P >= 0 ? P : g
+            g,
+            C
           );
           return;
         }
-        if (window.newEntryMode && window.newEntryMode.side === m) {
-          const g = parseInt(f.data("index")), h = f.data("identifier"), y = m === "single" ? window.singlePresetName : r(`#${m}-preset`).val(), P = Ze(y, "include_disabled").findIndex((x) => x.identifier === h);
-          gn(window.newEntryMode.apiInfo, m, P >= 0 ? P : g);
+        if (window.newEntryMode && window.newEntryMode.side === g) {
+          const h = parseInt(f.data("index")), y = f.data("identifier"), w = g === "single" ? window.singlePresetName : r(`#${g}-preset`).val(), S = et(w, "include_disabled").findIndex((k) => k.identifier === y);
+          Cn(window.newEntryMode.apiInfo, g, S >= 0 ? S : h);
           return;
         }
-        if (window.moveMode && window.moveMode.side === m) {
-          const g = parseInt(f.data("index")), h = f.data("identifier");
-          fn(window.moveMode.apiInfo, m, h, g);
+        if (window.moveMode && window.moveMode.side === g) {
+          const h = parseInt(f.data("index")), y = f.data("identifier");
+          Pn(window.moveMode.apiInfo, g, y, h);
           return;
         }
-        const b = f.find(".entry-checkbox");
-        b.prop("checked", !b.prop("checked")).trigger("change");
+        const m = f.find(".entry-checkbox");
+        m.prop("checked", !m.prop("checked")).trigger("change");
       }
     }), p.off("click", ".create-here-btn").on("click", ".create-here-btn", function(u) {
       u.preventDefault(), u.stopPropagation();
-      const f = c(this), m = parseInt(f.data("entry-index")), b = f.data("entry-side");
-      let g;
-      if (b === "left" ? g = c("#left-preset").val() : b === "right" ? g = c("#right-preset").val() : b === "single" && (g = window.singlePresetName), !g) {
+      const f = c(this), g = parseInt(f.data("entry-index")), b = f.data("entry-side");
+      let m;
+      if (b === "left" ? m = c("#left-preset").val() : b === "right" ? m = c("#right-preset").val() : b === "single" && (m = window.singlePresetName), !m) {
         alert("请先选择目标预设");
         return;
       }
-      const h = M();
+      const h = B();
       if (!h) {
         alert("无法获取API信息");
         return;
       }
-      const S = f.closest(".entry-item").data("identifier"), P = Ze(g, "include_disabled"), x = S ? P.findIndex((I) => I.identifier === S) : m, w = {
+      const w = f.closest(".entry-item").data("identifier"), C = et(m, "include_disabled"), S = w ? C.findIndex((P) => P.identifier === w) : g, k = {
         name: "新提示词",
         content: "",
         role: "system",
@@ -4239,38 +3091,38 @@ function Oe(e, t) {
         forbid_overrides: !1,
         system_prompt: !1,
         marker: !1,
-        injection_order: L.injection_order,
-        injection_trigger: [...L.injection_trigger],
+        injection_order: R.injection_order,
+        injection_trigger: [...R.injection_trigger],
         isNewEntry: !0
-      }, k = c("#auto-enable-entry").prop("checked");
-      Gn(
+      }, x = c("#auto-enable-entry").prop("checked");
+      Vn(
         h,
-        g,
-        w,
-        `after-${x >= 0 ? x : m}`,
-        k
+        m,
+        k,
+        `after-${S >= 0 ? S : g}`,
+        x
       ).then(() => {
-        window.toastr && toastr.success("已在此处新建空白条目"), W(h);
-      }).catch((I) => {
-        console.error("在此处新建失败:", I), window.toastr ? toastr.error("在此处新建失败: " + I.message) : alert("在此处新建失败: " + I.message);
+        window.toastr && toastr.success("已在此处新建空白条目"), L(h);
+      }).catch((P) => {
+        console.error("在此处新建失败:", P), window.toastr ? toastr.error("在此处新建失败: " + P.message) : alert("在此处新建失败: " + P.message);
       });
     });
   }, 50);
 }
-function ae(e) {
+function le(e) {
   const t = v(), r = [];
   let n, o;
   e === "single" ? (n = window.singleEntries, o = "#single-entries-list") : (n = e === "left" ? window.leftEntries : window.rightEntries, o = `#${e}-entries-list`);
   const i = [];
   return t(`${o} .entry-checkbox:checked`).each(function() {
-    const l = t(this).closest(".entry-item"), a = l.data("identifier"), s = parseInt(l.data("index"));
-    if (a && n) {
-      const d = n.find((c) => c.identifier === a);
+    const a = t(this).closest(".entry-item"), l = a.data("identifier"), s = parseInt(a.data("index"));
+    if (l && n) {
+      const d = n.find((c) => c.identifier === l);
       if (d) {
         i.push({
           entry: d,
           originalIndex: n.indexOf(d),
-          identifier: a
+          identifier: l
         });
         return;
       }
@@ -4280,20 +3132,21 @@ function ae(e) {
       originalIndex: s,
       identifier: n[s].identifier || null
     });
-  }), i.sort((l, a) => l.originalIndex - a.originalIndex), i.forEach((l) => r.push(l.entry)), r;
+  }), i.sort((a, l) => a.originalIndex - l.originalIndex), i.forEach((a) => r.push(a.entry)), r;
 }
-const Uo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Wo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
+  commitWorldbookPickTarget: Jn,
   displayEntries: Oe,
-  getSelectedEntries: ae,
-  loadAndDisplayEntries: W,
-  loadDualPresetMode: Wo,
-  loadSinglePresetMode: Ro
+  getSelectedEntries: le,
+  loadAndDisplayEntries: L,
+  loadDualPresetMode: Ro,
+  loadSinglePresetMode: Do
 }, Symbol.toStringTag, { value: "Module" }));
-function Vo() {
+function Uo() {
   const e = v();
-  q();
-  const t = A.getVars();
+  Y();
+  const t = N.getVars();
   e("#find-replace-modal").remove();
   const r = `
     <div id="find-replace-modal" style="--pt-font-size: ${t.fontSize}; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; height: calc(var(--pt-vh, 1vh) * 100); background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px); z-index: 10003; display: flex; align-items: center; justify-content: center; padding: ${t.margin}; padding-top: calc(${t.margin} + env(safe-area-inset-top)); padding-bottom: calc(${t.margin} + env(safe-area-inset-bottom));">
@@ -4348,47 +3201,47 @@ function Fo(e, t, r) {
     alert("未找到内容编辑区域");
     return;
   }
-  let i = o.val(), l = 0;
+  let i = o.val(), a = 0;
   if (r) {
-    const a = new RegExp(xn(e), "g");
-    i = i.replace(a, (s) => (l++, t));
+    const l = new RegExp(Mn(e), "g");
+    i = i.replace(l, (s) => (a++, t));
   } else {
-    const a = new RegExp(xn(e), "gi");
-    i = i.replace(a, (s) => (l++, t));
+    const l = new RegExp(Mn(e), "gi");
+    i = i.replace(l, (s) => (a++, t));
   }
-  o.val(i), l > 0 ? window.toastr ? toastr.success(`成功替换 ${l} 处文本`) : alert(`成功替换 ${l} 处文本`) : window.toastr ? toastr.info("未找到要替换的文本") : alert("未找到要替换的文本");
+  o.val(i), a > 0 ? window.toastr ? toastr.success(`成功替换 ${a} 处文本`) : alert(`成功替换 ${a} 处文本`) : window.toastr ? toastr.info("未找到要替换的文本") : alert("未找到要替换的文本");
 }
-function xn(e) {
+function Mn(e) {
   return e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
-const Ho = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Vo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   applyFindReplaceToCurrentEntry: Fo,
-  escapeRegExp: xn,
-  showFindReplaceDialog: Vo
+  escapeRegExp: Mn,
+  showFindReplaceDialog: Uo
 }, Symbol.toStringTag, { value: "Module" }));
-async function bt(e, t) {
-  var a;
-  const r = v(), n = re(), o = ((a = n == null ? void 0 : n.ui) == null ? void 0 : a.containerLabel) ?? "预设", i = ae(t);
-  let l;
-  if (t === "single" ? l = window.singlePresetName : l = r(`#${t}-preset`).val(), i.length === 0) {
+async function $t(e, t) {
+  var l;
+  const r = v(), n = D(), o = ((l = n == null ? void 0 : n.ui) == null ? void 0 : l.containerLabel) ?? "预设", i = le(t);
+  let a;
+  if (t === "single" ? a = window.singlePresetName : a = r(`#${t}-preset`).val(), i.length === 0) {
     alert("请至少选择一个条目进行删除");
     return;
   }
-  if (!l) {
+  if (!a) {
     alert(`请先选择${o}`);
     return;
   }
   showConfirmDialog(
-    `确定要从${o} "${l}" 中删除 ${i.length} 个条目吗？此操作不可撤销。`,
+    `确定要从${o} "${a}" 中删除 ${i.length} 个条目吗？此操作不可撤销。`,
     async () => {
       try {
         const s = t === "single" ? "#single-delete" : `#${t}-delete`;
-        if (r(s).prop("disabled", !0).text("删除中..."), await Co(e, l, i), console.log(`成功删除 ${i.length} 个条目`), r("#auto-close-modal").prop("checked")) {
+        if (r(s).prop("disabled", !0).text("删除中..."), await So(e, a, i), console.log(`成功删除 ${i.length} 个条目`), r("#auto-close-modal").prop("checked")) {
           r("#preset-transfer-modal").remove();
           return;
         }
-        W(e);
+        L(e);
       } catch (s) {
         console.error("删除失败:", s), alert("删除失败: " + s.message);
       } finally {
@@ -4398,35 +3251,35 @@ async function bt(e, t) {
     }
   );
 }
-function Ze(e, t = "default") {
+function et(e, t = "default") {
   var r;
   try {
-    const n = M();
+    const n = B();
     if (!n) return [];
-    const o = N(n, e);
+    const o = O(n, e);
     if (!o) return [];
     if (!o.prompts || !Array.isArray(o.prompts))
       return [];
-    const i = 100001, l = (r = o.prompt_order) == null ? void 0 : r.find((d) => d.character_id === i);
-    if (!l)
-      return X(o);
-    const a = [], s = new Map(o.prompts.map((d) => [d.identifier, d]));
-    return l.order.forEach((d) => {
+    const i = 100001, a = (r = o.prompt_order) == null ? void 0 : r.find((d) => d.character_id === i);
+    if (!a)
+      return ee(o);
+    const l = [], s = new Map(o.prompts.map((d) => [d.identifier, d]));
+    return a.order.forEach((d) => {
       const c = s.get(d.identifier);
       if (c && !c.system_prompt && !c.marker && c.name && c.name.trim() !== "") {
         const p = {
           ...c,
           enabled: d.enabled,
-          orderIndex: a.length
+          orderIndex: l.length
         };
-        t === "default" && !d.enabled && (p.hiddenInDefaultMode = !0), a.push(p);
+        t === "default" && !d.enabled && (p.hiddenInDefaultMode = !0), l.push(p);
       }
-    }), t === "default" ? a.filter((d) => !d.hiddenInDefaultMode) : a;
+    }), t === "default" ? l.filter((d) => !d.hiddenInDefaultMode) : l;
   } catch (n) {
     return console.error("获取目标提示词列表失败:", n), [];
   }
 }
-function Rt(e) {
+function Qt(e) {
   e.prompt_order || (e.prompt_order = []);
   const t = 100001;
   let r = e.prompt_order.find((n) => n.character_id === t);
@@ -4448,18 +3301,18 @@ function Rt(e) {
     ]
   }, e.prompt_order.push(r)), r;
 }
-function Go(e, t, r, n = null, o = !1, i = null, l = null, a = "default", s = !1) {
-  const d = v(), { isMobile: c, isSmallScreen: p, isPortrait: u } = G();
-  q(), d("#edit-entry-modal").remove();
-  const f = r.isNewEntry || !1, m = f ? "新建条目" : "编辑条目", b = A.getVars(), g = f ? fo({ name: "新提示词" }) : ne(r), h = g.injection_position, y = h == "relative" || h == null || h === "", S = h == "1" || h == "absolute", P = [
+function Go(e, t, r, n = null, o = !1, i = null, a = null, l = "default", s = !1) {
+  const d = v(), { isMobile: c, isSmallScreen: p, isPortrait: u } = K();
+  Y(), d("#edit-entry-modal").remove();
+  const f = r.isNewEntry || !1, g = f ? "新建条目" : "编辑条目", b = N.getVars(), m = f ? lo({ name: "新提示词" }) : oe(r), h = m.injection_position, y = h == "relative" || h == null || h === "", w = h == "1" || h == "absolute", C = [
     { value: "relative", label: "相对", selected: y },
-    { value: "1", label: "聊天中", selected: S }
-  ], x = `
+    { value: "1", label: "聊天中", selected: w }
+  ], S = `
         <div id="edit-entry-modal">
             <div class="edit-modal-content">
                 <div class="edit-modal-header">
                     <div>
-                        <h2>${m}</h2>
+                        <h2>${g}</h2>
                     </div>
                     <div class="preset-info">预设: ${t}</div>
                     <div class="edit-tip" style="margin-top: 8px; font-size: ${c ? "calc(var(--pt-font-size) * 0.75)" : "calc(var(--pt-font-size) * 0.6875)"}; color: ${b.tipColor}; text-align: center; opacity: 0.8;">
@@ -4471,16 +3324,16 @@ function Go(e, t, r, n = null, o = !1, i = null, l = null, a = "default", s = !1
                         <label for="edit-entry-name">
                             <span>条目名称</span>
                         </label>
-                        <input type="text" id="edit-entry-name" value="${g.name}" placeholder="输入条目名称...">
+                        <input type="text" id="edit-entry-name" value="${m.name}" placeholder="输入条目名称...">
                     </div>
                     <div class="form-field">
                         <label for="edit-entry-role">
                             <span>角色</span>
                         </label>
                         <select id="edit-entry-role">
-                            <option value="system" ${g.role === "system" ? "selected" : ""}>系统</option>
-                            <option value="user" ${g.role === "user" ? "selected" : ""}>用户</option>
-                            <option value="assistant" ${g.role === "assistant" ? "selected" : ""}>AI助手</option>
+                            <option value="system" ${m.role === "system" ? "selected" : ""}>系统</option>
+                            <option value="user" ${m.role === "user" ? "selected" : ""}>用户</option>
+                            <option value="assistant" ${m.role === "assistant" ? "selected" : ""}>AI助手</option>
                         </select>
                     </div>
                     <div class="form-field">
@@ -4488,22 +3341,22 @@ function Go(e, t, r, n = null, o = !1, i = null, l = null, a = "default", s = !1
                             <span>注入位置</span>
                         </label>
                         <select id="edit-entry-position">
-                            ${P.map(
-    (k) => `<option value="${k.value}" ${k.selected ? "selected" : ""}>${k.label}</option>`
+                            ${C.map(
+    (x) => `<option value="${x.value}" ${x.selected ? "selected" : ""}>${x.label}</option>`
   ).join("")}
                         </select>
                     </div>
-                    <div class="form-field" id="depth-field" style="display: ${S ? "block" : "none"};">
+                    <div class="form-field" id="depth-field" style="display: ${w ? "block" : "none"};">
                         <label for="edit-entry-depth">
                             <span>注入深度</span>
                         </label>
-                        <input type="number" id="edit-entry-depth" value="${g.injection_depth}" min="0" max="100">
+                        <input type="number" id="edit-entry-depth" value="${m.injection_depth}" min="0" max="100">
                     </div>
                     <div class="form-field">
                         <label for="edit-entry-content">
                             <span>内容</span>
                         </label>
-                        <textarea id="edit-entry-content" rows="8" placeholder="输入条目内容...">${g.content}</textarea>
+                        <textarea id="edit-entry-content" rows="8" placeholder="输入条目内容...">${m.content}</textarea>
                     </div>
                      <div class="form-field ai-assistant-section">
                         <label>
@@ -4524,18 +3377,18 @@ function Go(e, t, r, n = null, o = !1, i = null, l = null, a = "default", s = !1
                         <label for="edit-entry-order">
                             <span>注入顺序</span>
                         </label>
-                        <input type="number" id="edit-entry-order" value="${g.injection_order}">
+                        <input type="number" id="edit-entry-order" value="${m.injection_order}">
                     </div>
                     <div class="form-field">
                         <label>
                             <span>触发条件 (不选则为总是触发)</span>
                         </label>
                         <div id="edit-entry-triggers" class="trigger-container">
-                            ${Wr.map(
-    (k) => `
+                            ${Zr.map(
+    (x) => `
                                 <label class="trigger-label">
-                                    <input type="checkbox" class="trigger-checkbox" value="${k}" ${g.injection_trigger.includes(k) ? "checked" : ""}>
-                                    <span>${Ur[k] || k}</span>
+                                    <input type="checkbox" class="trigger-checkbox" value="${x}" ${m.injection_trigger.includes(x) ? "checked" : ""}>
+                                    <span>${eo[x] || x}</span>
                                 </label>
                             `
   ).join("")}
@@ -4550,22 +3403,22 @@ function Go(e, t, r, n = null, o = !1, i = null, l = null, a = "default", s = !1
             </div>
         </div>
     `;
-  d("body").append(x), d("#edit-entry-modal .edit-modal-header > div").first().find("span").first().remove(), d("#cancel-edit").text("取消"), d("#edit-entry-modal").data({
+  d("body").append(S), d("#edit-entry-modal .edit-modal-header > div").first().find("span").first().remove(), d("#cancel-edit").text("取消"), d("#edit-entry-modal").data({
     apiInfo: e,
     presetName: t,
     entry: r,
     insertPosition: n,
     autoEnable: o,
     side: i,
-    displayMode: a,
+    displayMode: l,
     fromCompare: s
-  }), qo(c), Jo(e, t, r, n, o, i, a, s);
+  }), Ho(c), qo(e, t, r, n, o, i, l, s);
 }
-function qo(e, t, r) {
-  const n = v(), o = A.getVars(), i = `
+function Ho(e, t, r) {
+  const n = v(), o = N.getVars(), i = `
         #edit-entry-modal {
             --pt-font-size: ${o.fontSize};
-            ${A.getModalBaseStyles()}
+            ${N.getModalBaseStyles()}
             align-items: ${o.isMobile ? "flex-start" : "center"};
             ${o.isMobile ? "padding-top: 20px;" : ""}
         }
@@ -4684,15 +3537,15 @@ function qo(e, t, r) {
         }
     `;
   n("#edit-entry-modal-styles").length || n("head").append(`<style id="edit-entry-modal-styles">${i}</style>`);
-  const l = document.createElement("link");
-  l.rel = "stylesheet", l.href = "./scripts/extensions/third-party/preset-transfer/src/styles/edit-modal.css", document.querySelector(`link[href="${l.href}"]`) || document.head.appendChild(l);
+  const a = document.createElement("link");
+  a.rel = "stylesheet", a.href = "./scripts/extensions/third-party/preset-transfer/src/styles/edit-modal.css", document.querySelector(`link[href="${a.href}"]`) || document.head.appendChild(a);
 }
-function Jo(e, t, r, n = null, o = !1, i = null, l = "default", a = !1) {
+function qo(e, t, r, n = null, o = !1, i = null, a = "default", l = !1) {
   const s = v(), d = s("#edit-entry-modal"), c = r.isNewEntry || !1;
   try {
-    const u = N(e, t), f = Le(u, "include_disabled"), m = s("#ai-style-entry-selector");
+    const u = O(e, t), f = We(u, "include_disabled"), g = s("#ai-style-entry-selector");
     f.length > 0 && f.forEach((b) => {
-      m.append(
+      g.append(
         s("<option>", {
           value: b.identifier,
           text: b.name
@@ -4705,26 +3558,26 @@ function Jo(e, t, r, n = null, o = !1, i = null, l = "default", a = !1) {
   s("#ai-convert-btn, #ai-create-btn").prop("disabled", !1);
   const p = async (u) => {
     const f = s("#ai-style-entry-selector").val();
-    let m;
+    let g;
     if (f) {
-      if (m = N(e, t).prompts.find((y) => y.identifier === f), !m) {
+      if (g = O(e, t).prompts.find((y) => y.identifier === f), !g) {
         alert("找不到指定的参考条目。");
         return;
       }
-    } else if (m = {
+    } else if (g = {
       name: s("#edit-entry-name").val() || "当前条目",
       content: s("#edit-entry-content").val() || "",
       role: s("#edit-entry-role").val() || "system"
-    }, !m.content.trim()) {
+    }, !g.content.trim()) {
       alert("当前条目内容为空，请输入内容或选择参考条目。");
       return;
     }
     const b = {
       name: s("#edit-entry-name").val(),
       content: s("#edit-entry-content").val()
-    }, g = s("#ai-additional-prompt").val();
+    }, m = s("#ai-additional-prompt").val();
     try {
-      const h = await callAIAssistant(e, u, b, m, g);
+      const h = await callAIAssistant(e, u, b, g, m);
       s("#edit-entry-name").val(h.name), s("#edit-entry-content").val(h.content), console.log(`AI ${u === "convert" ? "格式转换" : "辅助创作"}完成`);
     } catch {
     }
@@ -4755,42 +3608,42 @@ function Jo(e, t, r, n = null, o = !1, i = null, l = "default", a = !1) {
         alert("请输入条目名称");
         return;
       }
-      const m = c ? "创建中..." : "保存中...";
-      if (s("#save-entry-changes").prop("disabled", !0).text(m), c ? (await Gn(e, t, f, n || "bottom", o, l), s("#auto-close-modal").prop("checked") && s("#preset-transfer-modal").remove()) : (await saveEntryChanges(e, t, r, f), console.log("条目已成功更新")), d.remove(), a) {
+      const g = c ? "创建中..." : "保存中...";
+      if (s("#save-entry-changes").prop("disabled", !0).text(g), c ? (await Vn(e, t, f, n || "bottom", o, a), s("#auto-close-modal").prop("checked") && s("#preset-transfer-modal").remove()) : (await saveEntryChanges(e, t, r, f), console.log("条目已成功更新")), d.remove(), l) {
         const b = s("#compare-modal");
         b.length && (b.show(), setTimeout(() => {
-          Jn(e);
+          Hn(e);
         }, 100));
       }
-      s("#preset-transfer-modal").length && W(e);
+      s("#preset-transfer-modal").length && L(e);
     } catch (u) {
       console.error(c ? "创建条目失败:" : "保存条目失败:", u), alert((c ? "创建失败: " : "保存失败: ") + u.message);
       const f = c ? "创建条目" : "保存";
       s("#save-entry-changes").prop("disabled", !1).text(f);
     }
   }), s("#find-replace-btn").on("click", () => {
-    Vo();
+    Uo();
   }), s("#cancel-edit").on("click", () => {
-    if (d.remove(), a) {
+    if (d.remove(), l) {
       const u = s("#compare-modal");
       u.length && u.show();
     }
-  }), console.log('编辑/新建界面已打开，只能通过点击"取消"按钮关闭，避免误触'), G().isMobile) {
+  }), console.log('编辑/新建界面已打开，只能通过点击"取消"按钮关闭，避免误触'), K().isMobile) {
     const u = s("body").css("overflow");
     s("body").css("overflow", "hidden"), d.on("remove", () => s("body").css("overflow", u));
   }
   d.css("display", "flex");
 }
-const Ko = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Jo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  applyEditModalStyles: qo,
-  bindEditModalEvents: Jo,
+  applyEditModalStyles: Ho,
+  bindEditModalEvents: qo,
   createEditEntryModal: Go,
-  deleteSelectedEntries: bt,
-  getOrCreateDummyCharacterPromptOrder: Rt,
-  getTargetPromptsList: Ze
+  deleteSelectedEntries: $t,
+  getOrCreateDummyCharacterPromptOrder: Qt,
+  getTargetPromptsList: et
 }, Symbol.toStringTag, { value: "Module" }));
-function ba() {
+function Ba() {
   try {
     const e = v(), t = e("body").css("background-color") || e(":root").css("background-color") || e("html").css("background-color");
     if (t && t !== "rgba(0, 0, 0, 0)") {
@@ -4802,20 +3655,20 @@ function ba() {
   }
   return !1;
 }
-function xa() {
+function Na() {
   console.log("PresetTransfer: theme toggle is deprecated and now a no-op.");
 }
-function va() {
+function Oa() {
 }
-function ya() {
+function La() {
   const e = v();
   if (!e("#preset-transfer-modal").length) return;
-  const { isMobile: r, isSmallScreen: n, isPortrait: o } = G(), i = e("#compare-modal");
-  let l = null;
-  i.length && (l = i.data(), i.remove());
-  const a = e("#edit-entry-modal");
+  const { isMobile: r, isSmallScreen: n, isPortrait: o } = K(), i = e("#compare-modal");
+  let a = null;
+  i.length && (a = i.data(), i.remove());
+  const l = e("#edit-entry-modal");
   let s = null;
-  a.length && (s = a.data(), a.remove()), e("#preset-transfer-styles").remove(), e("#edit-entry-modal-styles").remove(), e("#compare-modal-styles").remove(), Hn(r, n, o), s && s.apiInfo && Go(
+  l.length && (s = l.data(), l.remove()), e("#preset-transfer-styles").remove(), e("#edit-entry-modal-styles").remove(), e("#compare-modal-styles").remove(), Fn(r, n, o), s && s.apiInfo && Go(
     s.apiInfo,
     s.presetName,
     s.entry,
@@ -4824,11 +3677,11 @@ function ya() {
     s.side,
     null,
     s.displayMode
-  ), l && l.apiInfo && Kn(
-    l.apiInfo,
-    l.leftPreset,
-    l.rightPreset,
-    l.commonEntries
+  ), a && a.apiInfo && qn(
+    a.apiInfo,
+    a.leftPreset,
+    a.rightPreset,
+    a.commonEntries
   );
   const d = localStorage.getItem("preset-transfer-font-size");
   if (d) {
@@ -4838,22 +3691,22 @@ function ya() {
     p && p.style.setProperty("--pt-font-size", c + "px"), e("#font-size-display").text(c + "px");
   }
   if (e("#entries-container").is(":visible")) {
-    const c = M();
-    c && W(c);
+    const c = B();
+    c && L(c);
   }
 }
-function vn() {
+function An() {
 }
-const Yo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Ko = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  initializeThemeSettings: vn,
-  isDarkTheme: ba,
-  toggleTransferToolTheme: xa,
-  updateModalTheme: ya,
-  updateThemeButton: va
+  initializeThemeSettings: An,
+  isDarkTheme: Ba,
+  toggleTransferToolTheme: Na,
+  updateModalTheme: La,
+  updateThemeButton: Oa
 }, Symbol.toStringTag, { value: "Module" }));
-async function Xo(e) {
-  const t = [], r = [], n = M();
+async function Yo(e) {
+  const t = [], r = [], n = B();
   for (const o of e)
     try {
       const i = await n.presetManager.deletePreset(o);
@@ -4863,14 +3716,14 @@ async function Xo(e) {
     }
   return { results: t, errors: r };
 }
-function Qo(e) {
-  const t = v(), n = M() || e;
+function Xo(e) {
+  const t = v(), n = B() || e;
   if (!n) {
     alert("无法获取当前API信息，请确保 SillyTavern 已正确加载");
     return;
   }
   t("#batch-delete-modal").remove();
-  const o = A.getVars(), i = `
+  const o = N.getVars(), i = `
     <div id="batch-delete-modal">
       <div class="batch-delete-modal-content">
         <div class="modal-header">
@@ -4883,11 +3736,11 @@ function Qo(e) {
           </div>
           <div class="preset-list" id="preset-list">
             ${n.presetNames.map(
-    (a) => `
+    (l) => `
               <label class="preset-item">
-                <input type="checkbox" value="${a}" ${a === "in_use" ? "disabled" : ""}>
-                <span class="preset-name">${a}</span>
-                ${a === "in_use" ? '<span class="current-badge">当前使用</span>' : ""}
+                <input type="checkbox" value="${l}" ${l === "in_use" ? "disabled" : ""}>
+                <span class="preset-name">${l}</span>
+                ${l === "in_use" ? '<span class="current-badge">当前使用</span>' : ""}
               </label>
             `
   ).join("")}
@@ -4906,13 +3759,13 @@ function Qo(e) {
     </div>
   `;
   t("body").append(i), t("#cancel-batch-delete").text("取消");
-  const l = `
+  const a = `
     #batch-delete-modal {
       --pt-font-size: ${o.fontSize};
-      ${A.getModalBaseStyles()}
+      ${N.getModalBaseStyles()}
     }
     #batch-delete-modal .batch-delete-modal-content {
-      ${A.getModalContentStyles()}
+      ${N.getModalContentStyles()}
     }
     #batch-delete-modal .modal-header {
       text-align: center; margin-bottom: ${o.margin};
@@ -5014,22 +3867,22 @@ function Qo(e) {
 
 
   `;
-  t("head").append(`<style id="batch-delete-modal-styles">${l}</style>`), Zo();
+  t("head").append(`<style id="batch-delete-modal-styles">${a}</style>`), Qo();
 }
-function Zo() {
+function Qo() {
   const e = v();
   function t() {
     const o = e("#preset-search").val().toLowerCase();
     e("#preset-list .preset-item").each(function() {
-      const l = e(this).find(".preset-name").text().toLowerCase().includes(o);
-      e(this).toggle(l);
+      const a = e(this).find(".preset-name").text().toLowerCase().includes(o);
+      e(this).toggle(a);
     });
   }
   function r() {
     const o = e('#preset-list input[type="checkbox"]:checked:not(:disabled)').length;
     e("#selected-count").text(`已选择: ${o}`), e("#execute-batch-delete").prop("disabled", o === 0);
   }
-  const n = te(t, 300);
+  const n = he(t, 300);
   e("#preset-search").on("input", n), e("#select-all-presets").on("click", function() {
     e('#preset-list input[type="checkbox"]:not(:disabled):visible').prop("checked", !0), r();
   }), e("#select-none-presets").on("click", function() {
@@ -5048,17 +3901,17 @@ ${o.join(`
 `)}`;
     if (!confirm(i))
       return;
-    const l = e(this), a = l.text();
-    l.prop("disabled", !0).text("删除中...");
+    const a = e(this), l = a.text();
+    a.prop("disabled", !0).text("删除中...");
     try {
-      const { results: s, errors: d } = await Xo(o);
+      const { results: s, errors: d } = await Yo(o);
       if (d.length > 0) {
         const p = s.filter((u) => !u.success).length;
         alert(`删除完成，但有 ${p} 个失败:
 ${d.join(`
 `)}`);
       }
-      const c = M();
+      const c = B();
       if (c) {
         const p = e("#preset-search").val(), u = c.presetNames.map(
           (y) => `
@@ -5070,13 +3923,13 @@ ${d.join(`
             `
         ).join("");
         e("#preset-list").html(u), e("#preset-search").val(p), t(), r();
-        const f = e("#left-preset"), m = e("#right-preset"), b = f.val(), g = m.val(), h = c.presetNames.map((y) => `<option value="${y}">${y}</option>`).join("");
-        f.html('<option value="">请选择预设</option>' + h), m.html('<option value="">请选择预设</option>' + h), c.presetNames.includes(b) && f.val(b), c.presetNames.includes(g) && m.val(g), f.trigger("change"), m.trigger("change");
+        const f = e("#left-preset"), g = e("#right-preset"), b = f.val(), m = g.val(), h = c.presetNames.map((y) => `<option value="${y}">${y}</option>`).join("");
+        f.html('<option value="">请选择预设</option>' + h), g.html('<option value="">请选择预设</option>' + h), c.presetNames.includes(b) && f.val(b), c.presetNames.includes(m) && g.val(m), f.trigger("change"), g.trigger("change");
       }
     } catch (s) {
       console.error("批量删除失败:", s), alert("批量删除失败: " + s.message);
     } finally {
-      l.prop("disabled", !1).text(a);
+      a.prop("disabled", !1).text(l);
     }
   }), e("#cancel-batch-delete").on("click", function() {
     e("#batch-delete-modal").remove(), e("#batch-delete-modal-styles").remove();
@@ -5086,18 +3939,18 @@ ${d.join(`
     o.key === "Escape" && (e("#batch-delete-modal").remove(), e("#batch-delete-modal-styles").remove(), e(document).off("keydown.batch-delete"));
   }), r();
 }
-const ei = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Zo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  batchDeletePresets: Xo,
-  bindBatchDeleteEvents: Zo,
-  createBatchDeleteModal: Qo
+  batchDeletePresets: Yo,
+  bindBatchDeleteEvents: Qo,
+  createBatchDeleteModal: Xo
 }, Symbol.toStringTag, { value: "Module" }));
-function yn(e, t = "AI 正在思考...") {
+function jn(e, t = "AI 正在思考...") {
   const r = v();
   if (r("#ai-loading-overlay").remove(), e) {
     localStorage.getItem("preset-transfer-font-size");
     const n = `
-      <div id="ai-loading-overlay" style="--pt-font-size: ${A.getVars().fontSize}; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10005; display: flex; align-items: center; justify-content: center; color: white; flex-direction: column; gap: 20px;">
+      <div id="ai-loading-overlay" style="--pt-font-size: ${N.getVars().fontSize}; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10005; display: flex; align-items: center; justify-content: center; color: white; flex-direction: column; gap: 20px;">
         <div class="spinner" style="border: 4px solid rgba(255, 255, 255, 0.3); border-left-color: #fff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;"></div>
         <div class="message" style="font-size: calc(var(--pt-font-size) * 1.125); font-weight: 500;">${t}</div>
       </div>
@@ -5106,13 +3959,13 @@ function yn(e, t = "AI 正在思考...") {
     r("body").append(n);
   }
 }
-async function wa(e, t, r, n, o = "") {
-  var l;
-  const i = Q();
+async function Da(e, t, r, n, o = "") {
+  var a;
+  const i = te();
   if (!i || typeof i.generateRaw != "function")
     throw new Error("无法访问 SillyTavern 的 generateRaw API（请确认酒馆版本支持 /scripts/st-context.js 暴露的接口）。");
   try {
-    yn(!0, t === "convert" ? "AI 正在分析并转换格式..." : "AI 正在理解需求并创作...");
+    jn(!0, t === "convert" ? "AI 正在分析并转换格式..." : "AI 正在理解需求并创作...");
     const d = {
       role: "system",
       directive: "超越框架：重塑核心协议 - 嵌套螺旋迭代",
@@ -5184,106 +4037,106 @@ ${JSON.stringify(
 【需求描述】
 名称或主题: ${r.name}
 详细要求: ${r.content}${u}`;
-    const m = [
+    const g = [
       d,
       { role: "system", content: c },
       p,
       { role: "user", content: f }
     ], b = await i.generateRaw({
       // SillyTavern 原生 generateRaw 支持 string 或 chat-style messages array
-      prompt: m,
+      prompt: g,
       // 尽量避免带入当前角色的说话口吻/名字
       quietToLoud: !0
-    }), g = (l = i.parseReasoningFromString) == null ? void 0 : l.call(i, b, { strict: !1 }), h = (g == null ? void 0 : g.content) ?? b, y = [], S = h.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-    S != null && S[1] && y.push(S[1]), y.push(h);
-    let P = null;
-    for (const x of y) {
-      const w = x.match(/\{[\s\S]*\}/);
-      if (w)
+    }), m = (a = i.parseReasoningFromString) == null ? void 0 : a.call(i, b, { strict: !1 }), h = (m == null ? void 0 : m.content) ?? b, y = [], w = h.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    w != null && w[1] && y.push(w[1]), y.push(h);
+    let C = null;
+    for (const S of y) {
+      const k = S.match(/\{[\s\S]*\}/);
+      if (k)
         try {
-          P = JSON.parse(w[0]);
+          C = JSON.parse(k[0]);
           break;
         } catch {
         }
     }
-    if (!P)
+    if (!C)
       throw new Error("AI 返回的不是有效的 JSON 对象。原始返回: " + h);
-    if (!P.name || typeof P.content > "u")
+    if (!C.name || typeof C.content > "u")
       throw new Error('AI 返回的 JSON 对象缺少 "name" 或 "content" 字段。');
-    return P;
-  } catch (a) {
-    throw console.error("AI 辅助失败:", a), alert("AI 辅助失败: " + a.message), a;
+    return C;
+  } catch (l) {
+    throw console.error("AI 辅助失败:", l), alert("AI 辅助失败: " + l.message), l;
   } finally {
-    yn(!1);
+    jn(!1);
   }
 }
-const ti = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const ei = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  callAIAssistant: wa,
-  showAILoading: yn
-}, Symbol.toStringTag, { value: "Module" })), ni = /* @__PURE__ */ new Map();
-let ie = null, Je = null;
-function ri(e, t) {
-  t && ni.set(e, t);
+  callAIAssistant: Da,
+  showAILoading: jn
+}, Symbol.toStringTag, { value: "Module" })), ti = /* @__PURE__ */ new Map();
+let se = null, Ye = null;
+function ni(e, t) {
+  t && ti.set(e, t);
 }
 function rt(e) {
-  return ni.get(e) || null;
+  return ti.get(e) || null;
 }
-function oi(e, t) {
+function ri(e, t) {
   const r = v(), n = rt(e);
   if (!r || !n) return;
   const o = r(n);
   if (o.find(".entry-item").removeClass("pt-drag-source"), !Array.isArray(t) || t.length === 0) return;
   const i = new Set(t.filter(Boolean));
   o.find(".entry-item").each(function() {
-    const l = r(this), a = l.data("identifier");
-    a && i.has(a) && l.addClass("pt-drag-source");
+    const a = r(this), l = a.data("identifier");
+    l && i.has(l) && a.addClass("pt-drag-source");
   });
 }
-function zt() {
+function Ut() {
   const e = v();
   e && e(".entry-item.pt-drag-source").removeClass("pt-drag-source");
 }
-function ii(e, t, r, n) {
-  Et();
-  const o = R(), i = o.document, l = G().isMobile, a = i.createElement("div");
-  a.id = "pt-drag-preview", a.style.position = "fixed", a.style.zIndex = "99999", a.style.pointerEvents = "none", a.style.transform = "translate(-50%, -50%)", a.style.minWidth = l ? "120px" : "160px", a.style.maxWidth = l ? "200px" : "240px", a.style.padding = l ? "6px 8px" : "8px 10px", a.style.borderRadius = "10px", a.style.boxShadow = "0 12px 30px rgba(0, 0, 0, 0.4)", a.style.fontSize = l ? "11px" : "12px", a.style.lineHeight = "1.3", a.style.opacity = "0.96", a.style.display = "flex", a.style.alignItems = "center", a.style.gap = "6px", a.style.backdropFilter = "blur(10px)", a.style.WebkitBackdropFilter = "blur(10px)";
+function oi(e, t, r, n) {
+  Ft();
+  const o = U(), i = o.document, a = K().isMobile, l = i.createElement("div");
+  l.id = "pt-drag-preview", l.style.position = "fixed", l.style.zIndex = "99999", l.style.pointerEvents = "none", l.style.transform = "translate(-50%, -50%)", l.style.minWidth = a ? "120px" : "160px", l.style.maxWidth = a ? "200px" : "240px", l.style.padding = a ? "6px 8px" : "8px 10px", l.style.borderRadius = "10px", l.style.boxShadow = "0 12px 30px rgba(0, 0, 0, 0.4)", l.style.fontSize = a ? "11px" : "12px", l.style.lineHeight = "1.3", l.style.opacity = "0.96", l.style.display = "flex", l.style.alignItems = "center", l.style.gap = "6px", l.style.backdropFilter = "blur(10px)", l.style.WebkitBackdropFilter = "blur(10px)";
   let s = "rgba(17, 24, 39, 0.92)", d = "#f9fafb", c = "#6366f1";
   try {
     const b = o.getComputedStyle(e);
     b && b.backgroundColor && (s = b.backgroundColor), b && b.color && (d = b.color);
-    const g = i.getElementById("preset-transfer-modal");
-    if (g) {
-      const h = o.getComputedStyle(g), y = h.getPropertyValue("--pt-accent-color"), S = h.getPropertyValue("--pt-body-color");
-      y && y.trim() && (c = y.trim()), S && S.trim() && (d = S.trim());
+    const m = i.getElementById("preset-transfer-modal");
+    if (m) {
+      const h = o.getComputedStyle(m), y = h.getPropertyValue("--pt-accent-color"), w = h.getPropertyValue("--pt-body-color");
+      y && y.trim() && (c = y.trim()), w && w.trim() && (d = w.trim());
     }
   } catch {
   }
-  a.style.background = s, a.style.color = d, a.style.border = `1px solid ${c}`;
+  l.style.background = s, l.style.color = d, l.style.border = `1px solid ${c}`;
   const p = e.querySelector(".entry-name"), u = p ? p.textContent.trim() : "Entry", f = i.createElement("span");
   f.style.display = "inline-block", f.style.width = "8px", f.style.height = "8px", f.style.borderRadius = "999px", f.style.background = c;
-  const m = i.createElement("span");
-  if (m.style.flex = "1", m.style.whiteSpace = "nowrap", m.style.overflow = "hidden", m.style.textOverflow = "ellipsis", m.textContent = u, a.appendChild(f), a.appendChild(m), t > 1) {
+  const g = i.createElement("span");
+  if (g.style.flex = "1", g.style.whiteSpace = "nowrap", g.style.overflow = "hidden", g.style.textOverflow = "ellipsis", g.textContent = u, l.appendChild(f), l.appendChild(g), t > 1) {
     const b = i.createElement("span");
-    b.style.fontSize = l ? "10px" : "11px", b.style.opacity = "0.85", b.textContent = `+${t - 1}`, a.appendChild(b);
+    b.style.fontSize = a ? "10px" : "11px", b.style.opacity = "0.85", b.textContent = `+${t - 1}`, l.appendChild(b);
   }
-  i.body.appendChild(a), ie = a, Yn(r, n);
+  i.body.appendChild(l), se = l, Kn(r, n);
+}
+function Kn(e, t) {
+  se && (se.style.left = `${e}px`, se.style.top = `${t}px`);
+}
+function Ft() {
+  se && se.parentNode && se.parentNode.removeChild(se), se = null;
 }
 function Yn(e, t) {
-  ie && (ie.style.left = `${e}px`, ie.style.top = `${t}px`);
-}
-function Et() {
-  ie && ie.parentNode && ie.parentNode.removeChild(ie), ie = null;
-}
-function Xn(e, t) {
   const r = v();
   if (!r) return null;
   const n = ["left", "right", "single"];
   for (const o of n) {
     const i = rt(o);
     if (!i) continue;
-    const l = i.getBoundingClientRect();
-    if (l.width <= 0 || l.height <= 0 || e < l.left || e > l.right || t < l.top || t > l.bottom) continue;
+    const a = i.getBoundingClientRect();
+    if (a.width <= 0 || a.height <= 0 || e < a.left || e > a.right || t < a.top || t > a.bottom) continue;
     const s = r(i).find(".entry-item").not(".position-item").not(".pt-drag-source").toArray();
     if (!s.length)
       return {
@@ -5292,15 +4145,15 @@ function Xn(e, t) {
         referenceElement: null
       };
     for (let f = 0; f < s.length; f++) {
-      const m = s[f], b = m.getBoundingClientRect();
+      const g = s[f], b = g.getBoundingClientRect();
       if (t >= b.top && t <= b.bottom) {
-        const g = t - b.top, h = b.height / 2;
-        if (g < h) {
+        const m = t - b.top, h = b.height / 2;
+        if (m < h) {
           if (f === 0)
             return {
               side: o,
               position: "top",
-              referenceElement: m
+              referenceElement: g
             };
           const y = s[f - 1];
           return {
@@ -5312,7 +4165,7 @@ function Xn(e, t) {
         return {
           side: o,
           position: "after",
-          referenceElement: m
+          referenceElement: g
         };
       }
     }
@@ -5332,84 +4185,84 @@ function Xn(e, t) {
   }
   return null;
 }
-function Wt(e) {
+function Zt(e) {
   const t = v();
-  if (!t || (Je && Je.referenceElement && t(Je.referenceElement).removeClass(
+  if (!t || (Ye && Ye.referenceElement && t(Ye.referenceElement).removeClass(
     "pt-drop-target pt-drop-target-top pt-drop-target-after pt-drop-target-bottom"
-  ), Je = null, !e || !e.side))
+  ), Ye = null, !e || !e.side))
     return;
   const r = e.referenceElement;
   if (!r)
     return;
   const n = t(r);
   let o = "pt-drop-target-after";
-  e.position === "top" ? o = "pt-drop-target-top" : e.position === "bottom" && (o = "pt-drop-target-bottom"), n.addClass("pt-drop-target").addClass(o), Je = e;
+  e.position === "top" ? o = "pt-drop-target-top" : e.position === "bottom" && (o = "pt-drop-target-bottom"), n.addClass("pt-drop-target").addClass(o), Ye = e;
 }
-function It() {
-  Wt(null);
+function Vt() {
+  Zt(null);
 }
-const si = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const ii = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  clearDragPreview: Et,
-  clearDragSources: zt,
-  clearDropIndicator: It,
-  createDragPreview: ii,
+  clearDragPreview: Ft,
+  clearDragSources: Ut,
+  clearDropIndicator: Vt,
+  createDragPreview: oi,
   getListContainer: rt,
-  hitTestDropTarget: Xn,
-  markDragSources: oi,
-  moveDragPreview: Yn,
-  registerListContainer: ri,
-  updateDropIndicator: Wt
+  hitTestDropTarget: Yn,
+  markDragSources: ri,
+  moveDragPreview: Kn,
+  registerListContainer: ni,
+  updateDropIndicator: Zt
 }, Symbol.toStringTag, { value: "Module" }));
-let ze = null;
-function $a(e) {
+let Ee = null;
+function Ra(e) {
   return e === "left" ? window.leftEntries || [] : e === "right" ? window.rightEntries || [] : e === "single" ? window.singleEntries || [] : [];
 }
-function ka(e, t) {
-  const r = $a(e);
+function Wa(e, t) {
+  const r = Ra(e);
   if (!Array.isArray(r) || !r.length) return null;
   const n = t.data("identifier"), o = parseInt(t.data("index"), 10);
   if (n) {
-    const i = r.find((l) => l.identifier === n);
+    const i = r.find((a) => a.identifier === n);
     if (i) return i;
   }
   return !Number.isNaN(o) && o >= 0 && o < r.length ? r[o] : null;
 }
-function ai({ apiInfo: e, side: t, itemElement: r }) {
+function si({ apiInfo: e, side: t, itemElement: r }) {
   const n = v();
   if (!n || !r) return null;
-  const o = n(r), l = o.find(".entry-checkbox").prop("checked"), a = ae(t);
+  const o = n(r), a = o.find(".entry-checkbox").prop("checked"), l = le(t);
   let s = [];
-  if (a.length > 0 && l)
-    s = a.slice();
+  if (l.length > 0 && a)
+    s = l.slice();
   else {
-    const c = ka(t, o);
+    const c = Wa(t, o);
     if (!c) return null;
     s = [c];
   }
   if (!s.length) return null;
-  ze = {
+  Ee = {
     apiInfo: e,
     fromSide: t,
     dragEntries: s,
     dropTarget: null
   };
   const d = s.map((c) => c.identifier).filter(Boolean);
-  return oi(t, d), {
+  return ri(t, d), {
     side: t,
     dragEntries: s
   };
 }
-function Qn(e) {
-  ze && (ze.dropTarget = e && e.side ? e : null);
+function Xn(e) {
+  Ee && (Ee.dropTarget = e && e.side ? e : null);
 }
-function Zn() {
-  ze = null;
+function Qn() {
+  Ee = null;
 }
-function Sa() {
-  return ze;
+function Ua() {
+  return Ee;
 }
-function _a(e, t) {
+function Fa(e, t) {
   const r = v();
   if (!r || !t || !t.position) return null;
   if (t.position === "top") return "top";
@@ -5418,20 +4271,20 @@ function _a(e, t) {
   if (!n) return null;
   const o = r(n), i = e === "single" ? window.singlePresetName : e === "left" ? r("#left-preset").val() : r("#right-preset").val();
   if (!i) return null;
-  const l = o.data("identifier"), a = parseInt(o.data("index"), 10), s = Ze(i, "include_disabled");
+  const a = o.data("identifier"), l = parseInt(o.data("index"), 10), s = et(i, "include_disabled");
   let d = -1;
-  return l && Array.isArray(s) && (d = s.findIndex((c) => c.identifier === l)), d >= 0 ? d : !Number.isNaN(a) && a >= 0 ? a : null;
+  return a && Array.isArray(s) && (d = s.findIndex((c) => c.identifier === a)), d >= 0 ? d : !Number.isNaN(l) && l >= 0 ? l : null;
 }
-async function li() {
-  const e = ze;
-  if (ze = null, !e || !e.dropTarget || !e.dropTarget.side)
+async function ai() {
+  const e = Ee;
+  if (Ee = null, !e || !e.dropTarget || !e.dropTarget.side)
     return !1;
   const { apiInfo: t, fromSide: r, dragEntries: n } = e, o = e.dropTarget, i = o.side;
   if (i === r) {
-    const p = Ie(r);
+    const p = Me(r);
     if (!p) return !1;
     let u = null, f = null;
-    return o.position === "top" ? f = "top" : o.position === "bottom" ? f = "bottom" : (u = v()(o.referenceElement).data("identifier") || null, f = null), await _o(
+    return o.position === "top" ? f = "top" : o.position === "bottom" ? f = "bottom" : (u = v()(o.referenceElement).data("identifier") || null, f = null), await $o(
       t,
       r,
       p,
@@ -5442,26 +4295,350 @@ async function li() {
   }
   if (!(r === "left" && i === "right" || r === "right" && i === "left"))
     return !1;
-  const a = v(), s = r === "left" ? a("#left-preset").val() : a("#right-preset").val(), d = i === "left" ? a("#left-preset").val() : a("#right-preset").val();
+  const l = v(), s = r === "left" ? l("#left-preset").val() : l("#right-preset").val(), d = i === "left" ? l("#left-preset").val() : l("#right-preset").val();
   if (!s || !d)
     return !1;
-  const c = _a(i, o);
+  const c = Fa(i, o);
   return c === null ? !1 : (window.transferMode = {
     apiInfo: t,
     fromSide: r,
     toSide: i,
     selectedEntries: n
-  }, await Pt(t, r, i, c), !0);
+  }, await Rt(t, r, i, c), !0);
 }
-const ci = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const li = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  beginDragFromItem: ai,
-  cancelDrag: Zn,
-  commitDrag: li,
-  getCurrentState: Sa,
-  updateDropTarget: Qn
-}, Symbol.toStringTag, { value: "Module" })), ot = "分组", K = "inclusive";
-function Y() {
+  beginDragFromItem: si,
+  cancelDrag: Qn,
+  commitDrag: ai,
+  getCurrentState: Ua,
+  updateDropTarget: Xn
+}, Symbol.toStringTag, { value: "Module" }));
+let ot = localStorage.getItem("preset-transfer-entry-states-save-world-bindings") !== "false", ci = localStorage.getItem("preset-transfer-entry-states-group") !== "false";
+function Va() {
+  return ot;
+}
+function Ga(e) {
+  ot = !!e;
+}
+function di() {
+  return ci;
+}
+function pi(e) {
+  ci = !!e;
+}
+let Le = null, tt = !1, H = null;
+function Gt() {
+  try {
+    if (tt) {
+      console.log("[EntryStates] Hook已安装，跳过");
+      return;
+    }
+    const e = getCurrentApiInfo();
+    if (!e || !e.presetManager) {
+      H || (H = setTimeout(() => {
+        H = null, Gt();
+      }, 1e3), console.log("[EntryStates] API信息未就绪，等待后重试Hook"));
+      return;
+    }
+    Le = e.presetManager.savePreset.bind(e.presetManager), e.presetManager.savePreset = async function(r, n, o = {}) {
+      var i;
+      try {
+        const a = M.API.getPreset(r), l = (a == null ? void 0 : a.extensions) || {};
+        if (!n) {
+          const c = this.getCompletionPresetByName(r);
+          c ? n = c : n = this.getPresetSettings(r);
+        }
+        n.extensions || (n.extensions = {}), l.entryStates && (n.extensions.entryStates = l.entryStates), l.entryGrouping && (n.extensions.entryGrouping = l.entryGrouping), !Object.prototype.hasOwnProperty.call(n.extensions, "regexBindings") && l.regexBindings && (n.extensions.regexBindings = l.regexBindings);
+        const d = await Le.call(this, r, n, o);
+        try {
+          const c = (i = this.getCompletionPresetByName) == null ? void 0 : i.call(this, r);
+          c && (c.extensions || (c.extensions = {}), l.entryStates && (c.extensions.entryStates = l.entryStates), l.entryGrouping && (c.extensions.entryGrouping = l.entryGrouping), Object.prototype.hasOwnProperty.call(n.extensions, "regexBindings") ? c.extensions.regexBindings = n.extensions.regexBindings : l.regexBindings ? c.extensions.regexBindings = l.regexBindings : delete c.extensions.regexBindings);
+        } catch {
+        }
+        return d;
+      } catch (a) {
+        return console.error("[EntryStates] 覆写 savePreset 失败，回退原始保存逻辑:", a), await Le.call(this, r, n, o);
+      }
+    }, tt = !0, H && (clearTimeout(H), H = null), console.log("[EntryStates] 预设保存Hook已安装");
+  } catch (e) {
+    console.error("[EntryStates] 安装预设保存Hook失败:", e), H || (H = setTimeout(() => {
+      H = null, Gt();
+    }, 1500), console.log("[EntryStates] 将稍后重试安装Hook"));
+  }
+}
+function kt() {
+  try {
+    if (!tt) return;
+    if (H && (clearTimeout(H), H = null), !Le) {
+      tt = !1;
+      return;
+    }
+    const e = getCurrentApiInfo == null ? void 0 : getCurrentApiInfo(), t = e == null ? void 0 : e.presetManager;
+    if (t && typeof t.savePreset == "function")
+      try {
+        t.savePreset = Le;
+      } catch {
+      }
+    Le = null, tt = !1;
+  } catch {
+  }
+}
+function ct(e) {
+  if (!Array.isArray(e)) return [];
+  const t = [], r = /* @__PURE__ */ new Set();
+  return e.forEach((n) => {
+    if (typeof n != "string") return;
+    const o = n.trim();
+    !o || r.has(o) || (r.add(o), t.push(o));
+  }), t;
+}
+function Zn(e) {
+  const t = e && typeof e == "object" ? e : {}, r = {
+    enabled: t.enabled !== !1,
+    versions: [],
+    currentVersion: t.currentVersion || null
+  };
+  return Array.isArray(t.versions) && (r.versions = t.versions.map((n) => {
+    if (!n || typeof n != "object") return null;
+    const o = { ...n };
+    return (!o.states || typeof o.states != "object") && (o.states = {}), o.worldBindings = ct(o.worldBindings), o;
+  }).filter(Boolean)), r;
+}
+function Ae(e) {
+  try {
+    const t = M.API.getPreset(e);
+    if (!t || !t.extensions)
+      return St();
+    const r = t.extensions.entryStates;
+    return r ? Zn(r) : St();
+  } catch (t) {
+    return console.warn(`获取预设 "${e}" 的条目状态配置失败:`, t), St();
+  }
+}
+async function dt(e, t) {
+  try {
+    const r = Zn(t), n = getCurrentApiInfo == null ? void 0 : getCurrentApiInfo();
+    if (t && typeof t == "object" && (t.enabled = r.enabled, t.versions = r.versions, t.currentVersion = r.currentVersion), n && n.presetManager) {
+      const i = n.presetManager.getCompletionPresetByName(e);
+      if (!i) throw new Error(`预设 "${e}" 不存在`);
+      return i.extensions || (i.extensions = {}), i.extensions.entryStates = r, await n.presetManager.savePreset(e, i, { skipUpdate: !1 }), !0;
+    }
+    const o = M.API.getPreset(e);
+    if (!o) throw new Error(`预设 "${e}" 不存在`);
+    return o.extensions || (o.extensions = {}), o.extensions.entryStates = r, await M.API.replacePreset(e, o), !0;
+  } catch (r) {
+    return console.error(`保存预设 "${e}" 的条目状态配置失败:`, r), !1;
+  }
+}
+function St() {
+  return {
+    enabled: !0,
+    versions: [],
+    currentVersion: null
+  };
+}
+function er(e) {
+  try {
+    const t = getCurrentApiInfo();
+    if (!t) return {};
+    const r = O(t, e);
+    if (!r) return {};
+    const n = We(r, "include_disabled"), o = {};
+    return n.forEach((i) => {
+      i.identifier && (o[i.identifier] = i.enabled === !0);
+    }), o;
+  } catch (t) {
+    return console.error("获取当前条目状态失败:", t), {};
+  }
+}
+async function Ha(e, t, r) {
+  try {
+    const n = Ae(e), o = n.versions.find((d) => d.id === t);
+    if (!o)
+      throw new Error("状态版本不存在");
+    const i = getCurrentApiInfo();
+    if (!i) throw new Error("无法获取API信息");
+    const a = O(i, e);
+    if (!a) throw new Error("预设不存在");
+    a.prompt_order || (a.prompt_order = []);
+    const l = 100001;
+    let s = a.prompt_order.find((d) => d.character_id === l);
+    return s || (s = { character_id: l, order: [] }, a.prompt_order.push(s)), s.order.forEach((d) => {
+      d.identifier && o.states.hasOwnProperty(d.identifier) && (d.enabled = o.states[d.identifier]);
+    }), await i.presetManager.savePreset(e, a, { skipUpdate: !0 }), n.currentVersion = t, await dt(e, n), ot && Object.prototype.hasOwnProperty.call(o, "worldBindings") && r && await r(o.worldBindings), !0;
+  } catch (n) {
+    throw console.error("应用条目状态失败:", n), n;
+  }
+}
+async function qa(e, t, r) {
+  try {
+    const n = er(e), o = Ae(e);
+    let i = null;
+    ot && r && (i = await r(), i === null && console.warn("[EntryStates] 获取世界书选择失败，已跳过绑定保存"));
+    const a = {
+      id: generateUUID(),
+      name: t,
+      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+      states: n
+    };
+    if (ot && i !== null && (a.worldBindings = i), o.versions.push(a), o.currentVersion = a.id, await dt(e, o))
+      return a;
+    throw new Error("保存失败");
+  } catch (n) {
+    throw console.error("保存条目状态版本失败:", n), n;
+  }
+}
+async function ui(e, t) {
+  try {
+    const r = Ae(e), n = r.versions.findIndex((o) => o.id === t);
+    if (n === -1)
+      throw new Error("版本不存在");
+    return r.versions.splice(n, 1), r.currentVersion === t && (r.currentVersion = null), await dt(e, r);
+  } catch (r) {
+    throw console.error("删除条目状态版本失败:", r), r;
+  }
+}
+async function fi(e, t, r) {
+  try {
+    const n = Ae(e), o = n.versions.find((i) => i.id === t);
+    if (!o)
+      throw new Error("版本不存在");
+    return o.name = r, await dt(e, n);
+  } catch (n) {
+    throw console.error("重命名条目状态版本失败:", n), n;
+  }
+}
+let ft = null;
+async function tr() {
+  return ft || (ft = import("/scripts/world-info.js").catch((e) => {
+    throw ft = null, e;
+  })), ft;
+}
+function gi() {
+  try {
+    const e = v();
+    if (!e) return null;
+    const t = e("#world_info");
+    if (!t.length) return null;
+    const r = t.find("option:selected");
+    if (!r.length) return [];
+    const n = [];
+    return r.each(function() {
+      const o = e(this).text().trim();
+      o && !n.includes(o) && n.push(o);
+    }), ct(n);
+  } catch (e) {
+    return console.warn("[EntryStates] 读取界面世界书选择失败:", e), null;
+  }
+}
+async function mi() {
+  const e = gi();
+  if (Array.isArray(e))
+    return e;
+  try {
+    const t = await tr(), r = Array.isArray(t.selected_world_info) ? t.selected_world_info : [];
+    return ct(r);
+  } catch (t) {
+    return console.warn("[EntryStates] 获取世界书选择失败:", t), null;
+  }
+}
+async function hi(e) {
+  var u, f, g, b;
+  const t = v(), r = ct(Array.isArray(e) ? e : []), n = r.length > 0;
+  let o = null;
+  const i = async () => (o || (o = await tr()), o), a = () => {
+    if (!t) return [];
+    const m = t("#world_info");
+    return m.length ? m.find("option").map((h, y) => t(y).text().trim()).get().filter(Boolean) : [];
+  };
+  let l = t ? t("#world_info") : null, s = l && l.length ? a() : [];
+  if (n && s.length === 0)
+    try {
+      const m = await i();
+      typeof m.updateWorldInfoList == "function" && await m.updateWorldInfoList(), (!l || !l.length) && (l = t ? t("#world_info") : null), l && l.length ? s = a() : Array.isArray(m.world_names) && (s = m.world_names.slice());
+    } catch (m) {
+      console.warn("[EntryStates] 更新世界书列表失败:", m);
+    }
+  if (!s.length && n)
+    try {
+      const m = await i();
+      Array.isArray(m.world_names) && (s = m.world_names.slice());
+    } catch (m) {
+      console.warn("[EntryStates] 获取世界书列表失败:", m);
+    }
+  const d = new Set(s), c = [], p = [];
+  if (n && r.forEach((m) => {
+    !d.size || d.has(m) ? c.push(m) : p.push(m);
+  }), l && l.length)
+    if (!n)
+      l.val([]).trigger("change");
+    else if (c.length > 0) {
+      const m = [], h = new Set(c);
+      l.find("option").each(function() {
+        const y = t(this).text().trim();
+        h.has(y) && m.push(t(this).val());
+      }), l.val(m).trigger("change");
+    } else p.length === r.length && l.val([]).trigger("change");
+  else {
+    if (!o && (n || !n))
+      try {
+        await i();
+      } catch (m) {
+        return console.warn("[EntryStates] 同步世界书失败:", m), { applied: c, missing: p };
+      }
+    if (!o)
+      return { applied: c, missing: p };
+    n ? c.length > 0 && (o.selected_world_info = c.slice()) : o.selected_world_info = [];
+    try {
+      const m = te();
+      (u = m == null ? void 0 : m.saveSettingsDebounced) == null || u.call(m), (b = (f = m == null ? void 0 : m.eventSource) == null ? void 0 : f.emit) == null || b.call(f, (g = m.eventTypes) == null ? void 0 : g.WORLDINFO_SETTINGS_UPDATED);
+    } catch (m) {
+      console.warn("[EntryStates] 同步世界书事件失败:", m);
+    }
+  }
+  return { applied: c, missing: p };
+}
+async function bi(e, t) {
+  return await Ha(e, t, async (n) => {
+    try {
+      const { applied: o, missing: i } = await hi(n);
+      window.toastr && (i.length && toastr.warning(`世界书未找到: ${i.join("、")}`), o.length ? toastr.success(`已同步世界书: ${o.join("、")}`) : Array.isArray(n) && n.length === 0 && toastr.info("世界书选择已清空"));
+    } catch (o) {
+      console.warn("同步世界书失败:", o), window.toastr && toastr.error("同步世界书失败: " + o.message);
+    }
+  });
+}
+async function xi(e, t) {
+  return await qa(e, t, async () => {
+    const n = await mi();
+    return n === null && window.toastr && toastr.warning("获取世界书选择失败，已跳过绑定保存"), n;
+  });
+}
+const vi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  applyEntryStates: bi,
+  applyWorldBindings: hi,
+  deleteEntryStatesVersion: ui,
+  getCurrentEntryStates: er,
+  getCurrentWorldSelection: mi,
+  getDefaultEntryStates: St,
+  getEntryStatesGroupByPrefix: di,
+  getEntryStatesSaveWorldBindings: Va,
+  getPresetEntryStates: Ae,
+  getWorldInfoModule: tr,
+  getWorldSelectionFromDom: gi,
+  hookPresetSaveToProtectExtensions: Gt,
+  normalizeEntryStatesConfig: Zn,
+  renameEntryStatesVersion: fi,
+  sanitizeWorldBindings: ct,
+  saveCurrentEntryStatesAsVersion: xi,
+  savePresetEntryStates: dt,
+  setEntryStatesGroupByPrefix: pi,
+  setEntryStatesSaveWorldBindings: Ga,
+  unhookPresetSaveToProtectExtensions: kt
+}, Symbol.toStringTag, { value: "Module" })), it = "分组", Q = "inclusive";
+function Z() {
   var e;
   try {
     if ((e = globalThis.crypto) != null && e.randomUUID) return globalThis.crypto.randomUUID();
@@ -5469,52 +4646,52 @@ function Y() {
   }
   return `pt-eg-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
-function di(e) {
+function yi(e) {
   return e ? Array.isArray(e) ? e : [e] : [];
 }
-function Mt(e) {
+function Ht(e) {
   return !!e && typeof e == "object" && !Array.isArray(e);
 }
-function $e(e) {
-  return (e == null ? void 0 : e.name) || (e == null ? void 0 : e.groupName) || ot;
+function Se(e) {
+  return (e == null ? void 0 : e.name) || (e == null ? void 0 : e.groupName) || it;
 }
-function pi(e) {
+function wi(e) {
   return typeof (e == null ? void 0 : e.startIndex) == "number" && typeof (e == null ? void 0 : e.endIndex) == "number";
 }
-function fi(e) {
+function $i(e) {
   return typeof (e == null ? void 0 : e.startIdentifier) == "string" || typeof (e == null ? void 0 : e.endIdentifier) == "string";
 }
-function Pa(e, t) {
-  if (!Mt(e)) return null;
-  if (pi(e)) {
+function Ja(e, t) {
+  if (!Ht(e)) return null;
+  if (wi(e)) {
     const r = Array.isArray(t) ? t[e.startIndex] : null, n = Array.isArray(t) ? t[e.endIndex] : null;
     return typeof r == "string" && typeof n == "string" ? {
-      id: typeof e.id == "string" ? e.id : Y(),
-      name: $e(e),
+      id: typeof e.id == "string" ? e.id : Z(),
+      name: Se(e),
       startIdentifier: r,
       endIdentifier: n,
-      mode: e.mode || K
+      mode: e.mode || Q
     } : {
-      id: typeof e.id == "string" ? e.id : Y(),
-      name: $e(e),
-      mode: e.mode || K,
+      id: typeof e.id == "string" ? e.id : Z(),
+      name: Se(e),
+      mode: e.mode || Q,
       unresolved: !0,
       legacyStartIndex: e.startIndex,
       legacyEndIndex: e.endIndex
     };
   }
-  if (fi(e)) {
+  if ($i(e)) {
     const r = typeof e.startIdentifier == "string" ? e.startIdentifier : null, n = typeof e.endIdentifier == "string" ? e.endIdentifier : null;
     return r && n ? {
-      id: typeof e.id == "string" ? e.id : Y(),
-      name: $e(e),
+      id: typeof e.id == "string" ? e.id : Z(),
+      name: Se(e),
       startIdentifier: r,
       endIdentifier: n,
-      mode: e.mode || K
+      mode: e.mode || Q
     } : {
-      id: typeof e.id == "string" ? e.id : Y(),
-      name: $e(e),
-      mode: e.mode || K,
+      id: typeof e.id == "string" ? e.id : Z(),
+      name: Se(e),
+      mode: e.mode || Q,
       unresolved: !0,
       legacyStartIndex: e.legacyStartIndex,
       legacyEndIndex: e.legacyEndIndex
@@ -5522,28 +4699,28 @@ function Pa(e, t) {
   }
   return null;
 }
-function Ca(e, t) {
-  if (!Mt(e)) return null;
-  if (fi(e)) {
+function Ka(e, t) {
+  if (!Ht(e)) return null;
+  if ($i(e)) {
     const r = {
-      id: typeof e.id == "string" ? e.id : Y(),
-      name: $e(e),
-      mode: e.mode || K
+      id: typeof e.id == "string" ? e.id : Z(),
+      name: Se(e),
+      mode: e.mode || Q
     };
     return typeof e.startIdentifier == "string" && (r.startIdentifier = e.startIdentifier), typeof e.endIdentifier == "string" && (r.endIdentifier = e.endIdentifier), e.unresolved && (r.unresolved = !0), typeof e.legacyStartIndex == "number" && (r.legacyStartIndex = e.legacyStartIndex), typeof e.legacyEndIndex == "number" && (r.legacyEndIndex = e.legacyEndIndex), r;
   }
-  if (pi(e)) {
+  if (wi(e)) {
     const r = Array.isArray(t) ? t[e.startIndex] : null, n = Array.isArray(t) ? t[e.endIndex] : null;
     return typeof r == "string" && typeof n == "string" ? {
-      id: typeof e.id == "string" ? e.id : Y(),
-      name: $e(e),
+      id: typeof e.id == "string" ? e.id : Z(),
+      name: Se(e),
       startIdentifier: r,
       endIdentifier: n,
-      mode: e.mode || K
+      mode: e.mode || Q
     } : {
-      id: typeof e.id == "string" ? e.id : Y(),
-      name: $e(e),
-      mode: e.mode || K,
+      id: typeof e.id == "string" ? e.id : Z(),
+      name: Se(e),
+      mode: e.mode || Q,
       unresolved: !0,
       legacyStartIndex: e.startIndex,
       legacyEndIndex: e.endIndex
@@ -5551,165 +4728,960 @@ function Ca(e, t) {
   }
   return null;
 }
-function We(e, t) {
-  return di(e).map((r) => Ca(r, t)).filter(Boolean);
+function Ue(e, t) {
+  return yi(e).map((r) => Ka(r, t)).filter(Boolean);
 }
-function er(e, t, r) {
+function nr(e, t, r) {
   var n, o, i;
   try {
-    const l = e == null ? void 0 : e.presetManager;
-    if (!l) return;
-    const a = (n = l.getSelectedPresetName) == null ? void 0 : n.call(l);
-    if (!a || a !== t) return;
-    const s = (i = (o = l.getPresetList) == null ? void 0 : o.call(l)) == null ? void 0 : i.settings;
-    if (!Mt(s)) return;
-    Mt(s.extensions) || (s.extensions = {}), s.extensions.entryGrouping = r;
-  } catch (l) {
-    console.warn("同步当前预设分组扩展数据失败:", l);
+    const a = e == null ? void 0 : e.presetManager;
+    if (!a) return;
+    const l = (n = a.getSelectedPresetName) == null ? void 0 : n.call(a);
+    if (!l || l !== t) return;
+    const s = (i = (o = a.getPresetList) == null ? void 0 : o.call(a)) == null ? void 0 : i.settings;
+    if (!Ht(s)) return;
+    Ht(s.extensions) || (s.extensions = {}), s.extensions.entryGrouping = r;
+  } catch (a) {
+    console.warn("同步当前预设分组扩展数据失败:", a);
   }
 }
-function At(e, t) {
+function qt(e, t) {
   try {
-    const r = z.API.getPreset(e);
+    const r = M.API.getPreset(e);
     if (!r || !r.extensions) return [];
     const n = r.extensions.entryGrouping;
-    return n ? di(n).map((o) => Pa(o, t)).filter(Boolean) : [];
+    return n ? yi(n).map((o) => Ja(o, t)).filter(Boolean) : [];
   } catch (r) {
     return console.warn(`获取预设 "${e}" 的分组配置失败`, r), [];
   }
 }
-async function ui(e, t, r, n, o) {
+async function ki(e, t, r, n, o) {
   try {
     if (typeof t != "string" || typeof r != "string")
       throw new Error("Invalid identifier anchors");
-    const i = M == null ? void 0 : M();
+    const i = B == null ? void 0 : B();
     if (i && i.presetManager) {
       const s = i.presetManager.getCompletionPresetByName(e);
       if (!s) throw new Error(`Preset "${e}" not found`);
       s.extensions || (s.extensions = {});
-      const d = We(s.extensions.entryGrouping, o);
+      const d = Ue(s.extensions.entryGrouping, o);
       d.push({
-        id: Y(),
-        name: n || ot,
+        id: Z(),
+        name: n || it,
         startIdentifier: t,
         endIdentifier: r,
-        mode: K
-      }), s.extensions.entryGrouping = d, er(i, e, d);
-      const c = z.API.getPreset(e);
+        mode: Q
+      }), s.extensions.entryGrouping = d, nr(i, e, d);
+      const c = M.API.getPreset(e);
       return c && (c.extensions || (c.extensions = {}), c.extensions.entryGrouping = d), await i.presetManager.savePreset(e, s, { skipUpdate: !0 }), !0;
     }
-    const l = z.API.getPreset(e);
-    if (!l) throw new Error(`Preset "${e}" not found`);
-    l.extensions || (l.extensions = {});
-    const a = We(l.extensions.entryGrouping, o);
-    return a.push({
-      id: Y(),
-      name: n || ot,
+    const a = M.API.getPreset(e);
+    if (!a) throw new Error(`Preset "${e}" not found`);
+    a.extensions || (a.extensions = {});
+    const l = Ue(a.extensions.entryGrouping, o);
+    return l.push({
+      id: Z(),
+      name: n || it,
       startIdentifier: t,
       endIdentifier: r,
-      mode: K
-    }), l.extensions.entryGrouping = a, await z.API.replacePreset(e, l), !0;
+      mode: Q
+    }), a.extensions.entryGrouping = l, await M.API.replacePreset(e, a), !0;
   } catch (i) {
     return console.error("添加分组配置失败:", i), !1;
   }
 }
-async function gi(e, t, r, n, o, i) {
+async function Si(e, t, r, n, o, i) {
   try {
-    const l = M == null ? void 0 : M();
-    if (l && l.presetManager) {
-      const c = l.presetManager.getCompletionPresetByName(e);
+    const a = B == null ? void 0 : B();
+    if (a && a.presetManager) {
+      const c = a.presetManager.getCompletionPresetByName(e);
       if (!c) throw new Error(`Preset "${e}" not found`);
       c.extensions || (c.extensions = {});
-      const p = We(c.extensions.entryGrouping, i);
+      const p = Ue(c.extensions.entryGrouping, i);
       if (t < 0 || t >= p.length)
         throw new Error(`Invalid group index: ${t}`);
       const u = p[t] || {};
       p[t] = {
-        id: u.id || Y(),
-        name: o || u.name || ot,
+        id: u.id || Z(),
+        name: o || u.name || it,
         startIdentifier: typeof r == "string" ? r : u.startIdentifier,
         endIdentifier: typeof n == "string" ? n : u.endIdentifier,
-        mode: u.mode || K
-      }, c.extensions.entryGrouping = p, er(l, e, p);
-      const f = z.API.getPreset(e);
-      return f && (f.extensions || (f.extensions = {}), f.extensions.entryGrouping = p), await l.presetManager.savePreset(e, c, { skipUpdate: !0 }), !0;
+        mode: u.mode || Q
+      }, c.extensions.entryGrouping = p, nr(a, e, p);
+      const f = M.API.getPreset(e);
+      return f && (f.extensions || (f.extensions = {}), f.extensions.entryGrouping = p), await a.presetManager.savePreset(e, c, { skipUpdate: !0 }), !0;
     }
-    const a = z.API.getPreset(e);
-    if (!a) throw new Error(`Preset "${e}" not found`);
-    a.extensions || (a.extensions = {});
-    const s = We(a.extensions.entryGrouping, i);
+    const l = M.API.getPreset(e);
+    if (!l) throw new Error(`Preset "${e}" not found`);
+    l.extensions || (l.extensions = {});
+    const s = Ue(l.extensions.entryGrouping, i);
     if (t < 0 || t >= s.length)
       throw new Error(`Invalid group index: ${t}`);
     const d = s[t] || {};
     return s[t] = {
-      id: d.id || Y(),
-      name: o || d.name || ot,
+      id: d.id || Z(),
+      name: o || d.name || it,
       startIdentifier: typeof r == "string" ? r : d.startIdentifier,
       endIdentifier: typeof n == "string" ? n : d.endIdentifier,
-      mode: d.mode || K
-    }, a.extensions.entryGrouping = s, await z.API.replacePreset(e, a), !0;
-  } catch (l) {
-    return console.error("更新分组配置失败:", l), !1;
+      mode: d.mode || Q
+    }, l.extensions.entryGrouping = s, await M.API.replacePreset(e, l), !0;
+  } catch (a) {
+    return console.error("更新分组配置失败:", a), !1;
   }
 }
-async function mi(e, t, r) {
+async function Pi(e, t, r) {
   try {
-    const n = M == null ? void 0 : M();
+    const n = B == null ? void 0 : B();
     if (n && n.presetManager) {
-      const l = n.presetManager.getCompletionPresetByName(e);
-      if (!l) throw new Error(`Preset "${e}" not found`);
-      l.extensions || (l.extensions = {});
-      const a = We(l.extensions.entryGrouping, r);
-      if (t < 0 || t >= a.length)
+      const a = n.presetManager.getCompletionPresetByName(e);
+      if (!a) throw new Error(`Preset "${e}" not found`);
+      a.extensions || (a.extensions = {});
+      const l = Ue(a.extensions.entryGrouping, r);
+      if (t < 0 || t >= l.length)
         throw new Error(`Invalid group index: ${t}`);
-      a.splice(t, 1), l.extensions.entryGrouping = a, er(n, e, a);
-      const s = z.API.getPreset(e);
-      return s && (s.extensions || (s.extensions = {}), s.extensions.entryGrouping = a), await n.presetManager.savePreset(e, l, { skipUpdate: !0 }), !0;
+      l.splice(t, 1), a.extensions.entryGrouping = l, nr(n, e, l);
+      const s = M.API.getPreset(e);
+      return s && (s.extensions || (s.extensions = {}), s.extensions.entryGrouping = l), await n.presetManager.savePreset(e, a, { skipUpdate: !0 }), !0;
     }
-    const o = z.API.getPreset(e);
+    const o = M.API.getPreset(e);
     if (!o) throw new Error(`Preset "${e}" not found`);
     o.extensions || (o.extensions = {});
-    const i = We(o.extensions.entryGrouping, r);
+    const i = Ue(o.extensions.entryGrouping, r);
     if (t < 0 || t >= i.length)
       throw new Error(`Invalid group index: ${t}`);
-    return i.splice(t, 1), o.extensions.entryGrouping = i, await z.API.replacePreset(e, o), !0;
+    return i.splice(t, 1), o.extensions.entryGrouping = i, await M.API.replacePreset(e, o), !0;
   } catch (n) {
     return console.error("删除分组配置失败:", n), !1;
   }
 }
-const hi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const _i = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  addPresetGrouping: ui,
-  getAllPresetGroupings: At,
-  removePresetGrouping: mi,
-  updatePresetGrouping: gi
+  addPresetGrouping: ki,
+  getAllPresetGroupings: qt,
+  removePresetGrouping: Pi,
+  updatePresetGrouping: Si
 }, Symbol.toStringTag, { value: "Module" }));
-function za(e) {
+let Ci = localStorage.getItem("preset-transfer-regex-binding-enabled") !== "false";
+const Ya = 2, Ei = "preset-transfer-regex-baseline-v2";
+let $e = null;
+const Xa = {
+  GLOBAL: "global",
+  // 全局正则，永不禁用
+  EXCLUSIVE: "exclusive"
+  // 专属正则，可被多个预设设置，切换时智能管理
+};
+function Qa() {
+  if ($e) return $e;
+  try {
+    const e = localStorage.getItem(Ei), t = e ? JSON.parse(e) : {};
+    $e = t && typeof t == "object" ? t : {};
+  } catch {
+    $e = {};
+  }
+  return $e;
+}
+function Za(e) {
+  $e = e && typeof e == "object" ? e : {};
+  try {
+    localStorage.setItem(Ei, JSON.stringify($e));
+  } catch {
+  }
+}
+function V(e) {
+  return String(e ?? "");
+}
+function Fe(e) {
+  const t = {
+    bound: [],
+    // [{ id: string, enabled: boolean }]
+    exclusive: [],
+    // legacy: array of ids
+    states: {}
+    // { [id]: boolean }
+  };
+  if (!e) return t;
+  const r = (n, o) => {
+    const i = V(n);
+    if (!i) return;
+    const a = !!o, l = t.bound.findIndex((s) => V(s == null ? void 0 : s.id) === i);
+    l >= 0 ? t.bound[l].enabled = a : t.bound.push({ id: i, enabled: a }), t.states[i] = a;
+  };
+  return Array.isArray(e.bound) ? e.bound.forEach((n) => {
+    n && typeof n == "object" && r(n.id, n.enabled);
+  }) : Array.isArray(e.items) ? e.items.forEach((n) => {
+    n && typeof n == "object" && r(n.id, n.enabled);
+  }) : Array.isArray(e.exclusive) && e.exclusive.forEach((n) => r(n, !0)), e.states && typeof e.states == "object" && Object.entries(e.states).forEach(([n, o]) => {
+    V(n) in t.states && r(n, !!o);
+  }), t.exclusive = t.bound.map((n) => V(n.id)), t;
+}
+function q(e) {
+  var t;
+  try {
+    try {
+      const o = B == null ? void 0 : B(), i = o == null ? void 0 : o.presetManager;
+      if (i && typeof i.getCompletionPresetByName == "function") {
+        const a = i.getCompletionPresetByName(e);
+        if ((t = a == null ? void 0 : a.extensions) != null && t.regexBindings)
+          return Fe(a.extensions.regexBindings);
+        if (a)
+          return ae();
+      }
+    } catch {
+    }
+    const r = M.API.getPreset(e);
+    if (!r || !r.extensions)
+      return ae();
+    const n = r.extensions.regexBindings;
+    return n ? Fe(n) : ae();
+  } catch (r) {
+    return console.warn(`获取预设 "${e}" 的正则绑定配置失败:`, r), ae();
+  }
+}
+function zi(e) {
+  const t = JSON.parse(JSON.stringify(e));
+  return t.prompts && Array.isArray(t.prompts) && (t.prompts = t.prompts.filter((r) => r != null)), t.prompt_order && Array.isArray(t.prompt_order) && (t.prompt_order = t.prompt_order.filter((r) => r != null).map((r) => r && r.order && Array.isArray(r.order) ? {
+    ...r,
+    order: r.order.filter((n) => n != null)
+  } : r)), t;
+}
+async function rr(e, t) {
+  try {
+    const r = Fe(t), n = {
+      version: Ya,
+      bound: r.bound,
+      // Keep legacy field for backwards compatibility / exports.
+      exclusive: r.exclusive
+    }, o = B == null ? void 0 : B();
+    if (o && o.presetManager) {
+      const a = o.presetManager.getCompletionPresetByName(e);
+      if (!a) throw new Error(`Preset "${e}" not found`);
+      a.extensions || (a.extensions = {}), a.extensions.regexBindings = n, await o.presetManager.savePreset(e, a, { skipUpdate: !1 });
+      const l = M.API.getPreset(e);
+      return l && (l.extensions || (l.extensions = {}), l.extensions.regexBindings = n), !0;
+    }
+    const i = M.API.getPreset(e);
+    if (!i) throw new Error(`Preset "${e}" not found`);
+    i.extensions || (i.extensions = {}), i.extensions.regexBindings = n;
+    try {
+      return await M.API.replacePreset(e, i), !0;
+    } catch (a) {
+      console.warn("Failed to replace preset directly, retrying with cleaned data:", a);
+      const l = zi(i);
+      return l.extensions.regexBindings = n, await M.API.replacePreset(e, l), console.log("Preset saved successfully with cleaned data"), !0;
+    }
+  } catch (r) {
+    return console.error(`Failed to save regex bindings for preset "${e}":`, r), !1;
+  }
+}
+function ae() {
+  return Fe(null);
+}
+function qe() {
+  try {
+    return M.API.getTavernRegexes({ scope: "global", enable_state: "all" }) || [];
+  } catch (e) {
+    return console.error("获取正则列表失败:", e), [];
+  }
+}
+function Ii(e, t, { fromBindings: r, toBindings: n } = {}) {
+  try {
+    const o = r != null ? Fe(r) : e ? q(e) : ae(), i = n != null ? Fe(n) : q(t), a = new Set((o.exclusive || []).map(V)), l = new Set((i.exclusive || []).map(V)), s = /* @__PURE__ */ new Map();
+    i.bound.forEach((f) => {
+      s.set(V(f.id), !!f.enabled);
+    });
+    const d = /* @__PURE__ */ new Set([...a, ...l]);
+    try {
+      const f = B == null ? void 0 : B(), g = f == null ? void 0 : f.presetNames;
+      Array.isArray(g) && g.forEach((b) => {
+        const m = b === t && n != null ? i : b === e && r != null ? o : q(b);
+        ((m == null ? void 0 : m.exclusive) || []).forEach((h) => d.add(V(h)));
+      });
+    } catch {
+    }
+    const c = i.bound.filter((f) => !!f.enabled).map((f) => V(f.id)), p = i.bound.filter((f) => !f.enabled).map((f) => V(f.id)), u = Array.from(a).filter((f) => !l.has(f));
+    return {
+      toEnable: c,
+      toDisable: p,
+      toRestore: u,
+      fromBindings: o,
+      toBindings: i,
+      fromIds: a,
+      toIds: l,
+      desiredById: s,
+      allBoundIds: d
+    };
+  } catch (o) {
+    return console.error("分析正则变化失败:", o), {
+      toEnable: [],
+      toDisable: [],
+      toRestore: [],
+      fromBindings: ae(),
+      toBindings: ae(),
+      fromIds: /* @__PURE__ */ new Set(),
+      toIds: /* @__PURE__ */ new Set(),
+      desiredById: /* @__PURE__ */ new Map(),
+      allBoundIds: /* @__PURE__ */ new Set()
+    };
+  }
+}
+async function Ve(e, t, r = {}) {
+  try {
+    const { fromIds: n, toIds: o, desiredById: i, toBindings: a, allBoundIds: l } = Ii(
+      e,
+      t,
+      r
+    );
+    if (((l == null ? void 0 : l.size) || 0) === 0 && ((n == null ? void 0 : n.size) || 0) === 0)
+      return !0;
+    const s = qe(), d = new Map(s.map((g) => [V(g.id), g])), c = Qa();
+    l.forEach((g) => {
+      if (Object.prototype.hasOwnProperty.call(c, g)) return;
+      const b = d.get(g);
+      b && (c[g] = !!b.enabled);
+    });
+    const p = new Set(Array.from(n).filter((g) => !l.has(g))), u = (g) => (g.forEach((b) => {
+      const m = V(b.id);
+      if (l.has(m)) {
+        b.enabled = i.has(m) ? !!i.get(m) : !1;
+        return;
+      }
+      p.has(m) && Object.prototype.hasOwnProperty.call(c, m) && (b.enabled = !!c[m]);
+    }), g), f = await M.API.updateTavernRegexesWith(u, { scope: "global" });
+    return Array.isArray(f) && f.forEach((g) => {
+      const b = V(g.id);
+      l.has(b) || (c[b] = !!g.enabled);
+    }), Za(c), !0;
+  } catch (n) {
+    return console.error("切换正则失败:", n), window.toastr ? toastr.error("正则切换失败: " + n.message) : console.error("正则切换失败:", n.message), !1;
+  }
+}
+function el(e, t, r) {
+  const n = v();
+  if (n("#regex-switching-feedback").remove(), e.length === 0 && t.length === 0)
+    return;
+  localStorage.getItem("preset-transfer-font-size");
+  const i = n(`
+    <div id="regex-switching-feedback" style="
+      --pt-font-size: ${N.getVars().fontSize};
+      position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 10002;
+      background: rgba(0, 0, 0, 0.85); color: white; padding: 10px 20px;
+      border-radius: 6px; font-size: calc(var(--pt-font-size) * 0.8125); font-weight: 500;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    ">
+      ✅ 已开启绑定正则
+    </div>
+  `);
+  n("body").append(i);
+}
+function tl() {
+  const e = v();
+  setTimeout(() => {
+    e("#regex-switching-feedback").fadeOut(300, function() {
+      e(this).remove();
+    });
+  }, 1e3);
+}
+function Je() {
+  return Ci;
+}
+function Mi(e) {
+  Ci = e;
+}
+const Ai = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  REGEX_BINDING_TYPES: Xa,
+  analyzeRegexChanges: Ii,
+  getAllAvailableRegexes: qe,
+  getDefaultRegexBindings: ae,
+  getPresetRegexBindings: q,
+  getRegexBindingEnabled: Je,
+  hideRegexSwitchingFeedback: tl,
+  minimalCleanPresetData: zi,
+  savePresetRegexBindings: rr,
+  setRegexBindingEnabled: Mi,
+  showRegexSwitchingFeedback: el,
+  switchPresetRegexes: Ve
+}, Symbol.toStringTag, { value: "Module" }));
+let ke = di(), gn = 0, Pe = null, Te = { entryStatesPanelEnabled: !0, regexBindingEnabled: !0 };
+function or() {
+  v()("#st-native-entry-states-panel").remove();
+}
+function ir() {
+  v()("#st-native-regex-panel").remove();
+}
+function ji() {
+  Pe && (clearTimeout(Pe), Pe = null), gn = 0;
+  const e = () => {
+    gn++;
+    const t = Te || {}, r = !!t.entryStatesPanelEnabled, n = !!t.regexBindingEnabled;
+    r || or(), n || ir(), (r || n) && Gt();
+    const o = !r || Ti(), i = !n || ar();
+    o && i || gn >= 10 || (Pe = setTimeout(e, 500));
+  };
+  e();
+}
+function Ti() {
+  var o, i;
+  const e = v(), t = e("#openai_api-presets");
+  if (!t.length) return !1;
+  if (e("#st-native-entry-states-panel").length) return !0;
+  e("#st-native-entry-states-styles").length || e("head").append(`
+      <style id="st-native-entry-states-styles">
+        /* 简化样式 - 跟随酒馆美化主题 */
+        #st-native-entry-states-panel { margin-top: 10px; }
+        #st-native-entry-states-panel .header { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
+        #st-native-entry-states-panel .header .title { font-weight: 600; }
+        #st-native-entry-states-panel .version-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; margin-bottom: 4px; border-radius: 6px; }
+        #st-native-entry-states-panel .version-item:hover { background: rgba(0,0,0,0.05); }
+        #st-native-entry-states-panel .version-name { flex: 1; font-weight: 500; }
+        #st-native-entry-states-panel .version-date { font-size: 11px; opacity: 0.7; }
+        #st-native-entry-states-panel .version-actions { display: flex; gap: 4px; }
+        #st-native-entry-states-panel .current-version { font-weight: 600; }
+      </style>
+    `);
+  const r = `
+    <div id="st-native-entry-states-panel">
+      <div class="header" style="display: flex; align-items: center; gap: 4px;">
+        <button id="st-entry-states-toggle" class="menu_button" title="展开/折叠">▶</button>
+        <span class="title">条目状态</span>
+        <div style="flex:1;"></div>
+        <button id="save-current-entry-states" class="menu_button" style="font-size: 11px; padding: 2px 6px; display: inline-block; white-space: nowrap;" title="保存当前条目状态">保存</button>
+        <button id="entry-states-group-toggle" class="menu_button" style="font-size: 11px; padding: 2px 6px; display: inline-block; white-space: nowrap;" title="按名称前缀分组显示">${ke ? "分组:开" : "分组:关"}</button>
+      </div>
+      <div class="content" style="display:none; max-height:50vh; overflow:auto; padding:10px;">
+        <div id="st-entry-states-status" style="opacity: .9;">加载中...</div>
+      </div>
+    </div>`;
+  t.append(r), Bi();
+  const n = (i = (o = M.API).getLoadedPresetName) == null ? void 0 : i.call(o);
+  return n && ze(n), !0;
+}
+function ge(e) {
+  const r = v()("#st-native-entry-states-panel");
+  if (!r.length) return;
+  const n = Ae(e), o = er(e), i = Object.keys(o).length, a = Object.values(o).filter(Boolean).length, l = (d) => Array.isArray(d) ? d.length === 0 ? '<div class="version-world" style="font-size: 12px; opacity: 0.75;">世界书: 无</div>' : `<div class="version-world" style="font-size: 12px; opacity: 0.75;">世界书: ${d.map((p) => I(p)).join("、")}</div>` : '<div class="version-world" style="font-size: 12px; opacity: 0.75;">世界书: 未保存</div>';
+  let s = `
+    <div style="margin-bottom: 12px; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 6px;">
+      <div style="font-weight: 600; margin-bottom: 4px;">当前状态</div>
+      <div style="font-size: 12px; opacity: 0.8;">
+        共 ${i} 个条目，已开启 ${a} 个
+      </div>
+    </div>
+  `;
+  if (n.versions.length === 0)
+    s += `
+      <div style="text-align: center; padding: 20px; opacity: 0.6;">
+        <div>暂无保存的状态版本</div>
+        <div style="font-size: 11px; margin-top: 4px;">点击"保存"按钮保存当前状态</div>
+      </div>
+    `;
+  else {
+    s += '<div style="margin-bottom: 8px; font-weight: 600;">已保存的状态版本</div>';
+    const d = (c) => {
+      const p = c.id === n.currentVersion, u = new Date(c.createdAt).toLocaleDateString(), f = Object.keys(c.states).length, g = Object.values(c.states).filter(Boolean).length, b = l(c.worldBindings);
+      return `
+        <div class="version-item ${p ? "current-version" : ""}" data-version-id="${c.id}" style="display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:6px; background: rgba(0,0,0,0.03); margin-bottom:6px;">
+          <div style="flex: 1;">
+            <div class="version-name">${I(c.name)}</div>
+            <div class="version-date" style="opacity:.8; font-size:12px;">${u} · ${g}/${f} 开启</div>
+            ${b}
+          </div>
+          <div class="version-actions" style="display:flex; gap:6px;">
+            <button class="menu_button apply-version-btn" style="font-size: 10px; padding: 1px 4px;" title="应用此状态">应用</button>
+            <button class="menu_button rename-version-btn" style="font-size: 10px; padding: 1px 4px;" title="重命名">✏️</button>
+            <button class="menu_button delete-version-btn" style="font-size: 10px; padding: 1px 4px;" title="删除">🗑️</button>
+          </div>
+        </div>`;
+    };
+    if (ke) {
+      const c = (u) => {
+        const f = (u || "").match(/^(【[^】]+】|[^-\[\]_.:：]+[-\[\]_.:：])/);
+        let g = f ? f[1].replace(/[-\[\]_.:：]$/, "").replace(/^【|】$/g, "") : "未分组";
+        return g = (g || "未分组").replace(/['"\\]/g, "").trim(), g.length ? g : "未分组";
+      }, p = /* @__PURE__ */ new Map();
+      n.versions.forEach((u) => {
+        const f = c(u.name || "");
+        p.has(f) || p.set(f, []), p.get(f).push(u);
+      }), s += '<div id="es-groups">';
+      for (const [u, f] of p.entries())
+        s += `
+          <div class="es-group" data-group="${I(u)}">
+            <div class="es-group-title" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:6px 8px;">
+              <span class="es-group-toggle" style="width:16px; text-align:center;">▶</span>
+              <span class="es-group-name" style="flex:1;">${I(u)}</span>
+              <span class="es-group-count" style="opacity:.7; font-size:12px;">${f.length}</span>
+            </div>
+            <div class="es-group-content" style="display:none;">`, f.forEach((g) => {
+          s += d(g);
+        }), s += "</div></div>";
+      s += "</div>";
+    } else
+      n.versions.forEach((c) => {
+        s += d(c);
+      });
+  }
+  r.find(".content").html(s);
+}
+function sr(e) {
+  const t = v(), r = t("#st-native-entry-states-panel");
+  r.length && (r.off("click", ".es-group-title").on("click", ".es-group-title", function() {
+    const o = t(this).closest(".es-group").find(".es-group-content").first(), i = t(this).find(".es-group-toggle"), a = !o.is(":visible");
+    o.slideToggle(120), i.text(a ? "▼" : "▶");
+  }), r.off("click", ".apply-version-btn").on("click", ".apply-version-btn", async function(n) {
+    var a, l;
+    n.stopPropagation();
+    const o = t(this).closest(".version-item").data("version-id"), i = (l = (a = M.API).getLoadedPresetName) == null ? void 0 : l.call(a);
+    if (!i) {
+      window.toastr && toastr.error("请先选择一个预设");
+      return;
+    }
+    try {
+      await bi(i, o), ze(i), ge(i), window.toastr && toastr.success("状态已应用");
+    } catch (s) {
+      console.error("应用状态失败:", s), window.toastr && toastr.error("应用状态失败: " + s.message);
+    }
+  }), r.off("click", ".rename-version-btn").on("click", ".rename-version-btn", async function(n) {
+    var s, d;
+    n.stopPropagation();
+    const o = t(this).closest(".version-item").data("version-id"), i = t(this).closest(".version-item").find(".version-name").text(), a = (d = (s = M.API).getLoadedPresetName) == null ? void 0 : d.call(s), l = prompt("请输入新名称:", i);
+    if (!(!l || l === i))
+      try {
+        await fi(a, o, l), ge(a), window.toastr && toastr.success("重命名成功");
+      } catch (c) {
+        console.error("重命名失败:", c), window.toastr && toastr.error("重命名失败: " + c.message);
+      }
+  }), r.off("click", ".delete-version-btn").on("click", ".delete-version-btn", async function(n) {
+    var l, s;
+    n.stopPropagation();
+    const o = t(this).closest(".version-item").data("version-id"), i = t(this).closest(".version-item").find(".version-name").text(), a = (s = (l = M.API).getLoadedPresetName) == null ? void 0 : s.call(l);
+    if (confirm(`确定要删除状态版本"${i}"吗？`))
+      try {
+        await ui(a, o), ge(a), ze(a), window.toastr && toastr.success("删除成功");
+      } catch (d) {
+        console.error("删除失败:", d), window.toastr && toastr.error("删除失败: " + d.message);
+      }
+  }));
+}
+function Bi() {
+  const e = v(), t = e("#st-native-entry-states-panel");
+  t.length && (e("#st-entry-states-toggle").off("click").on("click", function() {
+    var o, i;
+    const r = t.find(".content"), n = r.is(":visible");
+    if (r.slideToggle(150), e(this).text(n ? "▶" : "▼"), !n)
+      try {
+        const a = (i = (o = M.API).getLoadedPresetName) == null ? void 0 : i.call(o);
+        a ? (ge(a), sr(a)) : t.find("#st-entry-states-status").text("未检测到当前预设");
+      } catch (a) {
+        console.error("[EntryStatesPanel] 展开面板失败:", a), window.toastr && toastr.error("打开状态管理界面失败: " + a.message);
+      }
+  }), e("#save-current-entry-states").off("click").on("click", async function() {
+    var r, n;
+    try {
+      const o = (n = (r = M.API).getLoadedPresetName) == null ? void 0 : n.call(r);
+      if (!o) {
+        window.toastr && toastr.error("请先选择一个预设");
+        return;
+      }
+      const i = prompt("请输入状态版本名称:", "新状态版本");
+      if (!i) return;
+      await xi(o, i), ze(o), ge(o), window.toastr && toastr.success("状态已保存");
+    } catch (o) {
+      console.error("保存状态失败:", o), window.toastr && toastr.error("保存状态失败: " + o.message);
+    }
+  }), e("#entry-states-group-toggle").off("click").on("click", function() {
+    var n, o;
+    ke = !ke, pi(ke), localStorage.setItem("preset-transfer-entry-states-group", ke), e(this).text(ke ? "分组:开" : "分组:关");
+    const r = (o = (n = M.API).getLoadedPresetName) == null ? void 0 : o.call(n);
+    r && ge(r);
+  }));
+}
+function ze(e) {
+  try {
+    const r = v()("#st-native-entry-states-panel");
+    if (!r.length) return;
+    const n = Ae(e), o = Array.isArray(n.versions) ? n.versions.length : 0;
+    r.find("#st-entry-states-status").text(`预设: ${e}（已保存 ${o} 个状态版本）`);
+  } catch (t) {
+    console.warn("更新条目状态管理面板失败:", t);
+  }
+}
+function ar() {
+  var o, i;
+  const e = v(), t = e("#openai_api-presets");
+  if (!t.length) return !1;
+  if (e("#st-native-regex-panel").length) return !0;
+  e("#st-native-regex-styles").length || e("head").append(`
+      <style id="st-native-regex-styles">
+        /* 简化样式 - 跟随酒馆美化主题 */
+        #st-native-regex-panel { margin-top: 10px; }
+        #st-native-regex-panel .header { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
+        #st-native-regex-panel .header .title { font-weight: 600; }
+        #st-native-regex-panel .rb-group { margin-bottom: 8px; }
+        #st-native-regex-panel .rb-group-title { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 6px 10px; user-select: none; }
+        #st-native-regex-panel .rb-group-toggle { width: 16px; text-align: center; }
+        #st-native-regex-panel .rb-group-name { flex: 1; }
+        #st-native-regex-panel .rb-group-count { opacity: 0.7; font-size: 12px; }
+        #st-native-regex-panel .rb-group-content.collapsed { display: none; }
+        #st-native-regex-panel .rb-label { display: flex; align-items: center; gap: 8px; padding: 6px 10px; }
+        #st-native-regex-panel .rb-label .name { flex: 1; }
+        #st-native-regex-panel .rb-label .badge { padding: 2px 6px; border-radius: 3px; font-size: 11px; white-space: nowrap; }
+        #st-native-regex-panel .rb-label.unbound .badge { opacity: 0.6; }
+        #st-native-regex-panel .rb-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+        #st-native-regex-panel .rb-toolbar input { flex: 1; min-width: 160px; }
+        #st-native-regex-panel .rb-toolbar button, #st-native-regex-panel .rb-group-batch-btn { white-space: nowrap; }
+        /* 预设正则列表（仅显示已绑定项，用于控制开关） */
+        #st-native-regex-panel .preset-regex-toolbar { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+        #st-native-regex-panel .preset-regex-toolbar input { flex: 1; min-width: 160px; }
+        #st-native-regex-panel .preset-regex-list .pr-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 6px; }
+        #st-native-regex-panel .preset-regex-list .pr-row:hover { background: rgba(0,0,0,0.05); }
+        #st-native-regex-panel .preset-regex-list .pr-name { flex: 1; }
+        #st-native-regex-panel .preset-regex-list .pr-state { opacity: 0.7; font-size: 12px; min-width: 4em; text-align: right; }
+        #st-native-regex-panel .preset-regex-list .pr-toggle-wrap { display: flex; align-items: center; }
+        #st-native-regex-panel .preset-regex-list input.pr-toggle { display: none !important; }
+        #st-native-regex-panel .preset-regex-list .pr-toggle-off { cursor: pointer; opacity: 0.5; filter: grayscale(0.5); transition: opacity var(--animation-duration-2x) ease-in-out; }
+        #st-native-regex-panel .preset-regex-list .pr-toggle-off:hover { opacity: 1; filter: none; }
+        #st-native-regex-panel .preset-regex-list .pr-toggle-on { cursor: pointer; }
+        #st-native-regex-panel .preset-regex-list .pr-toggle:checked ~ .pr-toggle-on { display: inline-block; }
+        #st-native-regex-panel .preset-regex-list .pr-toggle:checked ~ .pr-toggle-off { display: none; }
+        #st-native-regex-panel .preset-regex-list .pr-toggle:not(:checked) ~ .pr-toggle-on { display: none; }
+        #st-native-regex-panel .preset-regex-list .pr-toggle:not(:checked) ~ .pr-toggle-off { display: inline-block; }
+        #st-native-regex-panel .preset-regex-empty { opacity: 0.75; padding: 10px; }
+
+        /* 绑定管理弹窗复用同一套布局（不再出现竖排/无法折叠） */
+        #pt-preset-regex-binding-modal {
+          position: fixed;
+          inset: 0;
+          z-index: 10050;
+          background: rgba(0, 0, 0, 0.55);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          width: 100vw;
+          height: 100vh;
+          height: 100dvh;
+          overflow: auto;
+          overscroll-behavior: contain;
+          -webkit-overflow-scrolling: touch;
+        }
+        #pt-preset-regex-binding-modal .inner {
+          width: min(1000px, 96vw);
+          max-height: 80vh;
+          max-height: 80dvh;
+          max-height: min(80dvh, 900px);
+          overflow: hidden;
+          background: var(--pt-modal-bg);
+          color: var(--pt-modal-text);
+          border: 1px solid var(--pt-modal-border);
+          border-radius: 12px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+        }
+        #pt-preset-regex-binding-modal .header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 12px;
+          border-bottom: 1px solid var(--pt-modal-border);
+        }
+        #pt-preset-regex-binding-modal .header .title {
+          flex: 1;
+          min-width: 0;
+          font-weight: 600;
+        }
+        #pt-preset-regex-binding-modal .content {
+          max-height: calc(80vh - 54px);
+          max-height: calc(80dvh - 54px);
+          max-height: calc(min(80dvh, 900px) - 54px);
+          overflow: auto;
+          padding: 10px;
+          -webkit-overflow-scrolling: touch;
+        }
+        @media (max-width: 640px), (max-height: 560px) {
+          #pt-preset-regex-binding-modal {
+            align-items: flex-start;
+            padding-top: 12px;
+            padding-top: calc(12px + env(safe-area-inset-top));
+            padding-bottom: 12px;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom));
+            padding-left: 12px;
+            padding-right: 12px;
+          }
+          #pt-preset-regex-binding-modal .inner {
+            width: 100%;
+            max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+          }
+          #pt-preset-regex-binding-modal .content {
+            max-height: calc(100dvh - 24px - 54px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+          }
+        }
+        #pt-preset-regex-binding-modal .rb-group { margin-bottom: 8px; }
+        #pt-preset-regex-binding-modal .rb-group-title { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 6px 10px; user-select: none; }
+        #pt-preset-regex-binding-modal .rb-group-toggle { width: 16px; text-align: center; }
+        #pt-preset-regex-binding-modal .rb-group-name { flex: 1; }
+        #pt-preset-regex-binding-modal .rb-group-count { opacity: 0.7; font-size: 12px; }
+        #pt-preset-regex-binding-modal .rb-group-content.collapsed { display: none; }
+        #pt-preset-regex-binding-modal .rb-label { display: flex; align-items: center; gap: 8px; padding: 6px 10px; }
+        #pt-preset-regex-binding-modal .rb-label .name { flex: 1; }
+        #pt-preset-regex-binding-modal .rb-label .badge { padding: 2px 6px; border-radius: 3px; font-size: 11px; white-space: nowrap; }
+        #pt-preset-regex-binding-modal .rb-label.unbound .badge { opacity: 0.6; }
+        #pt-preset-regex-binding-modal .rb-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+        #pt-preset-regex-binding-modal .rb-toolbar input { flex: 1; min-width: 160px; }
+        #pt-preset-regex-binding-modal .rb-toolbar button, #pt-preset-regex-binding-modal .rb-group-batch-btn { white-space: nowrap; }
+        /* 隐藏滚动条 */
+        #st-native-regex-panel .content::-webkit-scrollbar { display: none; }
+        #st-native-regex-panel .content { scrollbar-width: none; -ms-overflow-style: none; }
+      </style>
+    `), t.append(`
+    <div id="st-native-regex-panel">
+      <div class="header" style="display: flex; align-items: center; gap: 4px;">
+        <button id="st-regex-toggle" class="menu_button" title="展开/折叠">▶</button>
+        <span class="title">预设正则</span>
+        <div style="flex:1;"></div>
+        <button id="preset-regex-manage" class="menu_button" style="font-size: 11px; padding: 2px 6px; display: inline-block; white-space: nowrap;" title="选择要绑定到当前预设的正则">绑定管理</button>
+      </div>
+      <div class="content" style="display:none; max-height:50vh; overflow:auto; padding:10px;">
+        <div id="st-regex-binding-status" style="opacity: .9;">加载中...</div>
+        <div class="preset-regex-toolbar">
+          <input id="preset-regex-search" class="text_pole" placeholder="搜索当前预设绑定的正则..." />
+        </div>
+        <div class="preset-regex-list" id="preset-regex-list"></div>
+      </div>
+    </div>`), Ni();
+  const n = (i = (o = M.API).getLoadedPresetName) == null ? void 0 : i.call(o);
+  return n && Ie(n), !0;
+}
+function Ce(e) {
+  const r = v()("#st-native-regex-panel");
+  if (!r.length) return;
+  const n = q(e), o = qe(), i = new Map(o.map((c, p) => [String(c.id), p])), a = new Map(o.map((c) => [String(c.id), c])), l = (r.find("#preset-regex-search").val() || "").toLowerCase(), d = (Array.isArray(n.bound) ? n.bound.slice() : []).filter((c) => c && c.id != null).map((c) => ({ id: String(c.id), enabled: !!c.enabled })).filter((c) => a.has(c.id)).sort((c, p) => (i.get(c.id) ?? 1e9) - (i.get(p.id) ?? 1e9)).filter((c) => {
+    if (!l) return !0;
+    const p = a.get(c.id);
+    return ((p == null ? void 0 : p.script_name) || String(c.id)).toLowerCase().includes(l);
+  }).map((c) => {
+    const p = a.get(c.id), u = I((p == null ? void 0 : p.script_name) || String(c.id)), f = p != null && p.enabled ? "已启用" : "未启用";
+    return `
+        <div class="pr-row" data-id="${I(c.id)}">
+          <label class="pr-toggle-wrap checkbox flex-container" title="启用/禁用（仅影响该预设）">
+            <input type="checkbox" class="pr-toggle" ${c.enabled ? "checked" : ""} />
+            <span class="pr-toggle-on fa-solid fa-toggle-on fa-lg" title="点击禁用"></span>
+            <span class="pr-toggle-off fa-solid fa-toggle-off fa-lg" title="点击启用"></span>
+          </label>
+          <span class="pr-name">${u}</span>
+          <span class="pr-state">${f}</span>
+        </div>`;
+  }).join("");
+  r.find("#preset-regex-list").html(d || '<div class="preset-regex-empty">当前预设未绑定任何正则。</div>');
+}
+function lr(e) {
+  const t = v(), r = t("#st-native-regex-panel");
+  if (!r.length) return;
+  const n = he(() => Ce(e), 250);
+  r.find("#preset-regex-search").off("input").on("input", n), r.find("#preset-regex-list").off("change", ".pr-toggle").on("change", ".pr-toggle", async function() {
+    const o = t(this).closest(".pr-row"), i = String(o.data("id")), a = t(this).is(":checked"), l = q(e), s = {
+      bound: (l.bound || []).map((p) => ({ id: p.id, enabled: p.enabled }))
+    }, d = s.bound.findIndex((p) => String(p.id) === i);
+    if (d >= 0 && (s.bound[d].enabled = a), !await rr(e, s)) {
+      window.toastr && toastr.error("保存失败"), Ce(e);
+      return;
+    }
+    if (Je())
+      try {
+        await Ve(e, e, { fromBindings: l, toBindings: s }), await new Promise((p) => setTimeout(p, 100));
+      } catch (p) {
+        console.warn("应用预设正则开关失败:", p);
+      }
+    Ce(e);
+  });
+}
+function cr(e, t) {
+  const r = v(), n = t && t.length ? t : r("#pt-preset-regex-binding-modal");
+  if (!n.length) return;
+  const o = q(e), i = qe(), a = renderRegexListComponent({ regexes: i, bindings: o });
+  n.find(".content").html(a.html);
+}
+function dr(e, t, { onSaved: r } = {}) {
+  const n = v(), o = t && t.length ? t : n("#pt-preset-regex-binding-modal");
+  if (!o.length) return;
+  const i = o.find("#rb-groups");
+  i.off("click", ".rb-group-title").on("click", ".rb-group-title", function(s) {
+    if (n(s.target).closest(".rb-group-batch-btn").length) return;
+    const d = n(this), c = d.next(".rb-group-content"), p = d.find(".rb-group-toggle"), u = c.hasClass("collapsed");
+    c.toggleClass("collapsed", !u), p.text(u ? "▼" : "▶");
+  }), i.off("click", ".rb-group-batch-btn").on("click", ".rb-group-batch-btn", function(s) {
+    var g;
+    s.preventDefault(), s.stopPropagation();
+    const c = n(this).closest(".rb-group").find(".regex-row"), p = [
+      { fn: (b) => b.find(".rb-exclusive").prop("checked", !0) },
+      { fn: (b) => b.find(".rb-exclusive").prop("checked", !1) }
+    ], u = window.prompt("1=全选绑定, 2=全取消绑定"), f = { 1: 0, 2: 1 }[(g = u == null ? void 0 : u.trim) == null ? void 0 : g.call(u)] ?? -1;
+    f >= 0 && (p[f].fn(c), c.find(".rb-label").each(function() {
+      const b = n(this).find(".rb-exclusive").is(":checked");
+      n(this).toggleClass("bound", b).toggleClass("unbound", !b).find(".badge").text(b ? "已绑定" : "未绑定").toggleClass("menu_button", b);
+    }));
+  }), i.off("change", ".rb-exclusive").on("change", ".rb-exclusive", function() {
+    const s = n(this).closest(".rb-label"), d = n(this).is(":checked");
+    s.toggleClass("bound", d).toggleClass("unbound", !d).find(".badge").text(d ? "已绑定" : "未绑定").toggleClass("menu_button", d);
+  });
+  const a = () => {
+    const s = (o.find("#rb-search").val() || "").toLowerCase(), d = o.find("#rb-filter").val();
+    o.find("#rb-groups .rb-group").each(function() {
+      let c = !1;
+      n(this).find(".regex-row").each(function() {
+        const p = n(this).find(".name").text().toLowerCase(), u = n(this).find(".rb-exclusive").is(":checked"), b = (!s || p.includes(s)) && (d === "all" || d === "bound" && u || d === "unbound" && !u);
+        n(this).toggle(b), c = c || b;
+      }), n(this).toggle(c);
+    });
+  }, l = he(a, 300);
+  o.find("#rb-search").off("input").on("input", l), o.find("#rb-filter").off("change").on("change", a), o.find("#rb-save").off("click").on("click", async function() {
+    try {
+      const s = q(e), d = s != null && s.states && typeof s.states == "object" ? s.states : {}, c = [];
+      o.find("#rb-groups .regex-row").each(function() {
+        const f = String(n(this).data("id"));
+        if (!n(this).find(".rb-exclusive").is(":checked")) return;
+        const b = Object.prototype.hasOwnProperty.call(d, f) ? !!d[f] : !0;
+        c.push({ id: f, enabled: b });
+      });
+      const p = { bound: c };
+      if (await rr(e, p)) {
+        if (Ie(e), Je())
+          try {
+            await Ve(e, e, { fromBindings: s, toBindings: p }), await new Promise((f) => setTimeout(f, 100)), window.toastr && toastr.success("正则绑定配置已保存并生效");
+          } catch (f) {
+            console.error("应用正则绑定失败:", f), window.toastr && toastr.warning("正则绑定配置已保存，但应用失败: " + f.message);
+          }
+        else
+          window.toastr && toastr.info("已保存（正则绑定功能当前为关闭状态，未立即生效）");
+        cr(e, o), dr(e, o, { onSaved: r }), typeof r == "function" && r();
+      } else
+        window.toastr && toastr.error("保存失败");
+    } catch (s) {
+      console.error("保存绑定失败:", s), window.toastr && toastr.error("保存失败: " + s.message);
+    }
+  });
+}
+function pr(e) {
+  const t = v(), r = N.getVars();
+  t("#pt-preset-regex-binding-modal").remove();
+  const n = t(`
+    <div id="pt-preset-regex-binding-modal" style="
+      --pt-modal-bg: ${r.bgColor};
+      --pt-modal-text: ${r.textColor};
+      --pt-modal-border: ${r.borderColor};
+    ">
+      <div class="inner">
+        <div class="header">
+          <div style="flex:1; font-weight: 600;">绑定管理：${I(e)}</div>
+          <button id="pt-preset-regex-binding-save" class="menu_button" style="white-space:nowrap;">保存</button>
+          <button id="pt-preset-regex-binding-close" class="menu_button" style="white-space:nowrap;">关闭</button>
+        </div>
+        <div class="content"></div>
+      </div>
+    </div>
+  `);
+  t("body").append(n), n.on("click", function(o) {
+    o.target === this && t(this).remove();
+  }), n.find("#pt-preset-regex-binding-save").on("click", () => n.find("#rb-save").trigger("click")), n.find("#pt-preset-regex-binding-close").on("click", () => n.remove()), cr(e, n), dr(e, n, {
+    onSaved: () => {
+      Ie(e), Ce(e);
+    }
+  }), n.find("#rb-save").hide();
+}
+function Ni() {
+  const e = v(), t = e("#st-native-regex-panel");
+  t.length && (e("#st-regex-toggle").off("click").on("click", function() {
+    var o, i;
+    const r = t.find(".content"), n = r.is(":visible");
+    if (r.slideToggle(150), e(this).text(n ? "▶" : "▼"), !n)
+      try {
+        const a = (i = (o = M.API).getLoadedPresetName) == null ? void 0 : i.call(o);
+        a ? Ie(a) : t.find("#st-regex-binding-status").text("未检测到当前预设");
+      } catch (a) {
+        console.error("[RegexPanel] 展开面板失败:", a), window.toastr && toastr.error("打开绑定界面失败: " + a.message);
+      }
+  }), e("#preset-regex-manage").off("click").on("click", function() {
+    var r, n;
+    try {
+      const o = (n = (r = M.API).getLoadedPresetName) == null ? void 0 : n.call(r);
+      if (!o) {
+        window.toastr && toastr.error("请先选择一个预设");
+        return;
+      }
+      pr(o);
+    } catch (o) {
+      console.error("打开绑定管理失败:", o);
+    }
+  }));
+}
+function Ie(e) {
+  try {
+    const r = v()("#st-native-regex-panel");
+    if (!r.length) return;
+    const n = q(e), o = Array.isArray(n.bound) ? n.bound.length : Array.isArray(n.exclusive) ? n.exclusive.length : 0;
+    r.find("#st-regex-binding-status").text(`预设: ${e}（已绑定 ${o} 个正则）`);
+    try {
+      Ce(e), lr(e);
+    } catch {
+    }
+  } catch (t) {
+    console.warn("更新原生正则面板失败:", t);
+  }
+}
+function nl() {
+  ji();
+}
+function Pt(e) {
+  Te = {
+    entryStatesPanelEnabled: !!(e != null && e.entryStatesPanelEnabled),
+    regexBindingEnabled: !!(e != null && e.regexBindingEnabled)
+  }, Te.entryStatesPanelEnabled || or(), Te.regexBindingEnabled || ir(), Pe && (clearTimeout(Pe), Pe = null), (Te.entryStatesPanelEnabled || Te.regexBindingEnabled) && ji();
+}
+const Oi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  bindNativeEntryStatesMainPanelEvents: Bi,
+  bindNativeEntryStatesPanelEvents: sr,
+  bindNativePresetRegexPanelEvents: lr,
+  bindNativeRegexBindingPanelEvents: dr,
+  bindNativeRegexPanelEvents: Ni,
+  ensureNativeEntryStatesPanelInjected: Ti,
+  ensureNativeRegexPanelInjected: ar,
+  initNativeRegexPanelIntegration: nl,
+  openPresetRegexBindingManager: pr,
+  removeNativeEntryStatesPanel: or,
+  removeNativeRegexPanel: ir,
+  renderNativeEntryStatesContent: ge,
+  renderNativePresetRegexContent: Ce,
+  renderNativeRegexBindingContent: cr,
+  syncNativePanelsWithFeatureFlags: Pt,
+  updateNativeEntryStatesPanel: ze,
+  updateNativeRegexPanel: Ie
+}, Symbol.toStringTag, { value: "Module" }));
+function rl(e) {
   var t, r;
   try {
     const n = v();
-    Dt();
-    const o = e || ((r = (t = z.API).getLoadedPresetName) == null ? void 0 : r.call(t));
-    o && Fn(o);
+    ar();
+    const o = e || ((r = (t = M.API).getLoadedPresetName) == null ? void 0 : r.call(t));
+    o && pr(o);
   } catch (n) {
     console.warn("打开原生面板失败:", n);
   }
 }
-function Ea(e, t) {
+function ol(e, t) {
   return t.exclusive.includes(e) ? "exclusive" : "";
 }
-function Ia({ regexes: e, bindings: t }) {
-  const r = (a) => {
-    const s = (a || "").match(/^(【[^】]+】|[^-\[\]_.]+[-\[\]_.])/);
+function il({ regexes: e, bindings: t }) {
+  const r = (l) => {
+    const s = (l || "").match(/^(【[^】]+】|[^-\[\]_.]+[-\[\]_.])/);
     let d = s ? s[1].replace(/[-\[\]_.]$/, "").replace(/^【|】$/g, "") : "未分组";
     return d = (d || "未分组").replace(/['"\\]/g, "").trim(), d.length ? d : "未分组";
   }, n = /* @__PURE__ */ new Map();
-  e.forEach((a) => {
-    const s = r(a.script_name || String(a.id));
-    n.has(s) || n.set(s, []), n.get(s).push(a);
+  e.forEach((l) => {
+    const s = r(l.script_name || String(l.id));
+    n.has(s) || n.set(s, []), n.get(s).push(l);
   });
-  const o = (a) => {
-    const s = String(a.id), d = t.exclusive.includes(s), c = String(a.id).replace(/"/g, "&quot;"), p = C(a.script_name || String(a.id)), u = a.enabled ? "●" : "○";
+  const o = (l) => {
+    const s = String(l.id), d = t.exclusive.includes(s), c = String(l.id).replace(/"/g, "&quot;"), p = I(l.script_name || String(l.id)), u = l.enabled ? "●" : "○";
     return `
       <div class="regex-row" data-id="${c}">
         <label class="rb-label ${d ? "bound" : "unbound"}">
@@ -5729,13 +5701,13 @@ function Ia({ regexes: e, bindings: t }) {
         <option value="unbound">未绑定</option>
       </select>
       <button id="rb-save" class="menu_button">保存</button>
-    </div>` + `<div id="rb-groups" class="groups">${Array.from(n.entries()).map(([a, s]) => {
+    </div>` + `<div id="rb-groups" class="groups">${Array.from(n.entries()).map(([l, s]) => {
     const d = s.filter((u) => t.exclusive.includes(String(u.id))).length, c = s.length, p = s.map(o).join("");
     return `
-        <div class="rb-group" data-group="${C(a)}">
+        <div class="rb-group" data-group="${I(l)}">
           <div class="rb-group-title">
             <span class="rb-group-toggle">▶</span>
-            <span class="rb-group-name">${C(a)}</span>
+            <span class="rb-group-name">${I(l)}</span>
             <span class="rb-group-count">${d}/${c}</span>
             <button class="rb-group-batch-btn menu_button">批量</button>
           </div>
@@ -5745,18 +5717,18 @@ function Ia({ regexes: e, bindings: t }) {
         </div>`;
   }).join("")}</div>` };
 }
-function tr(e) {
+function ur(e) {
   const t = v();
-  F(e).exclusive.length, t("#left-preset").val(), t("#right-preset").val();
+  q(e).exclusive.length, t("#left-preset").val(), t("#right-preset").val();
 }
-const bi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Li = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  createRegexBindingModal: za,
-  getCurrentRegexBindingType: Ea,
-  renderRegexListComponent: Ia,
-  updatePresetRegexStatus: tr
+  createRegexBindingModal: rl,
+  getCurrentRegexBindingType: ol,
+  renderRegexListComponent: il,
+  updatePresetRegexStatus: ur
 }, Symbol.toStringTag, { value: "Module" }));
-let nr = {
+let fr = {
   isActive: !1,
   currentPreset: null,
   pollInterval: null,
@@ -5769,7 +5741,7 @@ let nr = {
   init() {
     if (!this.isActive)
       try {
-        this.parentWindow = (R == null ? void 0 : R()) ?? window, this.currentPreset = this.getCurrentPresetName(), this.listenToPresetEvents(), this.hookLoadPreset(), this.startPolling(), this.isActive = !0;
+        this.parentWindow = (U == null ? void 0 : U()) ?? window, this.currentPreset = this.getCurrentPresetName(), this.listenToPresetEvents(), this.hookLoadPreset(), this.startPolling(), this.isActive = !0;
       } catch (e) {
         console.error("初始化全局预设监听器失败:", e);
       }
@@ -5795,14 +5767,14 @@ let nr = {
   getCurrentPresetName() {
     var e, t;
     try {
-      const r = ((t = (e = z.API).getLoadedPresetName) == null ? void 0 : t.call(e)) ?? null;
+      const r = ((t = (e = M.API).getLoadedPresetName) == null ? void 0 : t.call(e)) ?? null;
       if (r) return r;
       try {
-        const l = v()("#settings_preset_openai").find(":selected").text();
-        if (l) return String(l);
+        const a = v()("#settings_preset_openai").find(":selected").text();
+        if (a) return String(a);
       } catch {
       }
-      const n = M == null ? void 0 : M(), o = n == null ? void 0 : n.presetManager;
+      const n = B == null ? void 0 : B(), o = n == null ? void 0 : n.presetManager;
       if (o && typeof o.getCompletionPresetByName == "function") {
         const i = o.getCompletionPresetByName("in_use");
         if (i && i.name && i.name !== "in_use") return i.name;
@@ -5818,7 +5790,7 @@ let nr = {
       const e = this, t = (o) => {
         let i = o;
         typeof o == "object" && o !== null && (i = o.name || o.presetName || o.preset || String(o)), (!i || typeof i != "string") && (i = e.getCurrentPresetName()), i && typeof i == "string" && e.handlePresetChange(e.currentPreset, i);
-      }, r = e.parentWindow ?? window, n = typeof z.API.eventOn == "function" ? z.API.eventOn : null;
+      }, r = e.parentWindow ?? window, n = typeof M.API.eventOn == "function" ? M.API.eventOn : null;
       n && (n("oai_preset_changed_after", () => setTimeout(() => t(null), 0)), n("preset_changed", (o) => setTimeout(() => t(o), 0)));
       try {
         const o = v();
@@ -5846,15 +5818,15 @@ let nr = {
       const e = this.parentWindow ?? window, t = typeof (e == null ? void 0 : e.loadPreset) == "function" && e.loadPreset || (typeof loadPreset == "function" ? loadPreset : null), r = this;
       if (!t) {
         try {
-          const n = M == null ? void 0 : M(), o = n == null ? void 0 : n.presetManager;
+          const n = B == null ? void 0 : B(), o = n == null ? void 0 : n.presetManager;
           if (o && typeof o.selectPreset == "function") {
             r.originalSelectPreset || (r.hookedPresetManager = o, r.originalSelectPreset = o.selectPreset, o.selectPreset = function(...i) {
-              const l = r.getCurrentPresetName(), a = r.originalSelectPreset.apply(this, i);
-              return Promise.resolve(a).catch(() => {
+              const a = r.getCurrentPresetName(), l = r.originalSelectPreset.apply(this, i);
+              return Promise.resolve(l).catch(() => {
               }).finally(() => {
                 const s = r.getCurrentPresetName();
-                s && s !== l && r.handlePresetChange(l, s);
-              }), a;
+                s && s !== a && r.handlePresetChange(a, s);
+              }), l;
             }, console.log("PresetManager.selectPreset Hook 成功"));
             return;
           }
@@ -5892,13 +5864,13 @@ let nr = {
       return;
     }
     try {
-      if (this.switchInProgress = !0, this.currentPreset = t, Ee())
+      if (this.switchInProgress = !0, this.currentPreset = t, Je())
         try {
-          await (async (a) => {
+          await (async (l) => {
             const s = Date.now();
             for (; Date.now() - s < 1500; ) {
               try {
-                if (this.getCurrentPresetName() === a && Date.now() - s > 120)
+                if (this.getCurrentPresetName() === l && Date.now() - s > 120)
                   return !0;
               } catch {
               }
@@ -5906,41 +5878,41 @@ let nr = {
             }
             return !1;
           })(t);
-          let l = !1;
-          for (let a = 0; a < 6; a++) {
-            await Re(e, t);
+          let a = !1;
+          for (let l = 0; l < 6; l++) {
+            await Ve(e, t);
             try {
-              const s = (n = (r = z.API).getPreset) == null ? void 0 : n.call(r, t);
+              const s = (n = (r = M.API).getPreset) == null ? void 0 : n.call(r, t);
               if (!((o = s == null ? void 0 : s.extensions) != null && o.regexBindings)) {
-                l = !0;
+                a = !0;
                 break;
               }
-              l = !0;
+              a = !0;
               break;
             } catch {
             }
             await new Promise((s) => setTimeout(s, 120));
           }
-          await new Promise((a) => setTimeout(a, 150)), l || console.warn("正则切换未确认完成（可能是预设数据延迟加载）");
+          await new Promise((l) => setTimeout(l, 150)), a || console.warn("正则切换未确认完成（可能是预设数据延迟加载）");
         } catch (i) {
           console.warn("正则切换失败（已忽略）:", i);
         }
       if (t) {
-        if (tr(t), typeof Pe == "function") {
-          Pe(t);
+        if (ur(t), typeof ze == "function") {
+          ze(t);
           try {
-            const l = v()("#st-native-entry-states-panel");
-            l.length && l.find(".content").is(":visible") && (pe(t), Rn(t));
+            const a = v()("#st-native-entry-states-panel");
+            a.length && a.find(".content").is(":visible") && (ge(t), sr(t));
           } catch {
           }
         }
-        if (typeof Ce == "function") {
-          Ce(t);
+        if (typeof Ie == "function") {
+          Ie(t);
           try {
-            const i = v(), l = i("#st-native-regex-panel");
-            if (l.length) {
-              const s = l.find(".content").is(":visible"), d = i("#preset-regex-search").val();
-              s && (_e(t), Wn(t), d && i("#preset-regex-search").val(d));
+            const i = v(), a = i("#st-native-regex-panel");
+            if (a.length) {
+              const s = a.find(".content").is(":visible"), d = i("#preset-regex-search").val();
+              s && (Ce(t), lr(t), d && i("#preset-regex-search").val(d));
             }
           } catch {
           }
@@ -5953,37 +5925,37 @@ let nr = {
     }
   }
 };
-const be = () => nr.init(), Ma = () => nr.stop(), xi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Di = () => fr.init(), Ri = () => fr.stop(), Wi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  globalPresetListener: nr,
-  init: be,
-  stop: Ma
+  globalPresetListener: fr,
+  init: Di,
+  stop: Ri
 }, Symbol.toStringTag, { value: "Module" }));
-async function Aa(e) {
+async function Ui(e) {
   try {
-    const t = M();
+    const t = B();
     if (!t || !t.presetManager)
       throw new Error("无法获取预设管理器");
-    const r = N(t, e);
+    const r = O(t, e);
     if (!r)
       throw new Error(`预设 "${e}" 不存在`);
-    const n = F(e), o = He(), i = Array.isArray(n.exclusive) ? n.exclusive.map(String) : [], l = o.filter((p) => i.includes(String(p.id))), a = {
+    const n = q(e), o = qe(), i = Array.isArray(n.exclusive) ? n.exclusive.map(String) : [], a = o.filter((p) => i.includes(String(p.id))), l = {
       type: "preset_with_regex_bundle",
       version: "2.0",
       metadata: {
         exportTime: (/* @__PURE__ */ new Date()).toISOString(),
         presetName: e,
-        regexCount: l.length
+        regexCount: a.length
       },
       preset: r,
-      regexes: l,
+      regexes: a,
       bindings: {
         version: 2,
         bound: Array.isArray(n.bound) ? n.bound : [],
         // keep legacy ids for compatibility with old tools
         exclusive: i
       }
-    }, s = (/* @__PURE__ */ new Date()).toISOString().slice(0, 19).replace(/[:.]/g, "-"), d = `preset-bundle-${e}-${s}.json`, c = JSON.stringify(a, null, 2);
+    }, s = (/* @__PURE__ */ new Date()).toISOString().slice(0, 19).replace(/[:.]/g, "-"), d = `preset-bundle-${e}-${s}.json`, c = JSON.stringify(l, null, 2);
     if (typeof download == "function")
       download(c, d, "application/json");
     else {
@@ -5995,36 +5967,36 @@ async function Aa(e) {
     throw console.error("导出预设包失败:", t), t;
   }
 }
-async function ja(e) {
+async function Fi(e) {
   try {
     const t = await new Promise((n, o) => {
       const i = new FileReader();
-      i.onload = (l) => n(l.target.result), i.onerror = o, i.readAsText(e);
+      i.onload = (a) => n(a.target.result), i.onerror = o, i.readAsText(e);
     }), r = JSON.parse(t);
     if (r.type !== "preset_with_regex_bundle")
       throw new Error("不是有效的预设包文件");
     if (!r.preset || !r.regexes || !r.bindings)
       throw new Error("预设包文件格式不完整");
-    await vi(r);
+    await Vi(r);
   } catch (t) {
     throw console.error("导入预设包失败:", t), t;
   }
 }
-async function vi(e) {
-  A.getVars();
-  const t = e.metadata.presetName, r = z.API.getPreset(t), n = He(), o = e.regexes.filter(
-    (i) => n.some((l) => l.scriptName === i.scriptName)
+async function Vi(e) {
+  N.getVars();
+  const t = e.metadata.presetName, r = M.API.getPreset(t), n = qe(), o = e.regexes.filter(
+    (i) => n.some((a) => a.scriptName === i.scriptName)
   );
   if (!r && o.length === 0) {
-    await rr(e, "none", "");
+    await gr(e, "none", "");
     return;
   }
-  await yi(e, r, o);
+  await Gi(e, r, o);
 }
-async function yi(e, t, r) {
-  const n = v(), o = A.getVars();
-  return q(), new Promise((i) => {
-    const l = e.metadata.presetName, a = `
+async function Gi(e, t, r) {
+  const n = v(), o = N.getVars();
+  return Y(), new Promise((i) => {
+    const a = e.metadata.presetName, l = `
       <div id="conflict-resolution-dialog" style="--pt-font-size: ${o.fontSize}; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; height: calc(var(--pt-vh, 1vh) * 100); background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px); z-index: 10003; display: flex; align-items: center; justify-content: center; padding: 20px; padding-top: calc(20px + env(safe-area-inset-top)); padding-bottom: calc(20px + env(safe-area-inset-bottom));">
         <div style="background: ${o.bgColor}; border-radius: 16px; padding: 24px; max-width: 500px; width: 100%; color: ${o.textColor}; box-shadow: 0 20px 40px rgba(0,0,0,0.1); max-height: 80vh; max-height: 80dvh; max-height: calc(var(--pt-vh, 1vh) * 80); overflow-y: auto;">
           <div style="text-align: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid ${o.borderColor};">
@@ -6035,7 +6007,7 @@ async function yi(e, t, r) {
           <div style="margin-bottom: 20px;">
             ${t ? `
               <div style="margin-bottom: 16px; padding: 12px; background: ${o.sectionBg}; border-radius: 8px;">
-                <strong>预设冲突：</strong> "${l}" 已存在
+                <strong>预设冲突：</strong> "${a}" 已存在
               </div>
             ` : ""}
 
@@ -6075,14 +6047,14 @@ async function yi(e, t, r) {
         </div>
       </div>
     `;
-    n("body").append(a), n('input[name="conflict-action"]').on("change", function() {
+    n("body").append(l), n('input[name="conflict-action"]').on("change", function() {
       const s = n(this).val() === "rename";
       n("#rename-prefix-section").toggle(s);
     }), n("#confirm-import").on("click", async function() {
       const s = n('input[name="conflict-action"]:checked').val(), d = n("#rename-prefix").val() || "";
       n("#conflict-resolution-dialog").remove();
       try {
-        await rr(e, s, d), i();
+        await gr(e, s, d), i();
       } catch (c) {
         console.error("执行导入失败:", c), window.toastr && toastr.error("导入失败: " + c.message), i();
       }
@@ -6093,44 +6065,44 @@ async function yi(e, t, r) {
     });
   });
 }
-async function rr(e, t, r) {
+async function gr(e, t, r) {
   var n;
   try {
     const o = v();
     let i = e.metadata.presetName;
     t === "rename" && r && (i = r + i);
-    const l = [];
+    const a = [];
     for (const c of e.regexes) {
       const p = c.script_name;
       let u = c.script_name;
       t === "rename" && r && (u = r + u, c.script_name = u, c.scriptName = u);
-      const f = generateUUID(), m = c.id;
-      c.id = f, l.push({ oldId: m, newId: f }), await z.API.updateTavernRegexesWith((b) => {
+      const f = generateUUID(), g = c.id;
+      c.id = f, a.push({ oldId: g, newId: f }), await M.API.updateTavernRegexesWith((b) => {
         if (t === "overwrite") {
-          const g = b.findIndex((h) => h.scriptName === u || h.script_name === u);
-          g !== -1 && b.splice(g, 1);
+          const m = b.findIndex((h) => h.scriptName === u || h.script_name === u);
+          m !== -1 && b.splice(m, 1);
         }
         return b.push(c), b;
       });
     }
-    const a = JSON.parse(JSON.stringify(e.bindings || {})), s = (c) => {
-      const p = l.find((u) => u.oldId === c);
+    const l = JSON.parse(JSON.stringify(e.bindings || {})), s = (c) => {
+      const p = a.find((u) => u.oldId === c);
       return p ? p.newId : c;
     };
-    Array.isArray(a.exclusive) && (a.exclusive = a.exclusive.map(s)), Array.isArray(a.bound) && (a.bound = a.bound.filter((c) => c && typeof c == "object" && c.id != null).map((c) => ({ ...c, id: s(c.id) })), Array.isArray(a.exclusive) || (a.exclusive = a.bound.map((c) => c.id)));
-    const d = M();
+    Array.isArray(l.exclusive) && (l.exclusive = l.exclusive.map(s)), Array.isArray(l.bound) && (l.bound = l.bound.filter((c) => c && typeof c == "object" && c.id != null).map((c) => ({ ...c, id: s(c.id) })), Array.isArray(l.exclusive) || (l.exclusive = l.bound.map((c) => c.id)));
+    const d = B();
     if (d && d.presetManager)
       await d.presetManager.savePreset(i, e.preset);
     else
       throw new Error("无法获取预设管理器");
     setTimeout(async () => {
       try {
-        await savePresetRegexBindings(i, a);
+        await savePresetRegexBindings(i, l);
       } catch {
       }
     }, 500);
     try {
-      const c = Q();
+      const c = te();
       (n = c == null ? void 0 : c.saveSettingsDebounced) == null || n.call(c);
     } catch {
     }
@@ -6139,47 +6111,47 @@ async function rr(e, t, r) {
     throw console.error("执行导入失败:", o), o;
   }
 }
-const wi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Hi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  executeImport: rr,
-  exportPresetBundle: Aa,
-  handleImportConflicts: vi,
-  importPresetBundle: ja,
-  showConflictResolutionDialog: yi
-}, Symbol.toStringTag, { value: "Module" })), $i = "preset-transfer", Zt = "main", wn = "preset-transfer:extension-update";
-let de = {
+  executeImport: gr,
+  exportPresetBundle: Ui,
+  handleImportConflicts: Vi,
+  importPresetBundle: Fi,
+  showConflictResolutionDialog: Gi
+}, Symbol.toStringTag, { value: "Module" })), qi = "preset-transfer", mn = "main", Tn = "preset-transfer:extension-update";
+let ue = {
   status: "idle",
   checkedAt: 0,
   local: null,
   remote: null,
   changelog: null,
   error: null
-}, dt = null, pt = null;
-function Ta() {
-  return de;
+}, gt = null, mt = null;
+function sl() {
+  return ue;
 }
-function Ba() {
+function al() {
   try {
-    R().dispatchEvent(new CustomEvent(wn, { detail: de }));
+    U().dispatchEvent(new CustomEvent(Tn, { detail: ue }));
   } catch {
   }
 }
-function Ke(e) {
-  de = { ...de, ...e }, Ba();
+function Xe(e) {
+  ue = { ...ue, ...e }, al();
 }
-function Ue(e) {
+function Ge(e) {
   return typeof e != "string" ? "" : e.trim().replace(/^[vV]/, "").trim();
 }
-function xr(e) {
-  const r = Ue(e).match(/^(\d+)(?:\.(\d+))?(?:\.(\d+))?/);
+function Cr(e) {
+  const r = Ge(e).match(/^(\d+)(?:\.(\d+))?(?:\.(\d+))?/);
   return r ? [
     parseInt(r[1] ?? "0", 10),
     parseInt(r[2] ?? "0", 10),
     parseInt(r[3] ?? "0", 10)
   ] : null;
 }
-function $n(e, t) {
-  const r = xr(e), n = xr(t);
+function Bn(e, t) {
+  const r = Cr(e), n = Cr(t);
   if (!r || !n) return 0;
   for (let o = 0; o < 3; o++) {
     if (r[o] > n[o]) return 1;
@@ -6187,7 +6159,7 @@ function $n(e, t) {
   }
   return 0;
 }
-function Na(e) {
+function ll(e) {
   if (!e || typeof e != "string") return null;
   try {
     const t = new URL(e);
@@ -6198,35 +6170,35 @@ function Na(e) {
     return null;
   }
 }
-function Oa() {
+function cl() {
   try {
     return new URL("../manifest.json", import.meta.url).toString();
   } catch {
     return null;
   }
 }
-function vr({ owner: e, repo: t, branch: r, filePath: n }) {
+function Er({ owner: e, repo: t, branch: r, filePath: n }) {
   return `https://raw.githubusercontent.com/${e}/${t}/${r}/${n}`;
 }
-async function ki(e) {
+async function Ji(e) {
   const t = await fetch(e, { cache: "no-store" });
   if (!t.ok)
     throw new Error(`HTTP ${t.status}: ${e}`);
   return t.json();
 }
-async function La(e) {
+async function dl(e) {
   const t = await fetch(e, { cache: "no-store" });
   if (!t.ok)
     throw new Error(`HTTP ${t.status}: ${e}`);
   return t.text();
 }
-function Da(e) {
+function pl(e) {
   const r = String(e || "").split(/\r?\n/), n = [];
   let o = null;
   for (const i of r) {
-    const l = i.match(/^##\s+(.+)\s*$/);
-    if (l) {
-      o && n.push(o), o = { version: Ue(l[1]), lines: [] };
+    const a = i.match(/^##\s+(.+)\s*$/);
+    if (a) {
+      o && n.push(o), o = { version: Ge(a[1]), lines: [] };
       continue;
     }
     o && o.lines.push(i);
@@ -6234,109 +6206,109 @@ function Da(e) {
   return o && n.push(o), n.map((i) => ({ version: i.version, body: i.lines.join(`
 `).trim() }));
 }
-function Ra(e, t, r) {
-  const n = Da(e);
+function ul(e, t, r) {
+  const n = pl(e);
   if (!n.length)
     return {
       mode: "raw",
       text: String(e || "").trim()
     };
-  const o = Ue(t), i = Ue(r), a = n.filter((s) => s.version ? $n(s.version, o) > 0 && (i ? $n(s.version, i) <= 0 : !0) : !1).map((s) => `## ${s.version}
+  const o = Ge(t), i = Ge(r), l = n.filter((s) => s.version ? Bn(s.version, o) > 0 && (i ? Bn(s.version, i) <= 0 : !0) : !1).map((s) => `## ${s.version}
 ${s.body}`.trim()).filter(Boolean).join(`
 
 `).trim();
-  return a ? { mode: "delta", text: a } : {
+  return l ? { mode: "delta", text: l } : {
     mode: "latest",
     text: `## ${n[0].version}
 ${n[0].body}`.trim()
   };
 }
-async function Si() {
-  const e = Oa();
+async function Ki() {
+  const e = cl();
   if (!e) throw new Error("无法定位本地 manifest.json");
-  const t = await ki(e);
+  const t = await Ji(e);
   return { url: e, manifest: t };
 }
-async function Wa() {
-  return dt || (dt = (async () => {
-    Ke({ status: "checking", error: null });
+async function fl() {
+  return gt || (gt = (async () => {
+    Xe({ status: "checking", error: null });
     try {
-      const { manifest: e } = await Si(), t = Na(e.homePage), r = {
-        name: $i,
-        version: Ue(e.version),
+      const { manifest: e } = await Ki(), t = ll(e.homePage), r = {
+        name: qi,
+        version: Ge(e.version),
         homePage: e.homePage || "",
         repo: t
       };
       if (!t)
-        return Ke({
+        return Xe({
           status: "error",
           checkedAt: Date.now(),
           local: r,
           remote: null,
           changelog: null,
           error: "homePage 不是 GitHub 仓库地址，无法自动检查更新"
-        }), de;
-      const n = vr({
+        }), ue;
+      const n = Er({
         ...t,
-        branch: Zt,
+        branch: mn,
         filePath: "manifest.json"
-      }), o = await ki(n), i = {
-        version: Ue(o.version),
+      }), o = await Ji(n), i = {
+        version: Ge(o.version),
         manifestUrl: n,
-        branch: Zt
+        branch: mn
       };
-      if (!($n(i.version, r.version) > 0))
-        return Ke({
+      if (!(Bn(i.version, r.version) > 0))
+        return Xe({
           status: "up-to-date",
           checkedAt: Date.now(),
           local: r,
           remote: i,
           changelog: null,
           error: null
-        }), de;
-      const a = vr({
+        }), ue;
+      const l = Er({
         ...t,
-        branch: Zt,
+        branch: mn,
         filePath: "CHANGELOG.md"
       });
       let s = "";
       try {
-        s = await La(a);
+        s = await dl(l);
       } catch {
         s = "";
       }
       const d = s ? {
-        url: a,
-        ...Ra(s, r.version, i.version)
+        url: l,
+        ...ul(s, r.version, i.version)
       } : null;
-      return Ke({
+      return Xe({
         status: "update-available",
         checkedAt: Date.now(),
         local: r,
         remote: i,
         changelog: d,
         error: null
-      }), de;
+      }), ue;
     } catch (e) {
-      return Ke({
+      return Xe({
         status: "error",
         checkedAt: Date.now(),
         error: (e == null ? void 0 : e.message) || String(e)
-      }), de;
+      }), ue;
     }
-  })(), dt);
+  })(), gt);
 }
-async function Ua() {
+async function gl() {
   async function e() {
-    return pt || (pt = (async () => {
+    return mt || (mt = (async () => {
       const o = await fetch("/csrf-token", { cache: "no-store", credentials: "same-origin" });
       if (!o.ok)
         throw new Error(`无法获取 CSRF Token：HTTP ${o.status}`);
-      const i = await o.json().catch(() => ({})), l = i == null ? void 0 : i.token;
-      if (!l || typeof l != "string")
+      const i = await o.json().catch(() => ({})), a = i == null ? void 0 : i.token;
+      if (!a || typeof a != "string")
         throw new Error("无法获取 CSRF Token：返回格式异常");
-      return l;
-    })(), pt);
+      return a;
+    })(), mt);
   }
   const r = {
     Accept: "application/json",
@@ -6346,7 +6318,7 @@ async function Ua() {
     method: "POST",
     headers: r,
     credentials: "same-origin",
-    body: JSON.stringify({ extensionName: $i, global: !0 })
+    body: JSON.stringify({ extensionName: qi, global: !0 })
   });
   if (!n.ok) {
     const o = await n.text().catch(() => "");
@@ -6356,11 +6328,44 @@ async function Ua() {
   }
   return n.json().catch(() => ({}));
 }
-const V = { start: null, end: null };
-let we = null, Ye = null, jt = !1, Tt = null, je = null, en = null, tn = null, ft = 0;
-const kn = /* @__PURE__ */ new Map();
-let nn = null, rn = null, on = null, sn = !1, yr = !1;
-function Va(e, t, r) {
+const mr = "preset-transfer-settings";
+function _t() {
+  return {
+    autoCloseModal: !0,
+    autoEnableEntry: !0,
+    leftDisplayMode: "default",
+    rightDisplayMode: "default",
+    singleDisplayMode: "default",
+    entryStatesPanelEnabled: !0,
+    entryGroupingEnabled: !0
+  };
+}
+function hr(e) {
+  try {
+    localStorage.setItem(mr, JSON.stringify(e));
+  } catch (t) {
+    console.warn("保存设置失败:", t);
+  }
+}
+function en() {
+  try {
+    const e = localStorage.getItem(mr);
+    return e ? { ..._t(), ...JSON.parse(e) } : _t();
+  } catch (e) {
+    return console.warn("加载设置失败，使用默认设置:", e), _t();
+  }
+}
+const Yi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  STORAGE_KEY: mr,
+  getDefaultSettings: _t,
+  loadTransferSettings: en,
+  saveTransferSettings: hr
+}, Symbol.toStringTag, { value: "Module" })), G = { start: null, end: null };
+let re = null, de = null, st = !1, at = null, ie = null, Ct = null, hn = null, ht = 0;
+const Nn = /* @__PURE__ */ new Map();
+let Et = null, zt = null, It = null, Mt = !1, zr = !1, pt = !0;
+function ml(e, t, r) {
   const n = t.join(""), o = r.map((i) => [
     (i == null ? void 0 : i.name) ?? "",
     (i == null ? void 0 : i.startIdentifier) ?? "",
@@ -6372,28 +6377,45 @@ function Va(e, t, r) {
   ].join("")).join("");
   return `${e}${n}${o}`;
 }
-function Fa(e) {
+function hl(e) {
   return !!e.find(".pt-entry-group-header, .entry-group-header").length;
 }
-function wr(e) {
+function On(e) {
   e.find(".pt-entry-group-wrapper, .entry-group-wrapper").contents().unwrap(), e.find(".pt-entry-group-header, .entry-group-header").remove();
 }
-function Ha() {
-  sn || (sn = !0, Promise.resolve().then(() => {
-    sn = !1;
-    const e = Me();
-    (!we || e.length && Tt !== e[0]) && Ut(), Ve();
-  }));
+function At() {
+  pt = !1;
+  try {
+    de && (clearTimeout(de), de = null);
+  } catch {
+  }
+  try {
+    re && (re.disconnect(), re = null), ie && (ie.disconnect(), ie = null);
+  } catch {
+  }
+  at = null, Ct = null, st = !1, Mt = !1, Et = null, zt = null, It = null;
+  try {
+    const e = xe();
+    e != null && e.length && On(e);
+  } catch {
+  }
 }
-function $r(e) {
+function bl() {
+  pt && (Mt || (Mt = !0, Promise.resolve().then(() => {
+    Mt = !1;
+    const e = xe();
+    (!re || e.length && at !== e[0]) && tn(), He();
+  })));
+}
+function Ir(e) {
   var r, n, o, i;
   if (!e || e.nodeType !== 1) return !1;
   const t = e;
   return (r = t.classList) != null && r.contains("pt-entry-group-wrapper") || (n = t.classList) != null && n.contains("pt-entry-group-header") || (o = t.classList) != null && o.contains("entry-group-wrapper") || (i = t.classList) != null && i.contains("entry-group-header") ? !0 : typeof t.querySelector != "function" ? !1 : !!t.querySelector(".pt-entry-group-wrapper,.pt-entry-group-header,.entry-group-wrapper,.entry-group-header");
 }
-async function Ga() {
-  if (!yr) {
-    yr = !0;
+async function xl() {
+  if (!zr) {
+    zr = !0;
     try {
       const e = await import("/scripts/PromptManager.js"), t = e == null ? void 0 : e.PromptManager;
       if (!(t != null && t.prototype) || t.prototype.__ptEntryGroupingHooked) return;
@@ -6402,7 +6424,7 @@ async function Ga() {
       t.prototype.makeDraggable = function(...n) {
         const o = r.apply(this, n);
         try {
-          H(0);
+          J(0);
         } catch {
         }
         return o;
@@ -6412,67 +6434,69 @@ async function Ga() {
     }
   }
 }
-function Me() {
+function xe() {
   const e = v();
   let t = e("#openai_prompt_manager_list");
   return t.length || (t = e('[id$="prompt_manager_list"]').first()), t.length || (t = e('ul[id*="prompt_manager"]').first()), t;
 }
-function or() {
-  return Me().closest(".range-block");
+function br() {
+  return xe().closest(".range-block");
 }
-function Qe() {
-  V.start = null, V.end = null;
+function Ze() {
+  G.start = null, G.end = null;
 }
-function Sn() {
-  const e = Me();
+function Ln() {
+  const e = xe();
   return e.length ? e.find("li[data-pm-identifier]").toArray().map((t) => t.getAttribute("data-pm-identifier")).filter(Boolean) : [];
 }
-function qa(e, t) {
-  const r = At(e, t), n = /* @__PURE__ */ new Set();
+function vl(e, t) {
+  const r = qt(e, t), n = /* @__PURE__ */ new Set();
   for (const o of r) {
     if (o != null && o.unresolved || typeof o.startIdentifier != "string" || typeof o.endIdentifier != "string") continue;
-    const i = t.indexOf(o.startIdentifier), l = t.indexOf(o.endIdentifier);
-    if (i === -1 || l === -1) continue;
-    const a = Math.min(i, l), s = Math.max(i, l);
-    for (let d = a; d <= s; d++) {
+    const i = t.indexOf(o.startIdentifier), a = t.indexOf(o.endIdentifier);
+    if (i === -1 || a === -1) continue;
+    const l = Math.min(i, a), s = Math.max(i, a);
+    for (let d = l; d <= s; d++) {
       const c = t[d];
       c && n.add(c);
     }
   }
   return n;
 }
-function Ja() {
-  const e = or();
+function yl() {
+  const e = br();
   if (!e.length) return;
-  const t = A.getVars();
+  const t = N.getVars();
   e.addClass("pt-entry-grouping-root"), e[0].style.setProperty("--pt-bg", t.bgColor), e[0].style.setProperty("--pt-border", t.borderColor), e[0].style.setProperty("--pt-section-bg", t.sectionBg), e[0].style.setProperty("--pt-text", t.textColor), e[0].style.setProperty("--pt-tip", t.tipColor), e[0].style.setProperty("--pt-danger", t.dangerColor);
 }
-function kr(e) {
+function Mr(e) {
   var r, n, o, i;
   if (!e || e.nodeType !== 1) return !1;
   const t = e;
   return t.tagName === "LI" && t.hasAttribute("data-pm-identifier") || (r = t.classList) != null && r.contains("pt-entry-group-wrapper") || (n = t.classList) != null && n.contains("pt-entry-group-header") || (o = t.classList) != null && o.contains("entry-group-wrapper") || (i = t.classList) != null && i.contains("entry-group-header") ? !0 : typeof t.querySelector == "function" && !!t.querySelector("li[data-pm-identifier]");
 }
-function Ka(e) {
+function wl(e) {
   var t, r;
-  return e.type === "childList" ? Array.from(e.addedNodes).some(kr) || Array.from(e.removedNodes).some(kr) : e.type === "attributes" ? e.attributeName === "data-pm-identifier" && ((t = e.target) == null ? void 0 : t.nodeType) === 1 && ((r = e.target) == null ? void 0 : r.tagName) === "LI" : !1;
+  return e.type === "childList" ? Array.from(e.addedNodes).some(Mr) || Array.from(e.removedNodes).some(Mr) : e.type === "attributes" ? e.attributeName === "data-pm-identifier" && ((t = e.target) == null ? void 0 : t.nodeType) === 1 && ((r = e.target) == null ? void 0 : r.tagName) === "LI" : !1;
 }
-function H(e = 150) {
-  if (Ye && clearTimeout(Ye), e <= 0) {
-    Ye = null, Ha();
-    return;
+function J(e = 150) {
+  if (pt) {
+    if (de && clearTimeout(de), e <= 0) {
+      de = null, bl();
+      return;
+    }
+    de = setTimeout(() => {
+      const t = xe();
+      (!re || t.length && at !== t[0]) && tn(), He(), de = null;
+    }, e);
   }
-  Ye = setTimeout(() => {
-    const t = Me();
-    (!we || t.length && Tt !== t[0]) && Ut(), Ve(), Ye = null;
-  }, e);
 }
-function Ya() {
+function $l() {
   v()(document).off("click.pt-entry-grouping-toggle").on("click.pt-entry-grouping-toggle", ".prompt-manager-toggle-action", () => {
-    H(0), setTimeout(() => H(0), 200);
+    J(0), setTimeout(() => J(0), 200);
   });
 }
-function Sr(e) {
+function Ar(e) {
   var n, o;
   if (!e || e.nodeType !== 1) return !1;
   const t = e;
@@ -6480,103 +6504,104 @@ function Sr(e) {
   const r = t.id || "";
   return r === "openai_prompt_manager_list" || r.endsWith("prompt_manager_list") || r.includes("prompt_manager") && t.tagName === "UL" ? !0 : typeof t.querySelector != "function" ? !1 : !!t.querySelector('#openai_prompt_manager_list,[id$="prompt_manager_list"],ul[id*="prompt_manager"]');
 }
-function Xa(e) {
-  return e.type !== "childList" ? !1 : Array.from(e.addedNodes).some(Sr) || Array.from(e.removedNodes).some(Sr);
+function kl(e) {
+  return e.type !== "childList" ? !1 : Array.from(e.addedNodes).some(Ar) || Array.from(e.removedNodes).some(Ar);
 }
-function Qa() {
+function Sl() {
   const e = document.body;
-  e && (je && en === e || (je && (je.disconnect(), je = null, en = null), je = new MutationObserver((t) => {
-    jt || t.some(Xa) && (H(0), setTimeout(() => H(0), 150));
-  }), je.observe(e, { childList: !0, subtree: !0 }), en = e));
+  e && (ie && Ct === e || (ie && (ie.disconnect(), ie = null, Ct = null), ie = new MutationObserver((t) => {
+    st || t.some(kl) && (J(0), setTimeout(() => J(0), 150));
+  }), ie.observe(e, { childList: !0, subtree: !0 }), Ct = e));
 }
-function xt() {
-  Ga(), Qa(), Ut(), Ya(), H(600), H(1800);
+function jt() {
+  pt = !0, xl(), Sl(), tn(), $l(), J(600), J(1800);
 }
-function Ut() {
-  we && (we.disconnect(), we = null, Tt = null);
-  const e = Me();
+function tn() {
+  re && (re.disconnect(), re = null, at = null);
+  const e = xe();
   if (!e.length) {
-    setTimeout(() => Ut(), 1e3);
+    setTimeout(() => tn(), 1e3);
     return;
   }
-  we = new MutationObserver((t) => {
-    jt || t.some(Ka) && (t.some((n) => n.type !== "childList" ? !1 : Array.from(n.removedNodes).some($r) || Array.from(n.addedNodes).some($r)) ? (H(0), setTimeout(() => H(0), 150)) : H(150));
-  }), we.observe(e[0], {
+  re = new MutationObserver((t) => {
+    st || t.some(wl) && (t.some((n) => n.type !== "childList" ? !1 : Array.from(n.removedNodes).some(Ir) || Array.from(n.addedNodes).some(Ir)) ? (J(0), setTimeout(() => J(0), 150)) : J(150));
+  }), re.observe(e[0], {
     childList: !0,
     subtree: !0,
     attributes: !0,
     attributeFilter: ["data-pm-identifier"]
-  }), Tt = e[0];
+  }), at = e[0];
 }
-function Ve() {
+function He() {
   var n, o;
-  const e = v(), t = (o = (n = z.API).getLoadedPresetName) == null ? void 0 : o.call(n);
+  if (!pt) return;
+  const e = v(), t = (o = (n = M.API).getLoadedPresetName) == null ? void 0 : o.call(n);
   if (!t) return;
-  const r = Me();
+  const r = xe();
   if (r.length) {
-    jt = !0;
+    st = !0;
     try {
-      Ja();
-      const i = Fa(r), l = r.find("li[data-pm-identifier]").toArray();
-      if (l.length === 0)
+      yl();
+      const i = hl(r), a = r.find("li[data-pm-identifier]").toArray();
+      if (a.length === 0)
         return;
-      const a = l.map((h) => h.getAttribute("data-pm-identifier")).filter(Boolean);
-      if (new Set(a).size !== a.length) {
-        console.warn("EntryGrouping: duplicate data-pm-identifier detected; skipping grouping."), me();
+      const l = a.map((h) => h.getAttribute("data-pm-identifier")).filter(Boolean);
+      if (new Set(l).size !== l.length) {
+        console.warn("EntryGrouping: duplicate data-pm-identifier detected; skipping grouping."), ye();
         return;
       }
-      const d = At(t, a), c = Va(t, a, d);
+      const d = qt(t, l), c = ml(t, l, d);
       if (d.length === 0) {
-        i && wr(r), nn = c, rn = t, on = r[0], me();
+        i && On(r), Et = c, zt = t, It = r[0], ye();
         return;
       }
-      if (i && nn === c && rn === t && on === r[0]) {
-        me();
+      if (i && Et === c && zt === t && It === r[0]) {
+        ye();
         return;
       }
       r.find(".pt-entry-group-header, .entry-group-header").each(function() {
-        const h = e(this), y = h.data("group-index"), P = h.next(".pt-entry-group-wrapper, .entry-group-wrapper").is(":visible");
-        y !== void 0 && kn.set(`${t}-${y}`, P);
-      }), wr(r);
+        const h = e(this), y = h.data("group-index"), C = h.next(".pt-entry-group-wrapper, .entry-group-wrapper").is(":visible");
+        y !== void 0 && Nn.set(`${t}-${y}`, C);
+      }), On(r);
       const p = r.find("li[data-pm-identifier]").toArray();
       if (p.length === 0)
         return;
       const u = p.map((h) => h.getAttribute("data-pm-identifier")).filter(Boolean);
       if (new Set(u).size !== u.length) {
-        console.warn("EntryGrouping: duplicate data-pm-identifier detected; skipping grouping."), me();
+        console.warn("EntryGrouping: duplicate data-pm-identifier detected; skipping grouping."), ye();
         return;
       }
-      const m = At(t, u);
-      if (m.length === 0) {
-        me();
-        return;
-      }
-      const b = m.filter((h) => h == null ? void 0 : h.unresolved).length;
-      b && window.toastr && toastr.warning(`有 ${b} 个分组无法解析（已跳过）`);
-      const g = m.map((h, y) => ({ ...h, originalIndex: y })).filter((h) => !h.unresolved && typeof h.startIdentifier == "string" && typeof h.endIdentifier == "string").map((h) => {
-        const y = u.indexOf(h.startIdentifier), S = u.indexOf(h.endIdentifier);
-        return y === -1 || S === -1 ? null : { ...h, startIndex: y, endIndex: S };
-      }).filter(Boolean).sort((h, y) => Math.min(y.startIndex, y.endIndex) - Math.min(h.startIndex, h.endIndex));
+      const g = qt(t, u);
       if (g.length === 0) {
-        tn !== t && (tn = t, ft = 0), ft < 3 && (ft += 1, setTimeout(() => H(0), 450), setTimeout(() => H(0), 1200)), me();
+        ye();
         return;
       }
-      tn = null, ft = 0;
-      for (const h of g) {
-        const y = Math.min(h.startIndex, h.endIndex), S = Math.max(h.startIndex, h.endIndex);
-        y < 0 || S >= p.length || Za(p.slice(y, S + 1), h, t, h.originalIndex);
+      const b = g.filter((h) => h == null ? void 0 : h.unresolved).length;
+      b && window.toastr && toastr.warning(`有 ${b} 个分组无法解析（已跳过）`);
+      const m = g.map((h, y) => ({ ...h, originalIndex: y })).filter((h) => !h.unresolved && typeof h.startIdentifier == "string" && typeof h.endIdentifier == "string").map((h) => {
+        const y = u.indexOf(h.startIdentifier), w = u.indexOf(h.endIdentifier);
+        return y === -1 || w === -1 ? null : { ...h, startIndex: y, endIndex: w };
+      }).filter(Boolean).sort((h, y) => Math.min(y.startIndex, y.endIndex) - Math.min(h.startIndex, h.endIndex));
+      if (m.length === 0) {
+        hn !== t && (hn = t, ht = 0), ht < 3 && (ht += 1, setTimeout(() => J(0), 450), setTimeout(() => J(0), 1200)), ye();
+        return;
       }
-      nn = c, rn = t, on = r[0], me();
+      hn = null, ht = 0;
+      for (const h of m) {
+        const y = Math.min(h.startIndex, h.endIndex), w = Math.max(h.startIndex, h.endIndex);
+        y < 0 || w >= p.length || Pl(p.slice(y, w + 1), h, t, h.originalIndex);
+      }
+      Et = c, zt = t, It = r[0], ye();
     } finally {
       setTimeout(() => {
-        jt = !1;
+        st = !1;
       }, 0);
     }
   }
 }
-function Za(e, t, r, n) {
-  const o = v(), i = o(e[0]), l = `${r}-${n}`, a = kn.get(l) || !1, s = o(`
-    <div class="pt-entry-group-header${a ? " is-expanded" : ""}">
+function Pl(e, t, r, n) {
+  const o = v(), i = o(e[0]), a = `${r}-${n}`, l = Nn.get(a) || !1, s = o(`
+    <div class="pt-entry-group-header${l ? " is-expanded" : ""}">
       <span class="pt-entry-group-toggle" aria-hidden="true"></span>
       <span class="pt-entry-group-name"></span>
       <span class="pt-entry-group-count"></span>
@@ -6585,53 +6610,53 @@ function Za(e, t, r, n) {
     </div>
   `);
   s.find(".pt-entry-group-name").text(t.name || "分组"), s.find(".pt-entry-group-count").text(String(e.length)), s.data("group-index", n);
-  const d = o(`<div class="pt-entry-group-wrapper${a ? " is-expanded" : ""}"></div>`);
+  const d = o(`<div class="pt-entry-group-wrapper${l ? " is-expanded" : ""}"></div>`);
   i.before(s), o(e).wrapAll(d), s.find(".pt-entry-group-toggle, .pt-entry-group-name, .pt-entry-group-count").on("click", () => {
     const c = s.next(".pt-entry-group-wrapper"), p = !s.hasClass("is-expanded");
-    s.toggleClass("is-expanded", p), c.toggleClass("is-expanded", p), kn.set(l, p);
+    s.toggleClass("is-expanded", p), c.toggleClass("is-expanded", p), Nn.set(a, p);
   }), s.find(".pt-entry-group-edit-btn").on("click", (c) => {
-    c.stopPropagation(), _i("请输入分组名称", t.name || "分组", async (p) => {
-      p !== t.name && (await gi(
+    c.stopPropagation(), Xi("请输入分组名称", t.name || "分组", async (p) => {
+      p !== t.name && (await Si(
         r,
         n,
         t.startIdentifier,
         t.endIdentifier,
         p,
-        Sn()
-      ), setTimeout(() => Ve(), 200), window.toastr && toastr.success("分组名称已更新"));
+        Ln()
+      ), setTimeout(() => He(), 200), window.toastr && toastr.success("分组名称已更新"));
     });
   }), s.find(".pt-entry-group-clear-btn").on("click", async (c) => {
-    c.stopPropagation(), confirm("确定要取消这个分组吗？") && (await mi(r, n, Sn()), Qe(), setTimeout(() => Ve(), 200), window.toastr && toastr.success("分组已取消"));
+    c.stopPropagation(), confirm("确定要取消这个分组吗？") && (await Pi(r, n, Ln()), Ze(), setTimeout(() => He(), 200), window.toastr && toastr.success("分组已取消"));
   });
 }
-function me() {
-  const e = v(), t = Me();
+function ye() {
+  const e = v(), t = xe();
   if (!t.length) return;
   t.find("li[data-pm-identifier]").off("click.grouping");
   const r = t.find("li[data-pm-identifier]");
   let n = 0, o = null, i = -1;
-  const l = () => {
+  const a = () => {
     n = 0, i = -1;
   };
-  r.each(function(a) {
+  r.each(function(l) {
     const s = e(this);
     s.on("click.grouping", function(d) {
       if (!e(d.target).closest(".prompt-manager-toggle-action, .prompt-manager-edit-action, .prompt-manager-detach-action, .prompt-manager-inspect-action, .pt-entry-group-edit-btn, .pt-entry-group-clear-btn, .group-edit-btn, .group-clear-btn").length) {
-        if (o && clearTimeout(o), i === a) {
+        if (o && clearTimeout(o), i === l) {
           if (n++, n >= 3) {
-            l(), d.preventDefault(), d.stopPropagation(), el(s, d.clientX, d.clientY);
+            a(), d.preventDefault(), d.stopPropagation(), _l(s, d.clientX, d.clientY);
             return;
           }
         } else
-          n = 1, i = a;
-        o = setTimeout(l, 1e3);
+          n = 1, i = l;
+        o = setTimeout(a, 1e3);
       }
     });
   });
 }
-function _i(e, t, r) {
-  const n = v(), o = A.getVars();
-  q();
+function Xi(e, t, r) {
+  const n = v(), o = N.getVars();
+  Y();
   const i = n(`
     <div class="entry-grouping-input-dialog" style="
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; height: calc(var(--pt-vh, 1vh) * 100);
@@ -6652,29 +6677,29 @@ function _i(e, t, r) {
         </div>
       </div>
     </div>
-  `), l = or();
-  (l.length ? l : n("body")).append(i), i.on("pointerdown mousedown click", (s) => s.stopPropagation()), i.children().first().on("pointerdown mousedown click", (s) => s.stopPropagation()), i.find(".dialog-input").focus().select();
-  const a = (s) => {
+  `), a = br();
+  (a.length ? a : n("body")).append(i), i.on("pointerdown mousedown click", (s) => s.stopPropagation()), i.children().first().on("pointerdown mousedown click", (s) => s.stopPropagation()), i.find(".dialog-input").focus().select();
+  const l = (s) => {
     const d = i.find(".dialog-input").val();
     i.remove(), s && d && r(d);
   };
-  i.find(".dialog-confirm").on("click", () => a(!0)), i.find(".dialog-cancel").on("click", () => a(!1)), i.find(".dialog-input").on("keypress", (s) => {
-    s.key === "Enter" && a(!0);
+  i.find(".dialog-confirm").on("click", () => l(!0)), i.find(".dialog-cancel").on("click", () => l(!1)), i.find(".dialog-input").on("keypress", (s) => {
+    s.key === "Enter" && l(!0);
   });
 }
-function el(e, t, r) {
-  var m, b;
-  const n = v(), o = (b = (m = z.API).getLoadedPresetName) == null ? void 0 : b.call(m);
+function _l(e, t, r) {
+  var g, b;
+  const n = v(), o = (b = (g = M.API).getLoadedPresetName) == null ? void 0 : b.call(g);
   if (!o) return;
   const i = e.attr("data-pm-identifier");
   if (!i) return;
   n(".entry-grouping-menu").remove();
-  const l = Sn(), a = qa(o, l);
-  if (a.has(i)) {
+  const a = Ln(), l = vl(o, a);
+  if (l.has(i)) {
     window.toastr && toastr.info("该条目已在分组中，不能再次分组");
     return;
   }
-  const s = A.getVars(), d = V.start !== null || V.end !== null, c = n(`
+  const s = N.getVars(), d = G.start !== null || G.end !== null, c = n(`
     <div class="entry-grouping-menu" style="
       position: fixed; left: ${t}px; top: ${r}px;
       background: ${s.bgColor}; border: 1px solid ${s.borderColor};
@@ -6684,8 +6709,8 @@ function el(e, t, r) {
       <div class="menu-item set-end" style="padding: 8px 12px; cursor: pointer; border-radius: 4px; font-size: 14px;">设为分组结束</div>
       ${d ? '<div class="menu-item clear-marks" style="padding: 8px 12px; cursor: pointer; border-radius: 4px; font-size: 14px; color: #ef4444;">清除标记</div>' : ""}
     </div>
-  `), p = or();
-  (p.length ? p : n("body")).append(c), c.on("pointerdown mousedown click", (g) => g.stopPropagation());
+  `), p = br();
+  (p.length ? p : n("body")).append(c), c.on("pointerdown mousedown click", (m) => m.stopPropagation());
   const u = c[0].getBoundingClientRect();
   u.right > window.innerWidth && c.css("left", t - u.width + "px"), u.bottom > window.innerHeight && c.css("top", r - u.height + "px"), c.find(".menu-item").hover(
     function() {
@@ -6695,56 +6720,105 @@ function el(e, t, r) {
       n(this).css("background", "transparent");
     }
   );
-  const f = async (g) => {
-    (g ? V.end : V.start) !== null ? _i("请输入分组名称", "分组", async (y) => {
-      const S = l.indexOf(V.start), P = l.indexOf(V.end);
-      if (S === -1 || P === -1) {
-        Qe(), window.toastr && toastr.error("分组锚点无法解析，请重试");
+  const f = async (m) => {
+    (m ? G.end : G.start) !== null ? Xi("请输入分组名称", "分组", async (y) => {
+      const w = a.indexOf(G.start), C = a.indexOf(G.end);
+      if (w === -1 || C === -1) {
+        Ze(), window.toastr && toastr.error("分组锚点无法解析，请重试");
         return;
       }
-      const x = Math.min(S, P), w = Math.max(S, P);
-      if (l.slice(x, w + 1).some((I) => a.has(I))) {
-        Qe(), window.toastr && toastr.error("选择范围包含已分组条目，请重新选择未分组的范围");
+      const S = Math.min(w, C), k = Math.max(w, C);
+      if (a.slice(S, k + 1).some((P) => l.has(P))) {
+        Ze(), window.toastr && toastr.error("选择范围包含已分组条目，请重新选择未分组的范围");
         return;
       }
-      await ui(
+      await ki(
         o,
-        V.start,
-        V.end,
+        G.start,
+        G.end,
         y,
-        l
-      ), Qe(), setTimeout(() => Ve(), 200), window.toastr && toastr.success("分组已创建");
-    }) : window.toastr && toastr.info(`已标记分组${g ? "开始" : "结束"}，请继续标记分组${g ? "结束" : "开始"}`);
+        a
+      ), Ze(), setTimeout(() => He(), 200), window.toastr && toastr.success("分组已创建");
+    }) : window.toastr && toastr.info(`已标记分组${m ? "开始" : "结束"}，请继续标记分组${m ? "结束" : "开始"}`);
   };
-  c.find(".set-start").on("click", (g) => {
-    if (g.stopPropagation(), a.has(i)) {
+  c.find(".set-start").on("click", (m) => {
+    if (m.stopPropagation(), l.has(i)) {
       window.toastr && toastr.info("该条目已在分组中，不能作为分组起点");
       return;
     }
-    V.start = i, c.remove(), n(document).off("click.grouping-menu"), f(!0);
-  }), c.find(".set-end").on("click", (g) => {
-    if (g.stopPropagation(), a.has(i)) {
+    G.start = i, c.remove(), n(document).off("click.grouping-menu"), f(!0);
+  }), c.find(".set-end").on("click", (m) => {
+    if (m.stopPropagation(), l.has(i)) {
       window.toastr && toastr.info("该条目已在分组中，不能作为分组终点");
       return;
     }
-    V.end = i, c.remove(), n(document).off("click.grouping-menu"), f(!1);
-  }), c.find(".clear-marks").on("click", (g) => {
-    g.stopPropagation(), Qe(), c.remove(), n(document).off("click.grouping-menu"), window.toastr && toastr.info("已清除临时标记");
+    G.end = i, c.remove(), n(document).off("click.grouping-menu"), f(!1);
+  }), c.find(".clear-marks").on("click", (m) => {
+    m.stopPropagation(), Ze(), c.remove(), n(document).off("click.grouping-menu"), window.toastr && toastr.info("已清除临时标记");
   }), setTimeout(() => {
-    n(document).one("click.grouping-menu", (g) => {
-      n(g.target).closest(".entry-grouping-menu").length || (c.remove(), n(document).off("click.grouping-menu"));
+    n(document).one("click.grouping-menu", (m) => {
+      n(m.target).closest(".entry-grouping-menu").length || (c.remove(), n(document).off("click.grouping-menu"));
     });
   }, 100);
 }
-const Pi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Qi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  applyGroupingToList: Ve,
-  initEntryGrouping: xt
+  applyGroupingToList: He,
+  destroyEntryGrouping: At,
+  initEntryGrouping: jt
 }, Symbol.toStringTag, { value: "Module" }));
-function _r(e) {
+function Cl() {
+  var e, t;
+  try {
+    return ((t = (e = M.API).getLoadedPresetName) == null ? void 0 : t.call(e)) ?? null;
+  } catch {
+    return null;
+  }
+}
+function Zi() {
+  const e = en();
+  return {
+    entryStatesPanelEnabled: e.entryStatesPanelEnabled !== !1,
+    entryGroupingEnabled: e.entryGroupingEnabled !== !1,
+    regexBindingEnabled: Je() !== !1
+  };
+}
+function El(e) {
+  const t = en();
+  t.entryStatesPanelEnabled = !!e, hr(t);
+}
+function zl(e) {
+  const t = en();
+  t.entryGroupingEnabled = !!e, hr(t);
+}
+async function Il(e) {
+  const t = !!e, r = Je() !== !1;
+  if (t !== r) {
+    Mi(t), localStorage.setItem("preset-transfer-regex-binding-enabled", String(t));
+    try {
+      const n = Cl();
+      if (n)
+        if (t)
+          await Ve(null, n);
+        else {
+          const o = q(n);
+          await Ve(n, null, {
+            fromBindings: o,
+            toBindings: ae()
+          });
+        }
+    } catch {
+    }
+  }
+}
+function De() {
+  const e = Zi();
+  Pt == null || Pt(e), e.entryStatesPanelEnabled || e.regexBindingEnabled ? Di() : (Ri(), kt == null || kt()), e.entryGroupingEnabled ? jt == null || jt() : At == null || At();
+}
+function jr(e) {
   return String(e ?? "").toLowerCase().trim().replace(/[\s\-_–—]+/g, "").replace(/[()（）[\]【】{}<>《》“”"'`~!@#$%^&*+=|\\:;,.?，。！？、·]/g, "");
 }
-function Pr(e) {
+function Tr(e) {
   const t = String(e ?? "").trim();
   if (!t)
     return { raw: "", base: "", normalizedBase: "", version: null };
@@ -6761,13 +6835,13 @@ function Pr(e) {
   }
   if (!i || i.index === void 0) {
     const s = t;
-    return { raw: t, base: s, normalizedBase: _r(s), version: null };
+    return { raw: t, base: s, normalizedBase: jr(s), version: null };
   }
-  const l = String(i[0]).replace(/^v/i, "");
-  let a = t.slice(0, i.index).trim();
-  return a = a.replace(/[\s\-_–—~†·•|\\/]+$/g, "").trim(), { raw: t, base: a, normalizedBase: _r(a), version: l };
+  const a = String(i[0]).replace(/^v/i, "");
+  let l = t.slice(0, i.index).trim();
+  return l = l.replace(/[\s\-_–—~†·•|\\/]+$/g, "").trim(), { raw: t, base: l, normalizedBase: jr(l), version: a };
 }
-function Cr(e) {
+function Br(e) {
   const t = String(e ?? "");
   if (t.length < 2) return [];
   const r = [];
@@ -6775,41 +6849,267 @@ function Cr(e) {
     r.push(t.slice(n, n + 2));
   return r;
 }
-function tl(e, t) {
+function Ml(e, t) {
   const r = String(e ?? ""), n = String(t ?? "");
   if (!r && !n) return 1;
   if (!r || !n) return 0;
   if (r === n) return 1;
   if (r.length < 2 || n.length < 2) return 0;
-  const o = Cr(r), i = Cr(n), l = /* @__PURE__ */ new Map();
+  const o = Br(r), i = Br(n), a = /* @__PURE__ */ new Map();
   for (const s of o)
-    l.set(s, (l.get(s) || 0) + 1);
-  let a = 0;
+    a.set(s, (a.get(s) || 0) + 1);
+  let l = 0;
   for (const s of i) {
-    const d = l.get(s) || 0;
-    d > 0 && (l.set(s, d - 1), a++);
+    const d = a.get(s) || 0;
+    d > 0 && (a.set(s, d - 1), l++);
   }
-  return 2 * a / (o.length + i.length);
+  return 2 * l / (o.length + i.length);
 }
-function zr(e) {
+function Nr(e) {
   return (String(e ?? "").toLowerCase().match(/[a-z0-9]+|[\u4e00-\u9fff]+/g) || []).filter((n) => n.length >= 2);
 }
-function nl(e, t, r = {}) {
-  const { threshold: n = 0.82 } = r, o = Pr(e), i = Pr(t);
+function Al(e, t, r = {}) {
+  const { threshold: n = 0.82 } = r, o = Tr(e), i = Tr(t);
   if (!o.raw || !i.raw) return { match: !1, similarity: 0, left: o, right: i };
   if (o.raw === i.raw) return { match: !1, similarity: 0, left: o, right: i };
   if (!o.version || !i.version) return { match: !1, similarity: 0, left: o, right: i };
   if (o.version === i.version) return { match: !1, similarity: 0, left: o, right: i };
   if (!o.normalizedBase || !i.normalizedBase) return { match: !1, similarity: 0, left: o, right: i };
-  const l = o.normalizedBase === i.normalizedBase ? 1 : tl(o.normalizedBase, i.normalizedBase), a = zr(o.base), s = zr(i.base), d = new Set(s);
-  if (!(a.find((h) => h.length >= 3 && d.has(h)) || null))
-    return { match: !1, similarity: l, left: o, right: i };
-  const p = new Set(a), u = a.length > 0 && a.every((h) => d.has(h)), f = s.length > 0 && s.every((h) => p.has(h));
-  return { match: o.normalizedBase.includes(i.normalizedBase) || i.normalizedBase.includes(o.normalizedBase) || u || f || l >= n, similarity: l, left: o, right: i };
+  const a = o.normalizedBase === i.normalizedBase ? 1 : Ml(o.normalizedBase, i.normalizedBase), l = Nr(o.base), s = Nr(i.base), d = new Set(s);
+  if (!(l.find((h) => h.length >= 3 && d.has(h)) || null))
+    return { match: !1, similarity: a, left: o, right: i };
+  const p = new Set(l), u = l.length > 0 && l.every((h) => d.has(h)), f = s.length > 0 && s.every((h) => p.has(h));
+  return { match: o.normalizedBase.includes(i.normalizedBase) || i.normalizedBase.includes(o.normalizedBase) || u || f || a >= n, similarity: a, left: o, right: i };
 }
-function ir(e) {
+const bt = 80;
+let Be = 0;
+function jl() {
+  return new Promise((e) => setTimeout(e, 0));
+}
+function Tl(e) {
+  return String(e || "").toLowerCase().trim();
+}
+function es(e) {
+  const t = v();
+  let r = e.find(".pt-global-search-panel");
+  return r.length || (r = t('<div class="pt-global-search-panel" style="display:none;"></div>'), e.append(r)), r;
+}
+function bn(e, t) {
+  const { title: r, subtitle: n, results: o, targetLabel: i } = t, a = (o || []).map((l) => {
+    const s = l.disabled ? "disabled" : "", d = "转移条目", c = l.sub ? `<div class="pt-global-search-sub">${l.sub}</div>` : "";
+    return `
+        <div class="pt-global-search-item" data-pt-result-id="${l.id}">
+          <div class="pt-global-search-meta">
+            <div class="pt-global-search-name">${xn(l.name || "")}</div>
+            ${c}
+          </div>
+          <div class="pt-global-search-actions">
+            <button class="pt-global-search-transfer" ${s}>${d}</button>
+          </div>
+        </div>
+      `;
+  }).join("");
+  e.html(`
+    <div class="pt-global-search-header">
+      <div>
+        <div class="pt-global-search-title">${xn(r || "全局搜索")}</div>
+        <div>${xn(n || "")}</div>
+      </div>
+    </div>
+    ${a || '<div class="pt-global-search-item"><div class="pt-global-search-meta"><div class="pt-global-search-sub">没有匹配结果</div></div></div>'}
+  `);
+}
+function xn(e) {
+  return String(e ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+function Bl(e) {
+  const t = v();
+  if (e === "left") return t("#left-preset").val();
+  if (e === "right") return t("#right-preset").val();
+  if (e === "main") {
+    const r = t("#left-preset").val(), n = t("#right-preset").val();
+    return r && !n ? r : !r && n ? n : "";
+  }
+  return "";
+}
+function Nl() {
+  const e = v();
+  return {
+    left: e("#left-preset").val(),
+    right: e("#right-preset").val()
+  };
+}
+function Or(e) {
+  const t = v();
+  return e === "left" ? t("#left-display-mode").val() || "default" : e === "right" ? t("#right-display-mode").val() || "default" : e === "main" && t("#single-display-mode").val() || "default";
+}
+function Ol() {
+  return v()("#auto-enable-entry").is(":checked");
+}
+function Lr() {
+  v()(".pt-global-search-panel").hide();
+}
+function Ll(e) {
+  es(e).hide();
+}
+async function Dl({ apiInfo: e, context: t, wrapperSelector: r, searchTerm: n, includeContent: o }) {
+  const i = v(), a = D(), l = be(), s = Tl(n), d = i(r), c = es(d);
+  if (!s) {
+    Ll(d);
+    return;
+  }
+  const p = Bl(t);
+  if (!p) {
+    c.show(), bn(c, {
+      title: "全局搜索",
+      subtitle: `请先选择目标${a.ui.containerLabel}`,
+      results: [],
+      targetLabel: a.ui.containerLabel
+    });
+    return;
+  }
+  const u = ++Be, f = await l.listContainers(e), g = [], b = /* @__PURE__ */ new Map();
+  c.show(), bn(c, {
+    title: "全局搜索",
+    subtitle: "准备扫描...",
+    results: [],
+    targetLabel: a.ui.containerLabel
+  });
+  for (let m = 0; m < f.length; m++) {
+    if (u !== Be) return;
+    const h = f[m];
+    let y = [];
+    try {
+      y = await l.getEntries(e, h, "include_disabled");
+    } catch {
+      continue;
+    }
+    for (const w of y) {
+      if (u !== Be) return;
+      if (!w) continue;
+      const C = String(w.name || ""), S = C.toLowerCase(), k = o ? String(w.content || "").toLowerCase() : "";
+      if (!(o ? S.includes(s) || k.includes(s) : S.includes(s))) continue;
+      const P = `${h}::${String(w.ptKey || w.identifier || C)}`;
+      if (b.has(P)) continue;
+      const E = `${h}::${String(w.identifier || "")}::${String(g.length)}`;
+      b.set(P, { id: E, container: h, entry: w });
+      const j = [];
+      if (j.push(`来源：${h}`), o && w.content) {
+        const _ = String(w.content || "").replace(/\s+/g, " ").trim();
+        _ && j.push(`片段：${_.slice(0, 60)}${_.length > 60 ? "…" : ""}`);
+      }
+      if (g.push({
+        id: E,
+        name: C,
+        sub: j.join("  "),
+        disabled: h === p
+      }), g.length >= bt) break;
+    }
+    if (u !== Be) return;
+    if (bn(c, {
+      title: "全局搜索",
+      subtitle: `已扫描 ${m + 1}/${f.length}，匹配 ${g.length}${g.length >= bt ? `（已达上限 ${bt}）` : ""}`,
+      results: g,
+      targetLabel: a.ui.containerLabel
+    }), g.length >= bt) break;
+    await jl();
+  }
+  u === Be && (c.off("click.ptGlobalSearch"), c.on("click.ptGlobalSearch", ".pt-global-search-transfer", async function(m) {
+    var P;
+    m.preventDefault(), m.stopPropagation();
+    const y = i(this).closest(".pt-global-search-item").data("pt-result-id");
+    if (!(g || []).find((E) => E.id === y)) return;
+    const C = Array.from(b.values()).find((E) => E.id === y);
+    if (!(C != null && C.entry)) return;
+    const S = C.container, k = C.entry;
+    if (!((P = a.capabilities) != null && P.supportsInsertPosition)) {
+      try {
+        const E = Ol();
+        let j = p;
+        if (a.id === "worldbook") {
+          const { left: _, right: z } = Nl(), A = !!_, T = !!z;
+          if (A && T && _ !== z) {
+            window.ptWorldbookPickTarget = {
+              apiInfo: e,
+              sourceContainer: S,
+              entries: [k]
+            }, c.hide(), i("#left-side, #right-side").addClass("transfer-target");
+            const ce = "转移模式已激活！请点击左侧或右侧面板区域，选择目标世界书。";
+            window.toastr ? toastr.info(ce) : alert(ce);
+            return;
+          }
+          const F = A ? _ : T ? z : "";
+          if (!F) {
+            window.toastr && toastr.warning("请先选择目标世界书");
+            return;
+          }
+          j = F, await l.transfer(e, {
+            sourceContainer: S,
+            targetContainer: F,
+            entries: [k],
+            insertPosition: null,
+            autoEnable: E,
+            displayMode: Or(t)
+          });
+        } else
+          await l.transfer(e, {
+            sourceContainer: S,
+            targetContainer: p,
+            entries: [k],
+            insertPosition: null,
+            autoEnable: E,
+            displayMode: Or(t)
+          });
+        await L(e), window.toastr && toastr.success(`已转移到目标${a.ui.containerLabel}: ${j}`);
+      } catch (E) {
+        console.error("全局搜索转移失败:", E), window.toastr && toastr.error("转移失败: " + E.message);
+      }
+      return;
+    }
+    window.transferMode = null, i(".transfer-target, .transfer-source").removeClass("transfer-target transfer-source"), window.transferMode = {
+      apiInfo: e,
+      fromSide: null,
+      toSide: "any",
+      selectedEntries: [k],
+      sourceContainer: S
+    }, c.hide(), i("#left-side, #right-side, #single-container .entries-side").addClass("transfer-target");
+    const x = "转移模式已激活！请点击任意面板中的条目来选择插入位置。";
+    window.toastr ? toastr.info(x) : alert(x);
+  }));
+}
+function Dr() {
+  Be += 1;
+}
+const ts = "preset-transfer-search-settings";
+function Rr() {
+  return {
+    globalSearch: !1,
+    includeContent: !1
+  };
+}
+function Re() {
+  try {
+    const t = localStorage.getItem(ts);
+    if (t)
+      return { ...Rr(), ...JSON.parse(t) };
+  } catch {
+  }
+  const e = Rr();
+  return ns(e), e;
+}
+function ns(e) {
+  try {
+    localStorage.setItem(ts, JSON.stringify(e));
+  } catch {
+  }
+}
+function Rl(e) {
+  const r = { ...Re(), ...e };
+  return ns(r), r;
+}
+function Jt(e) {
   const t = (e || "").toLowerCase().trim(), r = v();
-  sr();
+  xr();
   const n = "#left-entries-list .entry-item, #right-entries-list .entry-item, #single-entries-list .entry-item";
   if (!t) {
     r(n).each(function() {
@@ -6818,29 +7118,29 @@ function ir(e) {
     });
     return;
   }
-  const o = r("#search-content-main").is(":checked");
+  const { includeContent: o } = Re();
   r(n).each(function() {
     const i = r(this);
     if (i.hasClass("position-item")) return;
-    const l = (i.find(".entry-name").text() || "").toLowerCase();
-    let a = [];
-    i.closest("#left-entries-list").length ? a = window.leftEntries || [] : i.closest("#right-entries-list").length ? a = window.rightEntries || [] : i.closest("#single-entries-list").length && (a = window.singleEntries || []);
+    const a = (i.find(".entry-name").text() || "").toLowerCase();
+    let l = [];
+    i.closest("#left-entries-list").length ? l = window.leftEntries || [] : i.closest("#right-entries-list").length ? l = window.rightEntries || [] : i.closest("#single-entries-list").length && (l = window.singleEntries || []);
     let s = "";
     const d = i.data("identifier");
-    if (d && a.length) {
-      const p = a.find((u) => u && u.identifier === d);
+    if (d && l.length) {
+      const p = l.find((u) => u && u.identifier === d);
       s = p && p.content ? p.content : "";
     } else {
       const p = parseInt(i.data("index"), 10);
-      !Number.isNaN(p) && a[p] && (s = a[p].content || "");
+      !Number.isNaN(p) && l[p] && (s = l[p].content || "");
     }
-    const c = o ? l.includes(t) || s.toLowerCase().includes(t) : l.includes(t);
-    i.toggle(c), c ? Vt(i) : i.find(".create-here-btn").hide();
+    const c = o ? a.includes(t) || s.toLowerCase().includes(t) : a.includes(t);
+    i.toggle(c), c ? nn(i) : i.find(".create-here-btn").hide();
   });
 }
-function Fe(e, t) {
+function fe(e, t) {
   const r = (t || "").toLowerCase().trim(), n = v();
-  sr(e);
+  xr(e);
   const o = `#${e}-entries-list .entry-item`;
   if (!r) {
     n(o).each(function() {
@@ -6849,24 +7149,24 @@ function Fe(e, t) {
     });
     return;
   }
-  const l = n(e === "left" ? "#search-content-left" : "#search-content-right").is(":checked");
+  const { includeContent: i } = Re();
   n(o).each(function() {
     const a = n(this);
     if (a.hasClass("position-item")) return;
-    const s = (a.find(".entry-name").text() || "").toLowerCase(), d = a.data("identifier"), c = e === "left" ? window.leftEntries || [] : e === "right" ? window.rightEntries || [] : window.singleEntries || [];
-    let p = "";
-    if (d && c.length) {
-      const f = c.find((m) => m && m.identifier === d);
-      p = f && f.content ? f.content : "";
+    const l = (a.find(".entry-name").text() || "").toLowerCase(), s = a.data("identifier"), d = e === "left" ? window.leftEntries || [] : e === "right" ? window.rightEntries || [] : window.singleEntries || [];
+    let c = "";
+    if (s && d.length) {
+      const u = d.find((f) => f && f.identifier === s);
+      c = u && u.content ? u.content : "";
     } else {
-      const f = parseInt(a.data("index"), 10);
-      !Number.isNaN(f) && c[f] && (p = c[f].content || "");
+      const u = parseInt(a.data("index"), 10);
+      !Number.isNaN(u) && d[u] && (c = d[u].content || "");
     }
-    const u = l ? s.includes(r) || p.toLowerCase().includes(r) : s.includes(r);
-    a.toggle(u), u ? Vt(a) : a.find(".create-here-btn").hide();
+    const p = i ? l.includes(r) || c.toLowerCase().includes(r) : l.includes(r);
+    a.toggle(p), p ? nn(a) : a.find(".create-here-btn").hide();
   });
 }
-function Vt(e) {
+function nn(e) {
   const t = v();
   if (e.find(".jump-btn").length > 0)
     return;
@@ -6876,14 +7176,14 @@ function Vt(e) {
     </button>
   `);
   r.on("click", (n) => {
-    n.stopPropagation(), Ci(e);
+    n.stopPropagation(), rs(e);
   }), e.append(r), e.find(".create-here-btn").hide();
 }
-function sr(e = null) {
+function xr(e = null) {
   const t = v();
   e ? (t(`#${e}-entries-list .jump-btn`).remove(), t(`#${e}-entries-list .create-here-btn`).show()) : (t(".jump-btn").remove(), t(".create-here-btn").show());
 }
-function Ci(e) {
+function rs(e) {
   const t = v(), r = e.data("identifier");
   if (!r) return;
   let n = "";
@@ -6891,19 +7191,19 @@ function Ci(e) {
   const o = t(`${n} .entry-item`);
   o.show();
   const i = o.filter(function() {
-    const l = t(this);
-    return l.data("identifier") === r && !l.hasClass("position-item");
+    const a = t(this);
+    return a.data("identifier") === r && !a.hasClass("position-item");
   }).first();
   i.length !== 0 && (i[0].scrollIntoView({ behavior: "smooth", block: "center" }), i.addClass("jump-highlight"), setTimeout(() => i.removeClass("jump-highlight"), 2e3), setTimeout(() => {
-    const l = zi(n);
-    l && l.val() && (l.val(""), n === "#left-entries-list" ? Fe("left", "") : n === "#right-entries-list" ? Fe("right", "") : ir(""));
+    const a = os(n);
+    a && a.val() && (a.val(""), n === "#left-entries-list" ? fe("left", "") : n === "#right-entries-list" ? fe("right", "") : Jt(""));
   }, 100));
 }
-function zi(e) {
+function os(e) {
   const t = v();
   return e === "#left-entries-list" ? t("#left-entry-search-inline").is(":visible") ? t("#left-entry-search-inline") : t("#left-entry-search") : t(e === "#right-entries-list" ? "#right-entry-search-inline" : "#entry-search");
 }
-function _n(e, t) {
+function Dn(e, t) {
   const r = v(), n = r("#left-preset").val(), o = r("#right-preset").val(), i = r(`#${t}-show-new`);
   if (!n || !o || n === o) {
     alert("请先选择两个不同的预设，才能查看新增条目。");
@@ -6911,75 +7211,75 @@ function _n(e, t) {
   }
   if (i.hasClass("showing-new")) {
     i.removeClass("showing-new"), i.find(".btn-icon").text("");
-    const a = r(`#${t}-entry-search-inline`).val();
-    a ? setTimeout(() => Fe(t, a), 50) : r(`#${t}-entries-list .entry-item`).each(function() {
+    const l = r(`#${t}-entry-search-inline`).val();
+    l ? setTimeout(() => fe(t, l), 50) : r(`#${t}-entries-list .entry-item`).each(function() {
       const c = r(this);
       c.hasClass("position-item") || c.show();
     });
     const s = t === "left" ? n : o, d = t === "left" ? "左侧" : "右侧";
     r(`#${t}-preset-title`).text(`${d}预设: ${s}`), setTimeout(() => {
-      r(`#${t}-entries-list .entry-checkbox`).prop("checked", !1), J();
+      r(`#${t}-entries-list .entry-checkbox`).prop("checked", !1), X();
     }, 50);
     return;
   }
   try {
-    const a = re(), s = window.leftEntries || [], d = window.rightEntries || [], c = (x) => (x == null ? void 0 : x.ptKey) || (x == null ? void 0 : x.name) || (x == null ? void 0 : x.identifier) || "", p = new Set(s.map(c)), u = new Set(d.map(c)), f = /* @__PURE__ */ new Set();
+    const l = D(), s = window.leftEntries || [], d = window.rightEntries || [], c = (S) => (S == null ? void 0 : S.ptKey) || (S == null ? void 0 : S.name) || (S == null ? void 0 : S.identifier) || "", p = new Set(s.map(c)), u = new Set(d.map(c)), f = /* @__PURE__ */ new Set();
     if (t === "left")
-      for (const x of p)
-        u.has(x) || f.add(x);
+      for (const S of p)
+        u.has(S) || f.add(S);
     else
-      for (const x of u)
-        p.has(x) || f.add(x);
-    const m = new Set(
-      (t === "left" ? s : d).filter((x) => f.has(c(x))).map((x) => x.identifier)
+      for (const S of u)
+        p.has(S) || f.add(S);
+    const g = new Set(
+      (t === "left" ? s : d).filter((S) => f.has(c(S))).map((S) => S.identifier)
     ), b = t === "left" ? "左侧" : "右侧";
-    if (m.size === 0) {
+    if (g.size === 0) {
       alert(`${b}预设没有检测到新增条目。`);
       return;
     }
     i.addClass("showing-new"), i.find(".btn-icon").text("");
-    let g = 0;
-    const h = r(`#${t}-entry-search-inline`).val(), y = (h || "").toLowerCase().trim(), S = t === "left" ? window.leftEntries || [] : window.rightEntries || [];
+    let m = 0;
+    const h = r(`#${t}-entry-search-inline`).val(), y = (h || "").toLowerCase().trim(), w = t === "left" ? window.leftEntries || [] : window.rightEntries || [];
     r(`#${t}-entries-list .entry-item`).each(function() {
-      const x = r(this);
-      if (x.hasClass("position-item")) return;
-      const w = x.data("identifier");
-      if (!w || !m.has(w)) {
-        x.hide();
+      const S = r(this);
+      if (S.hasClass("position-item")) return;
+      const k = S.data("identifier");
+      if (!k || !g.has(k)) {
+        S.hide();
         return;
       }
       if (y) {
-        const k = (x.find(".entry-name").text() || "").toLowerCase();
-        let I = "";
-        const B = S.find((_) => _ && _.identifier === w);
-        if (B && B.content && (I = B.content.toLowerCase()), !(k.includes(y) || I.includes(y))) {
-          x.hide();
+        const x = (S.find(".entry-name").text() || "").toLowerCase();
+        let P = "";
+        const E = w.find((_) => _ && _.identifier === k);
+        if (E && E.content && (P = E.content.toLowerCase()), !(x.includes(y) || P.includes(y))) {
+          S.hide();
           return;
         }
       }
-      x.show(), g++, y && Vt(x);
+      S.show(), m++, y && nn(S);
     });
-    const P = t === "left" ? n : o;
-    r(`#${t}-preset-title`).text(`${b}预设: ${P} (新增 ${g})`), g === 0 && (alert(y ? `在搜索 "${h}" 的结果中，${b}预设没有符合条件的新增条目。` : `${b}预设没有检测到新增条目。`), i.removeClass("showing-new"), i.find(".btn-icon").text(""));
-  } catch (a) {
-    console.error("切换新增条目模式失败:", a), alert("切换新增条目模式失败: " + a.message), i.removeClass("showing-new"), i.find(".btn-icon").text("");
+    const C = t === "left" ? n : o;
+    r(`#${t}-preset-title`).text(`${b}预设: ${C} (新增 ${m})`), m === 0 && (alert(y ? `在搜索 "${h}" 的结果中，${b}预设没有符合条件的新增条目。` : `${b}预设没有检测到新增条目。`), i.removeClass("showing-new"), i.find(".btn-icon").text(""));
+  } catch (l) {
+    console.error("切换新增条目模式失败:", l), alert("切换新增条目模式失败: " + l.message), i.removeClass("showing-new"), i.find(".btn-icon").text("");
   }
 }
-const Ei = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const is = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  addJumpButton: Vt,
-  clearSearchResults: sr,
-  filterDualEntries: ir,
-  filterSideEntries: Fe,
-  getActiveSearchInput: zi,
-  jumpToOriginalPosition: Ci,
-  toggleNewEntries: _n
+  addJumpButton: nn,
+  clearSearchResults: xr,
+  filterDualEntries: Jt,
+  filterSideEntries: fe,
+  getActiveSearchInput: os,
+  jumpToOriginalPosition: rs,
+  toggleNewEntries: Dn
 }, Symbol.toStringTag, { value: "Module" }));
-function Ii() {
+function ss() {
   const e = v(), t = loadTransferSettings();
   e("#auto-close-modal").prop("checked", t.autoCloseModal), e("#auto-enable-entry").prop("checked", t.autoEnableEntry), e("#left-display-mode").val(t.leftDisplayMode), e("#right-display-mode").val(t.rightDisplayMode), e("#single-display-mode").val(t.singleDisplayMode);
 }
-function vt() {
+function Tt() {
   const e = v(), t = {
     autoCloseModal: e("#auto-close-modal").prop("checked"),
     autoEnableEntry: e("#auto-enable-entry").prop("checked"),
@@ -6989,24 +7289,24 @@ function vt() {
   };
   saveTransferSettings(t);
 }
-const Mi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const as = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  applyStoredSettings: Ii,
-  saveCurrentSettings: vt
-}, Symbol.toStringTag, { value: "Module" })), Er = "preset-transfer-extension-update-btn", Be = "pt-extension-update-modal";
-function rl(e) {
+  applyStoredSettings: ss,
+  saveCurrentSettings: Tt
+}, Symbol.toStringTag, { value: "Module" })), Wr = "preset-transfer-extension-update-btn", Ne = "pt-extension-update-modal";
+function Wl(e) {
   var r;
   const t = (r = e == null ? void 0 : e.changelog) == null ? void 0 : r.text;
   return typeof t == "string" && t.trim() ? t.trim() : "（未找到 CHANGELOG.md 或无法读取更新日志）";
 }
-function ol(e) {
+function Ul(e) {
   var d, c;
-  const t = v(), r = R(), n = A.getVars();
-  t(`#${Be}`).remove();
-  const o = ((d = e == null ? void 0 : e.local) == null ? void 0 : d.version) || "?", i = ((c = e == null ? void 0 : e.remote) == null ? void 0 : c.version) || "?", l = C(rl(e)), a = `
-    <div id="${Be}" style="
+  const t = v(), r = U(), n = N.getVars();
+  t(`#${Ne}`).remove();
+  const o = ((d = e == null ? void 0 : e.local) == null ? void 0 : d.version) || "?", i = ((c = e == null ? void 0 : e.remote) == null ? void 0 : c.version) || "?", a = I(Wl(e)), l = `
+    <div id="${Ne}" style="
       --pt-font-size: ${n.fontSize};
-      ${A.getModalBaseStyles({ maxWidth: "720px" })}
+      ${N.getModalBaseStyles({ maxWidth: "720px" })}
       z-index: 10020;
     ">
       <div style="
@@ -7043,7 +7343,7 @@ function ol(e) {
         </div>
         <div style="padding: 16px 18px; color: ${n.textColor};">
           <div style="opacity: 0.9; font-size: calc(var(--pt-font-size) * 0.875); margin-bottom: 10px;">
-            当前版本：<b>${C(o)}</b>　→　最新版本：<b>${C(i)}</b>
+            当前版本：<b>${I(o)}</b>　→　最新版本：<b>${I(i)}</b>
           </div>
           <div style="
             border: 1px solid ${n.borderColor};
@@ -7056,7 +7356,7 @@ function ol(e) {
             line-height: 1.55;
             font-size: calc(var(--pt-font-size) * 0.8125);
             color: ${n.textColor};
-          ">${l}</div>
+          ">${a}</div>
           <div style="display:flex; gap: 10px; justify-content: flex-end; margin-top: 14px;">
             <button id="pt-extension-update-cancel" type="button" style="
               border: 1px solid ${n.borderColor};
@@ -7089,17 +7389,17 @@ function ol(e) {
       </div>
     </div>
   `;
-  t(r.document.body).append(a);
+  t(r.document.body).append(l);
   function s() {
-    t(`#${Be}`).remove();
+    t(`#${Ne}`).remove();
   }
-  t(`#${Be}`).off("click.ptUpdateOverlay").on("click.ptUpdateOverlay", function(p) {
-    p.target && p.target.id === Be && s();
+  t(`#${Ne}`).off("click.ptUpdateOverlay").on("click.ptUpdateOverlay", function(p) {
+    p.target && p.target.id === Ne && s();
   }), t("#pt-extension-update-close, #pt-extension-update-cancel").off("click.ptUpdate").on("click.ptUpdate", s), t("#pt-extension-update-confirm").off("click.ptUpdate").on("click.ptUpdate", async function() {
     const p = t(this);
     p.prop("disabled", !0).text("更新中..."), t("#pt-extension-update-error").text("");
     try {
-      await Ua(), r.location.reload();
+      await gl(), r.location.reload();
     } catch (u) {
       p.prop("disabled", !1).text("更新并刷新");
       const f = (u == null ? void 0 : u.message) || String(u);
@@ -7107,7 +7407,7 @@ function ol(e) {
     }
   });
 }
-function il() {
+function Fl() {
   const e = v();
   if (e("#preset-transfer-extension-update-style").length) return;
   e("head").append(`<style id="preset-transfer-extension-update-style">
@@ -7163,10 +7463,10 @@ function il() {
     }
   </style>`);
 }
-function Ir(e) {
-  const t = v(), r = Ta(), n = e.find(".font-size-wrapper");
-  if (!n.length || (n.find(`#${Er}`).remove(), r.status !== "update-available")) return;
-  il();
+function Ur(e) {
+  const t = v(), r = sl(), n = e.find(".font-size-wrapper");
+  if (!n.length || (n.find(`#${Wr}`).remove(), r.status !== "update-available")) return;
+  Fl();
   const o = `
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path d="M8 17l4 4 4-4"></path>
@@ -7174,33 +7474,33 @@ function Ir(e) {
       <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>
     </svg>
   `.trim(), i = t(
-    `<button id="${Er}" class="pt-extension-update-btn has-update" type="button" title="发现新版本，点击更新" aria-label="更新扩展">${o}</button>`
-  ), l = n.find(".pt-header-mini-actions");
-  l.length ? l.append(i) : n.append(i), i.off("click.ptUpdate").on("click.ptUpdate", function(a) {
-    a.preventDefault(), a.stopPropagation(), ol(r);
+    `<button id="${Wr}" class="pt-extension-update-btn has-update" type="button" title="发现新版本，点击更新" aria-label="更新扩展">${o}</button>`
+  ), a = n.find(".pt-header-mini-actions");
+  a.length ? a.append(i) : n.append(i), i.off("click.ptUpdate").on("click.ptUpdate", function(l) {
+    l.preventDefault(), l.stopPropagation(), Ul(r);
   });
 }
-function sl(e) {
+function Vl(e) {
   const t = v();
-  Ir(e);
-  const r = R(), n = () => Ir(e);
-  r.addEventListener(wn, n), e.on("remove.ptExtensionUpdate", () => {
-    r.removeEventListener(wn, n);
+  Ur(e);
+  const r = U(), n = () => Ur(e);
+  r.addEventListener(Tn, n), e.on("remove.ptExtensionUpdate", () => {
+    r.removeEventListener(Tn, n);
   }), t(document).on("keydown.ptExtensionUpdate", (o) => {
-    o.key === "Escape" && t(`#${Be}`).remove();
+    o.key === "Escape" && t(`#${Ne}`).remove();
   }), e.on("remove.ptExtensionUpdateEsc", () => {
     t(document).off("keydown.ptExtensionUpdate");
   });
 }
-const al = 100001;
-function Bt(e) {
-  return !e || !Array.isArray(e.prompt_order) ? null : e.prompt_order.find((t) => t && t.character_id === al) ?? null;
+const Gl = 100001;
+function Kt(e) {
+  return !e || !Array.isArray(e.prompt_order) ? null : e.prompt_order.find((t) => t && t.character_id === Gl) ?? null;
 }
-function Mr(e) {
-  const t = Bt(e), r = new Set(((t == null ? void 0 : t.order) ?? []).map((n) => n && n.identifier).filter(Boolean));
+function Fr(e) {
+  const t = Kt(e), r = new Set(((t == null ? void 0 : t.order) ?? []).map((n) => n && n.identifier).filter(Boolean));
   return { order: t, ids: r };
 }
-function Ai(e) {
+function ls(e) {
   const t = /* @__PURE__ */ new Map();
   if (!e || !Array.isArray(e.order))
     return t;
@@ -7208,94 +7508,94 @@ function Ai(e) {
     r && r.identifier && t.set(r.identifier, !!r.enabled);
   return t;
 }
-function Ar(e) {
+function Vr(e) {
   return typeof e != "string" ? "" : e.trim();
 }
-function ll(e) {
+function Hl(e) {
   if (typeof e != "string") return "";
   let t = e.trim().replace(/\s+/g, " ");
   return t = t.replace(/^[（(]\s*选\s*[一二三四五六七八九十0-9]+\s*[）)]\s*/u, ""), t = t.replace(/^选\s*[一二三四五六七八九十0-9]+\s*[:：\-–—]\s*/u, ""), t.trim();
 }
-function Nt(e) {
-  return ll(e).toLowerCase().replace(
+function Yt(e) {
+  return Hl(e).toLowerCase().replace(
     /[\s\-_–—:：()（）【】[\]{}<>《》"'`~!@#$%^&*+=|\\;,.?，。！？、·]/g,
     ""
   );
 }
-function cl(e) {
+function ql(e) {
   return e || "relative";
 }
-function dl(e) {
+function Jl(e) {
   return Array.isArray(e) ? [...e].filter(Boolean).sort() : [];
 }
-function Ot(e) {
-  const t = ne(e), r = typeof (t == null ? void 0 : t.content) == "string" ? t.content.replace(/\r\n/g, `
+function Xt(e) {
+  const t = oe(e), r = typeof (t == null ? void 0 : t.content) == "string" ? t.content.replace(/\r\n/g, `
 `).trim() : "";
   return JSON.stringify({
     content: r,
     role: (t == null ? void 0 : t.role) ?? "system",
-    injection_position: cl(t == null ? void 0 : t.injection_position),
+    injection_position: ql(t == null ? void 0 : t.injection_position),
     injection_depth: (t == null ? void 0 : t.injection_depth) ?? 4,
     injection_order: (t == null ? void 0 : t.injection_order) ?? "",
-    injection_trigger: dl(t == null ? void 0 : t.injection_trigger),
+    injection_trigger: Jl(t == null ? void 0 : t.injection_trigger),
     system_prompt: !!(t != null && t.system_prompt),
     marker: !!(t != null && t.marker),
     forbid_overrides: !!(t != null && t.forbid_overrides)
   });
 }
-function Pn(e) {
+function Rn(e) {
   const t = /* @__PURE__ */ new Map(), r = Array.isArray(e == null ? void 0 : e.prompts) ? e.prompts : [];
   for (const n of r)
     n && n.identifier && t.set(n.identifier, n);
   return t;
 }
-function pl(e, t) {
+function Kl(e, t) {
   const r = /* @__PURE__ */ new Map(), n = Array.isArray(e == null ? void 0 : e.prompts) ? e.prompts : [];
   for (const o of n) {
     if (!o || !o.identifier || t && t.size && !t.has(o.identifier)) continue;
-    const i = Nt(o.name);
+    const i = Yt(o.name);
     i && (r.has(i) || r.set(i, []), r.get(i).push(o.identifier));
   }
   return r;
 }
-function fl(e, t) {
+function Yl(e, t) {
   const r = /* @__PURE__ */ new Map(), n = Array.isArray(e == null ? void 0 : e.prompts) ? e.prompts : [];
   for (const o of n) {
     if (!o || !o.identifier || t && t.size && !t.has(o.identifier)) continue;
-    const i = Ot(o);
+    const i = Xt(o);
     i && (r.has(i) || r.set(i, []), r.get(i).push(o.identifier));
   }
   return r;
 }
-function ji(e, t, r, n = {}) {
-  const { matchByName: o = !0 } = n, i = Pn(e), l = Pn(t), a = o ? pl(t, r) : /* @__PURE__ */ new Map(), s = o ? fl(t, r) : /* @__PURE__ */ new Map();
+function cs(e, t, r, n = {}) {
+  const { matchByName: o = !0 } = n, i = Rn(e), a = Rn(t), l = o ? Kl(t, r) : /* @__PURE__ */ new Map(), s = o ? Yl(t, r) : /* @__PURE__ */ new Map();
   function d(c) {
     if (!c) return null;
     if (r && r.has(c)) return c;
     if (!o) return null;
     const p = i.get(c);
     if (!p) return null;
-    const u = Nt(p == null ? void 0 : p.name);
-    let f = u ? a.get(u) : null;
+    const u = Yt(p == null ? void 0 : p.name);
+    let f = u ? l.get(u) : null;
     if (!Array.isArray(f) || f.length === 0) {
-      const b = Ot(p);
+      const b = Xt(p);
       f = s.get(b);
     }
     if (!Array.isArray(f) || f.length === 0) return null;
     if (f.length === 1) return f[0];
-    const m = p == null ? void 0 : p.role;
-    if (m) {
-      const b = f.find((g) => {
+    const g = p == null ? void 0 : p.role;
+    if (g) {
+      const b = f.find((m) => {
         var h;
-        return ((h = l.get(g)) == null ? void 0 : h.role) === m;
+        return ((h = a.get(m)) == null ? void 0 : h.role) === g;
       });
       if (b) return b;
     }
     return f[0];
   }
-  return { resolve: d, sourcePromptMap: i, targetPromptMap: l };
+  return { resolve: d, sourcePromptMap: i, targetPromptMap: a };
 }
-function Ti(e, t, r) {
+function ds(e, t, r) {
   const n = Array.isArray(e == null ? void 0 : e.order) ? e.order.map((i) => i && i.identifier).filter(Boolean) : [];
   if (!r) return n;
   const o = [];
@@ -7305,24 +7605,24 @@ function Ti(e, t, r) {
       o.push(i);
       continue;
     }
-    const l = r.resolve(i);
-    o.push(l || i);
+    const a = r.resolve(i);
+    o.push(a || i);
   }
   return o;
 }
-function ar(e, t) {
-  const { ids: r } = Mr(e), { ids: n } = Mr(t), o = X(e).filter(
+function vr(e, t) {
+  const { ids: r } = Fr(e), { ids: n } = Fr(t), o = ee(e).filter(
     (s) => s && s.identifier && r.has(s.identifier)
-  ), i = X(t).filter(
+  ), i = ee(t).filter(
     (s) => s && s.identifier && n.has(s.identifier)
-  ), l = new Set(i.map((s) => Nt(s && s.name)).filter(Boolean)), a = new Set(i.map((s) => Ot(s)).filter(Boolean));
+  ), a = new Set(i.map((s) => Yt(s && s.name)).filter(Boolean)), l = new Set(i.map((s) => Xt(s)).filter(Boolean));
   return o.filter((s) => {
     if (!s) return !1;
-    const d = Nt(s.name), c = d ? l.has(d) : !1, p = a.has(Ot(s));
+    const d = Yt(s.name), c = d ? a.has(d) : !1, p = l.has(Xt(s));
     return s.identifier ? !(n.has(s.identifier) || c || p) : d ? !(c || p) : !1;
   });
 }
-function Bi(e, t, r) {
+function ps(e, t, r) {
   const n = [];
   if (!Array.isArray(e) || e.length === 0)
     return t.size > 0 && n.push({
@@ -7334,39 +7634,39 @@ function Bi(e, t, r) {
       startSourceIndex: -1,
       endSourceIndex: -1
     }), n;
-  let o = null, i = -1, l = null;
-  for (let a = 0; a < e.length; a++) {
-    const s = e[a];
+  let o = null, i = -1, a = null;
+  for (let l = 0; l < e.length; l++) {
+    const s = e[l];
     if (!s) continue;
     const d = r.has(s);
     if (t.has(s)) {
-      l || (l = {
+      a || (a = {
         ids: [],
         prevAnchor: o,
         nextAnchor: null,
         prevAnchorSourceIndex: i,
         nextAnchorSourceIndex: -1,
-        startSourceIndex: a,
-        endSourceIndex: a
-      }), l.ids.push(s), l.endSourceIndex = a;
+        startSourceIndex: l,
+        endSourceIndex: l
+      }), a.ids.push(s), a.endSourceIndex = l;
       continue;
     }
-    if (l) {
+    if (a) {
       let p = null, u = -1;
-      for (let f = a; f < e.length; f++) {
-        const m = e[f];
-        if (m && r.has(m)) {
-          p = m, u = f;
+      for (let f = l; f < e.length; f++) {
+        const g = e[f];
+        if (g && r.has(g)) {
+          p = g, u = f;
           break;
         }
       }
-      l.nextAnchor = p, l.nextAnchorSourceIndex = u, n.push(l), l = null;
+      a.nextAnchor = p, a.nextAnchorSourceIndex = u, n.push(a), a = null;
     }
-    d && (o = s, i = a);
+    d && (o = s, i = l);
   }
-  return l && n.push(l), n;
+  return a && n.push(a), n;
 }
-function Ni(e, t) {
+function us(e, t) {
   const r = t.prevAnchor ? e.findIndex((o) => o && o.identifier === t.prevAnchor) : -1, n = t.nextAnchor ? e.findIndex((o) => o && o.identifier === t.nextAnchor) : -1;
   if (r !== -1 && n !== -1) {
     if (r < n)
@@ -7376,22 +7676,22 @@ function Ni(e, t) {
   }
   return r !== -1 ? r + 1 : n !== -1 ? n : e.length;
 }
-function ul(e, t) {
-  const r = e.prevAnchor ? t.get(e.prevAnchor) : null, n = e.nextAnchor ? t.get(e.nextAnchor) : null, o = Ar(r == null ? void 0 : r.name) || e.prevAnchor, i = Ar(n == null ? void 0 : n.name) || e.nextAnchor;
+function Xl(e, t) {
+  const r = e.prevAnchor ? t.get(e.prevAnchor) : null, n = e.nextAnchor ? t.get(e.nextAnchor) : null, o = Vr(r == null ? void 0 : r.name) || e.prevAnchor, i = Vr(n == null ? void 0 : n.name) || e.nextAnchor;
   return !e.prevAnchor && !e.nextAnchor ? "插入到末尾" : e.prevAnchor && e.nextAnchor ? `插入在 "${o}" 与 "${i}" 之间` : e.prevAnchor ? `插入在 "${o}" 之后` : `插入在 "${i}" 之前`;
 }
-async function Oi(e, t, r, n = {}) {
+async function fs(e, t, r, n = {}) {
   const {
     preserveEnabled: o = !0,
     selectedIdentifiers: i = null
-  } = n, l = N(e, t), a = N(e, r);
-  if (!l || !a) throw new Error("无法获取预设数据");
-  const s = ar(l, a), d = Array.isArray(i) || i instanceof Set ? new Set(i) : null, c = d ? s.filter((_) => _ && _.identifier && d.has(_.identifier)) : s;
+  } = n, a = O(e, t), l = O(e, r);
+  if (!a || !l) throw new Error("无法获取预设数据");
+  const s = vr(a, l), d = Array.isArray(i) || i instanceof Set ? new Set(i) : null, c = d ? s.filter((_) => _ && _.identifier && d.has(_.identifier)) : s;
   if (c.length === 0)
     return { merged: 0, insertedOrder: 0, addedPrompts: 0, skipped: 0, missingEntries: [] };
-  a.prompts || (a.prompts = []);
-  const p = new Set((a.prompts ?? []).map((_) => _ && _.identifier).filter(Boolean)), u = Rt(a), f = new Set(u.order.map((_) => _ && _.identifier).filter(Boolean)), m = Bt(l), b = ji(l, a, f, { matchByName: !0 }), g = o ? Ai(m) : /* @__PURE__ */ new Map(), h = /* @__PURE__ */ new Map(), y = [];
-  let S = 0;
+  l.prompts || (l.prompts = []);
+  const p = new Set((l.prompts ?? []).map((_) => _ && _.identifier).filter(Boolean)), u = Qt(l), f = new Set(u.order.map((_) => _ && _.identifier).filter(Boolean)), g = Kt(a), b = cs(a, l, f, { matchByName: !0 }), m = o ? ls(g) : /* @__PURE__ */ new Map(), h = /* @__PURE__ */ new Map(), y = [];
+  let w = 0;
   for (const _ of c)
     if (_) {
       if (!_.identifier) {
@@ -7403,11 +7703,11 @@ async function Oi(e, t, r, n = {}) {
         __targetHasPrompt: p.has(_.identifier)
       });
     }
-  const P = new Set(
+  const C = new Set(
     Array.from(h.keys()).filter((_) => !f.has(_))
-  ), x = Ti(m, P, b), w = Bi(x, P, f), k = new Set(x), I = Array.from(P).filter((_) => !k.has(_));
-  I.length > 0 && w.push({
-    ids: I,
+  ), S = ds(g, C, b), k = ps(S, C, f), x = new Set(S), P = Array.from(C).filter((_) => !x.has(_));
+  P.length > 0 && k.push({
+    ids: P,
     prevAnchor: null,
     nextAnchor: null,
     prevAnchorSourceIndex: -1,
@@ -7415,72 +7715,72 @@ async function Oi(e, t, r, n = {}) {
     startSourceIndex: -1,
     endSourceIndex: -1
   });
-  let B = 0, O = 0;
+  let E = 0, j = 0;
   for (const _ of h.values()) {
     if (_ != null && _.__targetHasPrompt) continue;
-    const E = _.identifier, T = et(a, E);
-    if (T !== E)
-      throw new Error(`目标预设已存在相同 identifier，无法保留: ${E}`);
-    const j = ne(_);
-    j.identifier = T, Array.isArray(j.injection_trigger) && (j.injection_trigger = [...j.injection_trigger]), j.injection_depth ?? (j.injection_depth = 4), j.system_prompt = !!j.system_prompt, j.marker = !!j.marker, j.forbid_overrides = !!j.forbid_overrides, delete j.enabled, delete j.orderIndex, delete j.isNewEntry, delete j.isUninserted, delete j.hiddenInDefaultMode, a.prompts.push(j), p.add(T), B++;
+    const z = _.identifier, A = nt(l, z);
+    if (A !== z)
+      throw new Error(`目标预设已存在相同 identifier，无法保留: ${z}`);
+    const T = oe(_);
+    T.identifier = A, Array.isArray(T.injection_trigger) && (T.injection_trigger = [...T.injection_trigger]), T.injection_depth ?? (T.injection_depth = 4), T.system_prompt = !!T.system_prompt, T.marker = !!T.marker, T.forbid_overrides = !!T.forbid_overrides, delete T.enabled, delete T.orderIndex, delete T.isNewEntry, delete T.isUninserted, delete T.hiddenInDefaultMode, l.prompts.push(T), p.add(A), E++;
   }
   for (const _ of y) {
-    const E = ne(_);
-    E.identifier = et(a, E.identifier), Array.isArray(E.injection_trigger) && (E.injection_trigger = [...E.injection_trigger]), E.injection_depth ?? (E.injection_depth = 4), E.system_prompt = !!E.system_prompt, E.marker = !!E.marker, E.forbid_overrides = !!E.forbid_overrides, delete E.enabled, delete E.orderIndex, delete E.isNewEntry, delete E.isUninserted, delete E.hiddenInDefaultMode, a.prompts.push(E), B++;
+    const z = oe(_);
+    z.identifier = nt(l, z.identifier), Array.isArray(z.injection_trigger) && (z.injection_trigger = [...z.injection_trigger]), z.injection_depth ?? (z.injection_depth = 4), z.system_prompt = !!z.system_prompt, z.marker = !!z.marker, z.forbid_overrides = !!z.forbid_overrides, delete z.enabled, delete z.orderIndex, delete z.isNewEntry, delete z.isUninserted, delete z.hiddenInDefaultMode, l.prompts.push(z), E++;
   }
-  for (const _ of w) {
+  for (const _ of k) {
     if (!_ || !Array.isArray(_.ids) || _.ids.length === 0) continue;
-    const E = Ni(u.order, _), T = _.ids.filter((j) => P.has(j)).map((j) => ({
-      identifier: j,
-      enabled: o && g.has(j) ? g.get(j) : !0
+    const z = us(u.order, _), A = _.ids.filter((T) => C.has(T)).map((T) => ({
+      identifier: T,
+      enabled: o && m.has(T) ? m.get(T) : !0
     }));
-    if (T.length !== 0) {
-      u.order.splice(E, 0, ...T), O += T.length;
-      for (const j of T)
-        P.delete(j.identifier);
+    if (A.length !== 0) {
+      u.order.splice(z, 0, ...A), j += A.length;
+      for (const T of A)
+        C.delete(T.identifier);
     }
   }
   if (o)
     for (const _ of h.keys()) {
-      if (!f.has(_) && !u.order.some((T) => T && T.identifier === _) || !g.has(_)) continue;
-      const E = u.order.find((T) => T && T.identifier === _);
-      E && (E.enabled = g.get(_));
+      if (!f.has(_) && !u.order.some((A) => A && A.identifier === _) || !m.has(_)) continue;
+      const z = u.order.find((A) => A && A.identifier === _);
+      z && (z.enabled = m.get(_));
     }
-  return await e.presetManager.savePreset(r, a), {
-    merged: c.length - S,
-    insertedOrder: O,
-    addedPrompts: B,
-    skipped: S,
+  return await e.presetManager.savePreset(r, l), {
+    merged: c.length - w,
+    insertedOrder: j,
+    addedPrompts: E,
+    skipped: w,
     missingEntries: c
   };
 }
-function gl(e, t, r) {
-  const n = N(e, t), o = N(e, r);
+function Ql(e, t, r) {
+  const n = O(e, t), o = O(e, r);
   if (!n || !o) throw new Error("无法获取预设数据");
-  const i = ar(n, o);
+  const i = vr(n, o);
   return {
     missingEntries: i,
     missingCount: i.length
   };
 }
-function Li(e, t, r, n = {}) {
-  const o = N(e, t), i = N(e, r);
+function gs(e, t, r, n = {}) {
+  const o = O(e, t), i = O(e, r);
   if (!o || !i) throw new Error("无法获取预设数据");
-  const l = ar(o, i), a = Bt(i) ?? { order: [] }, s = new Set((a.order ?? []).map((w) => w && w.identifier).filter(Boolean)), d = Pn(i), c = Bt(o), p = Ai(c), u = ji(o, i, s, { matchByName: !0 }), f = /* @__PURE__ */ new Map(), m = /* @__PURE__ */ new Set(), b = [];
-  for (const w of l)
-    if (w) {
-      if (!w.identifier) {
-        b.push(w);
+  const a = vr(o, i), l = Kt(i) ?? { order: [] }, s = new Set((l.order ?? []).map((k) => k && k.identifier).filter(Boolean)), d = Rn(i), c = Kt(o), p = ls(c), u = cs(o, i, s, { matchByName: !0 }), f = /* @__PURE__ */ new Map(), g = /* @__PURE__ */ new Set(), b = [];
+  for (const k of a)
+    if (k) {
+      if (!k.identifier) {
+        b.push(k);
         continue;
       }
-      f.set(w.identifier, {
-        ...w,
-        enabledInSource: p.has(w.identifier) ? p.get(w.identifier) : null
-      }), m.add(w.identifier);
+      f.set(k.identifier, {
+        ...k,
+        enabledInSource: p.has(k.identifier) ? p.get(k.identifier) : null
+      }), g.add(k.identifier);
     }
-  const g = Ti(c, m, u), h = Bi(g, m, s), y = new Set(g), S = Array.from(m).filter((w) => !y.has(w)), P = h.slice();
-  S.length > 0 && P.push({
-    ids: S,
+  const m = ds(c, g, u), h = ps(m, g, s), y = new Set(m), w = Array.from(g).filter((k) => !y.has(k)), C = h.slice();
+  w.length > 0 && C.push({
+    ids: w,
     prevAnchor: null,
     nextAnchor: null,
     prevAnchorSourceIndex: -1,
@@ -7488,44 +7788,44 @@ function Li(e, t, r, n = {}) {
     startSourceIndex: -1,
     endSourceIndex: -1
   });
-  const x = P.filter((w) => w && Array.isArray(w.ids) && w.ids.length > 0).map((w, k) => {
-    const I = Ni(a.order ?? [], w), B = ul(w, d), O = w.ids.map((_) => f.get(_)).filter(Boolean);
+  const S = C.filter((k) => k && Array.isArray(k.ids) && k.ids.length > 0).map((k, x) => {
+    const P = us(l.order ?? [], k), E = Xl(k, d), j = k.ids.map((_) => f.get(_)).filter(Boolean);
     return {
-      id: `run-${k}-${w.prevAnchor || "start"}-${w.nextAnchor || "end"}`,
-      insertIndex: I,
-      label: B,
-      prevAnchor: w.prevAnchor,
-      nextAnchor: w.nextAnchor,
-      entries: O
+      id: `run-${x}-${k.prevAnchor || "start"}-${k.nextAnchor || "end"}`,
+      insertIndex: P,
+      label: E,
+      prevAnchor: k.prevAnchor,
+      nextAnchor: k.nextAnchor,
+      entries: j
     };
-  }).sort((w, k) => w.insertIndex - k.insertIndex);
-  return b.length > 0 && x.push({
+  }).sort((k, x) => k.insertIndex - x.insertIndex);
+  return b.length > 0 && S.push({
     id: "no-identifier",
-    insertIndex: (a.order ?? []).length,
+    insertIndex: (l.order ?? []).length,
     label: "无法定位（缺少 identifier），将插入到末尾",
     prevAnchor: null,
     nextAnchor: null,
-    entries: b.map((w) => ({ ...w, enabledInSource: null }))
+    entries: b.map((k) => ({ ...k, enabledInSource: null }))
   }), {
     missingEntries: Array.from(f.values()).concat(b),
-    missingCount: l.length,
-    groups: x
+    missingCount: a.length,
+    groups: S
   };
 }
-const Di = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const ms = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  getPresetUpdateDiff: gl,
-  getPresetUpdatePlan: Li,
-  performPresetUpdateMerge: Oi
+  getPresetUpdateDiff: Ql,
+  getPresetUpdatePlan: gs,
+  performPresetUpdateMerge: fs
 }, Symbol.toStringTag, { value: "Module" }));
-function Cn(e, t, r) {
+function Wn(e, t, r) {
   const n = v();
-  if (q(), !t || !r || t === r) {
+  if (Y(), !t || !r || t === r) {
     alert("请选择两个不同的预设。");
     return;
   }
   n("#preset-update-modal").remove();
-  const o = A.getVars(), i = localStorage.getItem("preset-transfer-pu-preserve-enabled") === null ? !0 : localStorage.getItem("preset-transfer-pu-preserve-enabled") !== "false", l = `
+  const o = N.getVars(), i = localStorage.getItem("preset-transfer-pu-preserve-enabled") === null ? !0 : localStorage.getItem("preset-transfer-pu-preserve-enabled") !== "false", a = `
     <div id="preset-update-modal" style="--pt-font-size:${o.fontSize};">
       <div class="preset-update-modal-content">
         <button class="close-preset-update-btn" id="close-preset-update-header" type="button">×</button>
@@ -7534,8 +7834,8 @@ function Cn(e, t, r) {
             <h2>预设更新</h2>
           </div>
           <div class="preset-update-info">
-            <div><span class="label">旧版/来源：</span><span class="value">${C(t)}</span></div>
-            <div><span class="label">新版/目标：</span><span class="value">${C(r)}</span></div>
+            <div><span class="label">旧版/来源：</span><span class="value">${I(t)}</span></div>
+            <div><span class="label">新版/目标：</span><span class="value">${I(r)}</span></div>
           </div>
           <div class="preset-update-options">
             <label class="pu-option">
@@ -7566,150 +7866,150 @@ function Cn(e, t, r) {
       </div>
     </div>
   `;
-  n("body").append(l), ml();
-  const a = n("#preset-update-modal");
-  a.data({ apiInfo: e, sourcePreset: t, targetPreset: r }), s(), d();
+  n("body").append(a), Zl();
+  const l = n("#preset-update-modal");
+  l.data({ apiInfo: e, sourcePreset: t, targetPreset: r }), s(), d();
   function s() {
-    const g = te(p, 150);
-    if (a.off("click.pu"), a.off("change.pu"), a.on("click.pu", "#close-preset-update-header", () => a.remove()), a.on("click.pu", "#pu-close", () => a.remove()), a.on("click", (h) => h.target === a[0] && a.remove()), n(document).on("keydown.preset-update-modal", (h) => {
-      h.key === "Escape" && (a.remove(), n(document).off("keydown.preset-update-modal"));
-    }), a.on("remove", () => {
+    const m = he(p, 150);
+    if (l.off("click.pu"), l.off("change.pu"), l.on("click.pu", "#close-preset-update-header", () => l.remove()), l.on("click.pu", "#pu-close", () => l.remove()), l.on("click", (h) => h.target === l[0] && l.remove()), n(document).on("keydown.preset-update-modal", (h) => {
+      h.key === "Escape" && (l.remove(), n(document).off("keydown.preset-update-modal"));
+    }), l.on("remove", () => {
       n(document).off("keydown.preset-update-modal");
-    }), a.on("input.pu", "#pu-search", g), a.on("click.pu", "#pu-refresh", (h) => {
+    }), l.on("input.pu", "#pu-search", m), l.on("click.pu", "#pu-refresh", (h) => {
       h.preventDefault(), d();
-    }), a.on("click.pu", ".pu-option", function(h) {
+    }), l.on("click.pu", ".pu-option", function(h) {
       h.preventDefault();
       const y = n(this).find('input[type="checkbox"]').first();
       y.length && y.prop("checked", !y.prop("checked")).trigger("change");
-    }), a.on("change.pu", "#pu-preserve-enabled", function() {
+    }), l.on("change.pu", "#pu-preserve-enabled", function() {
       localStorage.setItem("preset-transfer-pu-preserve-enabled", n(this).prop("checked")), d();
-    }), a.on("click.pu", "#pu-select-all", (h) => {
+    }), l.on("click.pu", "#pu-select-all", (h) => {
       h.preventDefault(), u(!0);
-    }), a.on("click.pu", "#pu-select-none", (h) => {
+    }), l.on("click.pu", "#pu-select-none", (h) => {
       h.preventDefault(), u(!1);
-    }), a.on("click.pu", "#pu-execute", (h) => {
+    }), l.on("click.pu", "#pu-execute", (h) => {
       h.preventDefault(), b();
-    }), G().isMobile) {
+    }), K().isMobile) {
       const h = n("body").css("overflow");
-      n("body").css("overflow", "hidden"), a.on("remove", () => n("body").css("overflow", h));
+      n("body").css("overflow", "hidden"), l.on("remove", () => n("body").css("overflow", h));
     }
-    a.css("display", "flex");
+    l.css("display", "flex");
   }
   function d() {
-    const g = n("#pu-body");
-    g.html('<div class="pu-loading">正在计算差异...</div>'), n("#pu-summary").text(""), n("#pu-execute").prop("disabled", !0);
+    const m = n("#pu-body");
+    m.html('<div class="pu-loading">正在计算差异...</div>'), n("#pu-summary").text(""), n("#pu-execute").prop("disabled", !0);
     let h;
     try {
-      h = Li(e, t, r);
+      h = gs(e, t, r);
     } catch (y) {
-      console.error("预设更新：计算差异失败:", y), g.html(`<div class="pu-empty">计算差异失败：${C((y == null ? void 0 : y.message) || String(y))}</div>`);
+      console.error("预设更新：计算差异失败:", y), m.html(`<div class="pu-empty">计算差异失败：${I((y == null ? void 0 : y.message) || String(y))}</div>`);
       return;
     }
-    a.data("plan", h), c(h), p();
+    l.data("plan", h), c(h), p();
   }
-  function c(g) {
-    const h = n("#pu-body"), y = (g == null ? void 0 : g.missingCount) ?? 0, S = n("#pu-preserve-enabled").prop("checked");
-    if (!g || !Array.isArray(g.groups) || g.groups.length === 0 || y === 0) {
-      h.html('<div class="pu-empty">没有检测到需要补全的条目。</div>'), m();
+  function c(m) {
+    const h = n("#pu-body"), y = (m == null ? void 0 : m.missingCount) ?? 0, w = n("#pu-preserve-enabled").prop("checked");
+    if (!m || !Array.isArray(m.groups) || m.groups.length === 0 || y === 0) {
+      h.html('<div class="pu-empty">没有检测到需要补全的条目。</div>'), g();
       return;
     }
-    const P = g.groups.map((x) => {
-      const w = (x.entries || []).map((k) => {
-        const I = (k == null ? void 0 : k.identifier) || "", B = (k == null ? void 0 : k.name) || "(未命名)", O = (k == null ? void 0 : k.enabledInSource) === !0 || (k == null ? void 0 : k.enabledInSource) === !1, _ = O ? k.enabledInSource ? "是" : "否" : "未知", T = (S && O ? k.enabledInSource : !0) ? "是" : "否", j = typeof (k == null ? void 0 : k.content) == "string" ? k.content : "", Ae = j ? C(j.replace(/\s+/g, " ").slice(0, 140)) : '<span class="pu-muted">（无内容）</span>', Z = j.slice(0, 2e3), ts = `${B} ${Z}`.toLowerCase(), ns = (k == null ? void 0 : k.role) || "system", rs = (k == null ? void 0 : k.injection_position) || "relative", os = (k == null ? void 0 : k.injection_depth) ?? 4, is = (k == null ? void 0 : k.injection_order) ?? "", ss = Array.isArray(k == null ? void 0 : k.injection_trigger) ? k.injection_trigger.join(", ") : "", as = `${ns} | ${rs} | ${os} | ${is} | ${ss || "无"} | 源启用:${_} | 最终启用:${T}`;
+    const C = m.groups.map((S) => {
+      const k = (S.entries || []).map((x) => {
+        const P = (x == null ? void 0 : x.identifier) || "", E = (x == null ? void 0 : x.name) || "(未命名)", j = (x == null ? void 0 : x.enabledInSource) === !0 || (x == null ? void 0 : x.enabledInSource) === !1, _ = j ? x.enabledInSource ? "是" : "否" : "未知", A = (w && j ? x.enabledInSource : !0) ? "是" : "否", T = typeof (x == null ? void 0 : x.content) == "string" ? x.content : "", je = T ? I(T.replace(/\s+/g, " ").slice(0, 140)) : '<span class="pu-muted">（无内容）</span>', F = T.slice(0, 2e3), ce = `${E} ${F}`.toLowerCase(), Ms = (x == null ? void 0 : x.role) || "system", As = (x == null ? void 0 : x.injection_position) || "relative", js = (x == null ? void 0 : x.injection_depth) ?? 4, Ts = (x == null ? void 0 : x.injection_order) ?? "", Bs = Array.isArray(x == null ? void 0 : x.injection_trigger) ? x.injection_trigger.join(", ") : "", Ns = `${Ms} | ${As} | ${js} | ${Ts} | ${Bs || "无"} | 源启用:${_} | 最终启用:${A}`;
         return `
-              <div class="pu-entry" data-identifier="${C(I)}" data-search="${C(ts)}">
+              <div class="pu-entry" data-identifier="${I(P)}" data-search="${I(ce)}">
                 <label class="pu-entry-main">
-                  <input type="checkbox" class="pu-entry-check" data-identifier="${C(I)}">
-                  <span class="pu-entry-name">${C(B)}</span>
+                  <input type="checkbox" class="pu-entry-check" data-identifier="${I(P)}">
+                  <span class="pu-entry-name">${I(E)}</span>
                 </label>
-                <div class="pu-entry-meta">${C(as)}</div>
-                <div class="pu-entry-content">${Ae}</div>
+                <div class="pu-entry-meta">${I(Ns)}</div>
+                <div class="pu-entry-content">${je}</div>
               </div>
             `;
       }).join("");
       return `
-          <div class="pu-group" data-group-id="${C(x.id)}">
+          <div class="pu-group" data-group-id="${I(S.id)}">
             <div class="pu-group-header">
-              <div class="pu-group-title">${C(x.label || "插入位置")}</div>
+              <div class="pu-group-title">${I(S.label || "插入位置")}</div>
               <div class="pu-group-actions">
                 <button type="button" class="pu-btn small pu-group-select" data-action="all">全选</button>
                 <button type="button" class="pu-btn small pu-group-select" data-action="none">不选</button>
               </div>
             </div>
             <div class="pu-group-body">
-              ${w || '<div class="pu-empty">（此分组无条目）</div>'}
+              ${k || '<div class="pu-empty">（此分组无条目）</div>'}
             </div>
           </div>
         `;
     }).join("");
-    h.html(P), h.off("change.pu").on("change.pu", ".pu-entry-check", () => m()), h.off("click.puToggle").on("click.puToggle", ".pu-entry-main", function(x) {
-      x.preventDefault();
-      const w = n(this).find(".pu-entry-check").first();
-      w.length && w.prop("checked", !w.prop("checked")).trigger("change");
+    h.html(C), h.off("change.pu").on("change.pu", ".pu-entry-check", () => g()), h.off("click.puToggle").on("click.puToggle", ".pu-entry-main", function(S) {
+      S.preventDefault();
+      const k = n(this).find(".pu-entry-check").first();
+      k.length && k.prop("checked", !k.prop("checked")).trigger("change");
     }), h.off("click.pu").on("click.pu", ".pu-group-select", function() {
-      const x = n(this), w = x.data("action"), k = x.closest(".pu-group"), I = w === "all";
-      k.find(".pu-entry:visible .pu-entry-check").prop("checked", I), m();
-    }), m();
+      const S = n(this), k = S.data("action"), x = S.closest(".pu-group"), P = k === "all";
+      x.find(".pu-entry:visible .pu-entry-check").prop("checked", P), g();
+    }), g();
   }
   function p() {
-    const g = (n("#pu-search").val() || "").toString().toLowerCase().trim();
+    const m = (n("#pu-search").val() || "").toString().toLowerCase().trim();
     let h = 0;
     n("#pu-body .pu-entry").each(function() {
-      const y = n(this), S = (y.data("search") || "").toString(), P = !g || S.includes(g);
-      y.toggle(P), P && h++;
+      const y = n(this), w = (y.data("search") || "").toString(), C = !m || w.includes(m);
+      y.toggle(C), C && h++;
     }), n("#pu-body .pu-group").each(function() {
-      const y = n(this), S = y.find(".pu-entry:visible").length > 0;
-      y.toggle(S);
-    }), n("#pu-search-hint").text(g ? `可见 ${h} 条` : ""), m();
+      const y = n(this), w = y.find(".pu-entry:visible").length > 0;
+      y.toggle(w);
+    }), n("#pu-search-hint").text(m ? `可见 ${h} 条` : ""), g();
   }
-  function u(g) {
-    n("#pu-body .pu-entry:visible .pu-entry-check").prop("checked", g), m();
+  function u(m) {
+    n("#pu-body .pu-entry:visible .pu-entry-check").prop("checked", m), g();
   }
   function f() {
-    const g = [];
+    const m = [];
     return n("#pu-body .pu-entry-check:checked").each(function() {
       const h = n(this).data("identifier");
-      h && g.push(String(h));
-    }), g;
+      h && m.push(String(h));
+    }), m;
   }
-  function m() {
-    const g = a.data("plan"), h = (g == null ? void 0 : g.missingCount) ?? 0, y = f().length;
+  function g() {
+    const m = l.data("plan"), h = (m == null ? void 0 : m.missingCount) ?? 0, y = f().length;
     n("#pu-summary").text(`缺失 ${h} 条，已选 ${y} 条`), n("#pu-execute").prop("disabled", y === 0);
   }
   async function b() {
-    const g = f();
-    if (g.length === 0) return;
-    const h = n("#pu-preserve-enabled").prop("checked"), y = `确定将选中的 <b>${g.length}</b> 个条目从 <b>${C(
+    const m = f();
+    if (m.length === 0) return;
+    const h = n("#pu-preserve-enabled").prop("checked"), y = `确定将选中的 <b>${m.length}</b> 个条目从 <b>${I(
       t
-    )}</b> 转移到 <b>${C(r)}</b> 吗？`;
-    Ct(y, async () => {
-      const S = n("#pu-execute"), P = S.text();
-      S.prop("disabled", !0).text("转移中...");
+    )}</b> 转移到 <b>${I(r)}</b> 吗？`;
+    Wt(y, async () => {
+      const w = n("#pu-execute"), C = w.text();
+      w.prop("disabled", !0).text("转移中...");
       try {
-        const x = await Oi(e, t, r, {
+        const S = await fs(e, t, r, {
           preserveEnabled: h,
-          selectedIdentifiers: g
+          selectedIdentifiers: m
         });
-        if (x.merged ? alert(`已转移 ${x.merged} 个条目到 "${r}"。`) : alert("没有转移任何条目。"), n("#auto-close-modal").prop("checked")) {
+        if (S.merged ? alert(`已转移 ${S.merged} 个条目到 "${r}"。`) : alert("没有转移任何条目。"), n("#auto-close-modal").prop("checked")) {
           n("#preset-update-modal").remove(), n("#preset-transfer-modal").remove();
           return;
         }
         try {
-          W(e);
-        } catch (w) {
-          console.warn("预设更新：刷新主界面失败", w);
+          L(e);
+        } catch (k) {
+          console.warn("预设更新：刷新主界面失败", k);
         }
         d();
-      } catch (x) {
-        console.error("预设更新：转移失败", x), alert("预设更新失败: " + ((x == null ? void 0 : x.message) || x));
+      } catch (S) {
+        console.error("预设更新：转移失败", S), alert("预设更新失败: " + ((S == null ? void 0 : S.message) || S));
       } finally {
-        S.prop("disabled", !1).text(P), m();
+        w.prop("disabled", !1).text(C), g();
       }
     });
   }
 }
-function ml() {
-  const e = v(), t = A.getVars(), r = document.createElement("link");
+function Zl() {
+  const e = v(), t = N.getVars(), r = document.createElement("link");
   r.rel = "stylesheet", r.href = "./scripts/extensions/third-party/preset-transfer/src/styles/preset-update-modal.css", document.querySelector(`link[href="${r.href}"]`) || document.head.appendChild(r);
   const n = `
     #preset-update-modal {
@@ -7722,7 +8022,7 @@ function ml() {
       --pt-border-color: ${t.borderColor};
       --pt-body-color: ${t.textColor};
       --pt-quote-color: ${t.tipColor};
-      ${A.getModalBaseStyles({ maxWidth: t.maxWidthLarge })}
+      ${N.getModalBaseStyles({ maxWidth: t.maxWidthLarge })}
       z-index: 10004;
     }
     #preset-update-modal .preset-update-modal-content {
@@ -7745,20 +8045,20 @@ function ml() {
   `;
   e("#preset-update-modal-styles").length || e("head").append(`<style id="preset-update-modal-styles">${n}</style>`);
 }
-const Ri = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const hs = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  showPresetUpdateModal: Cn
+  showPresetUpdateModal: Wn
 }, Symbol.toStringTag, { value: "Module" }));
-let an = null;
-async function Wi() {
-  return an || (an = import("/scripts/world-info.js")), await an;
+let vn = null;
+async function bs() {
+  return vn || (vn = import("/scripts/world-info.js")), await vn;
 }
-async function jr() {
-  const e = await Wi();
+async function Gr() {
+  const e = await bs();
   return typeof e.updateWorldInfoList == "function" && await e.updateWorldInfoList(), Array.isArray(e.world_names) ? e.world_names.slice() : [];
 }
-async function hl(e) {
-  const t = [], r = [], n = await Wi();
+async function ec(e) {
+  const t = [], r = [], n = await bs();
   if (typeof n.deleteWorldInfo != "function")
     throw new Error("World Info module missing deleteWorldInfo");
   for (const o of e)
@@ -7770,10 +8070,10 @@ async function hl(e) {
     }
   return { results: t, errors: r };
 }
-async function bl() {
+async function tc() {
   const e = v();
   e("#batch-delete-modal").remove(), e("#batch-delete-modal-styles").remove();
-  const t = A.getVars(), n = `
+  const t = N.getVars(), n = `
     <div id="batch-delete-modal">
       <div class="batch-delete-modal-content">
         <div class="modal-header">
@@ -7785,7 +8085,7 @@ async function bl() {
             <input type="text" id="preset-search" placeholder="搜索世界书...">
           </div>
           <div class="preset-list" id="preset-list">
-            ${(await jr()).map(
+            ${(await Gr()).map(
     (s) => `
               <label class="preset-item">
                 <input type="checkbox" value="${s}">
@@ -7811,10 +8111,10 @@ async function bl() {
   const o = `
     #batch-delete-modal {
       --pt-font-size: ${t.fontSize};
-      ${A.getModalBaseStyles()}
+      ${N.getModalBaseStyles()}
     }
     #batch-delete-modal .batch-delete-modal-content {
-      ${A.getModalContentStyles()}
+      ${N.getModalContentStyles()}
     }
     #batch-delete-modal .modal-header {
       text-align: center; margin-bottom: ${t.margin};
@@ -7915,16 +8215,16 @@ async function bl() {
       e(this).toggle(d.includes(s));
     });
   }
-  function l() {
+  function a() {
     const s = e('#preset-list input[type="checkbox"]:checked:not(:disabled)').length;
     e("#selected-count").text(`已选择: ${s}`), e("#execute-batch-delete").prop("disabled", s === 0);
   }
-  const a = te(i, 300);
-  e("#preset-search").on("input", a), e("#select-all-presets").on("click", function() {
-    e('#preset-list input[type="checkbox"]:not(:disabled):visible').prop("checked", !0), l();
+  const l = he(i, 300);
+  e("#preset-search").on("input", l), e("#select-all-presets").on("click", function() {
+    e('#preset-list input[type="checkbox"]:not(:disabled):visible').prop("checked", !0), a();
   }), e("#select-none-presets").on("click", function() {
-    e('#preset-list input[type="checkbox"]:visible').prop("checked", !1), l();
-  }), e("#preset-list").on("change", 'input[type="checkbox"]', l), e("#execute-batch-delete").on("click", async function() {
+    e('#preset-list input[type="checkbox"]:visible').prop("checked", !1), a();
+  }), e("#preset-list").on("change", 'input[type="checkbox"]', a), e("#execute-batch-delete").on("click", async function() {
     const s = [];
     if (e('#preset-list input[type="checkbox"]:checked:not(:disabled)').each(function() {
       s.push(e(this).val());
@@ -7941,24 +8241,24 @@ ${s.join(`
     const c = e(this), p = c.text();
     c.prop("disabled", !0).text("删除中...");
     try {
-      const { results: u, errors: f } = await hl(s);
+      const { results: u, errors: f } = await ec(s);
       if (f.length > 0) {
-        const w = u.filter((k) => !k.success).length;
-        alert(`删除完成，但有 ${w} 个失败:
+        const k = u.filter((x) => !x.success).length;
+        alert(`删除完成，但有 ${k} 个失败:
 ${f.join(`
 `)}`);
       }
-      const m = await jr(), b = e("#preset-search").val(), g = m.map(
-        (w) => `
+      const g = await Gr(), b = e("#preset-search").val(), m = g.map(
+        (k) => `
             <label class="preset-item">
-              <input type="checkbox" value="${w}">
-              <span class="preset-name">${w}</span>
+              <input type="checkbox" value="${k}">
+              <span class="preset-name">${k}</span>
             </label>
           `
       ).join("");
-      e("#preset-list").html(g), e("#preset-search").val(b), i(), l();
-      const h = e("#left-preset"), y = e("#right-preset"), S = h.val(), P = y.val(), x = m.map((w) => `<option value="${w}">${w}</option>`).join("");
-      h.html('<option value="">请选择世界书</option>' + x), y.html('<option value="">请选择世界书</option>' + x), m.includes(S) && h.val(S), m.includes(P) && y.val(P), h.trigger("change"), y.trigger("change");
+      e("#preset-list").html(m), e("#preset-search").val(b), i(), a();
+      const h = e("#left-preset"), y = e("#right-preset"), w = h.val(), C = y.val(), S = g.map((k) => `<option value="${k}">${k}</option>`).join("");
+      h.html('<option value="">请选择世界书</option>' + S), y.html('<option value="">请选择世界书</option>' + S), g.includes(w) && h.val(w), g.includes(C) && y.val(C), h.trigger("change"), y.trigger("change");
     } catch (u) {
       console.error("批量删除失败:", u), alert("批量删除失败: " + u.message);
     } finally {
@@ -7970,107 +8270,107 @@ ${f.join(`
     s.target === this && (e(this).remove(), e("#batch-delete-modal-styles").remove());
   }), e(document).on("keydown.batch-delete", function(s) {
     s.key === "Escape" && (e("#batch-delete-modal").remove(), e("#batch-delete-modal-styles").remove(), e(document).off("keydown.batch-delete"));
-  }), l();
+  }), a();
 }
-let D = null, fe = null, ke = null, yt = 0, ce = 0;
-function Ui() {
-  fe && (clearInterval(fe), fe = null), ke && (clearTimeout(ke), ke = null);
+let W = null, me = null, _e = null, Bt = 0, pe = 0;
+function xs() {
+  me && (clearInterval(me), me = null), _e && (clearTimeout(_e), _e = null);
 }
-function Xe() {
-  fe && (clearInterval(fe), fe = null);
+function Qe() {
+  me && (clearInterval(me), me = null);
 }
-function xl(e) {
+function nc(e) {
   if (!e || !e.side) {
-    Xe();
+    Qe();
     return;
   }
   if (!rt(e.side)) {
-    Xe();
+    Qe();
     return;
   }
   const r = 40;
-  fe || (fe = setInterval(() => {
+  me || (me = setInterval(() => {
     const n = rt(e.side);
     if (!n) {
-      Xe();
+      Qe();
       return;
     }
     const o = n.getBoundingClientRect();
     if (o.height <= 0) {
-      Xe();
+      Qe();
       return;
     }
     let i = 0;
-    if (ce < o.top + r ? i = -1 : ce > o.bottom - r && (i = 1), !i) {
-      Xe();
+    if (pe < o.top + r ? i = -1 : pe > o.bottom - r && (i = 1), !i) {
+      Qe();
       return;
     }
-    const l = i === -1 ? o.top + r - ce : ce - (o.bottom - r), a = Math.min(1, Math.max(0.1, Math.abs(l) / r)), s = 4, c = s + (20 - s) * a;
+    const a = i === -1 ? o.top + r - pe : pe - (o.bottom - r), l = Math.min(1, Math.max(0.1, Math.abs(a) / r)), s = 4, c = s + (20 - s) * l;
     n.scrollTop += i * c;
-    const p = Xn(yt, ce);
-    Qn(p), Wt(p);
+    const p = Yn(Bt, pe);
+    Xn(p), Zt(p);
   }, 16));
 }
-function Tr(e) {
-  const t = e || R().document, r = v();
-  Ui(), Zn(), It(), zt(), r && (r("#preset-transfer-modal").removeClass("pt-dragging"), r(t).off(".presetTransferDrag")), D = null;
+function Hr(e) {
+  const t = e || U().document, r = v();
+  xs(), Qn(), Vt(), Ut(), r && (r("#preset-transfer-modal").removeClass("pt-dragging"), r(t).off(".presetTransferDrag")), W = null;
 }
-function Vi(e) {
+function vs(e) {
   const t = v();
   if (!t) return;
-  const n = R().document;
+  const n = U().document;
   ["left", "right", "single"].forEach((s) => {
     const d = t(`#${s}-entries-list`);
-    d.length && ri(s, d[0]);
+    d.length && ni(s, d[0]);
   });
   const o = t("#entries-container");
   if (!o.length) return;
   function i() {
-    if (!D || D.started) return;
-    D.started = !0, ke && (clearTimeout(ke), ke = null);
-    const { apiInfo: s, side: d, itemElement: c } = D, p = ai({
+    if (!W || W.started) return;
+    W.started = !0, _e && (clearTimeout(_e), _e = null);
+    const { apiInfo: s, side: d, itemElement: c } = W, p = si({
       apiInfo: s,
       side: d,
       itemElement: c
     });
     if (!p || !p.dragEntries || p.dragEntries.length === 0) {
-      Tr(n);
+      Hr(n);
       return;
     }
-    t("#preset-transfer-modal").addClass("pt-dragging"), ii(c, p.dragEntries.length, yt, ce), navigator.vibrate && navigator.vibrate(50);
+    t("#preset-transfer-modal").addClass("pt-dragging"), oi(c, p.dragEntries.length, Bt, pe), navigator.vibrate && navigator.vibrate(50);
   }
-  function l(s) {
-    if (!D || s.pointerId != null && s.pointerId !== D.pointerId)
+  function a(s) {
+    if (!W || s.pointerId != null && s.pointerId !== W.pointerId)
       return;
-    yt = s.clientX, ce = s.clientY;
-    const d = s.clientX - D.startX, c = s.clientY - D.startY, p = d * d + c * c, u = 4 * 4;
-    if (!D.started)
+    Bt = s.clientX, pe = s.clientY;
+    const d = s.clientX - W.startX, c = s.clientY - W.startY, p = d * d + c * c, u = 4 * 4;
+    if (!W.started)
       if (p > u)
-        if (D.isTouch) {
-          Tr(n);
+        if (W.isTouch) {
+          Hr(n);
           return;
         } else
           i();
       else
         return;
-    s.cancelable && s.preventDefault(), Yn(s.clientX, s.clientY);
-    const f = Xn(s.clientX, s.clientY);
-    Qn(f), Wt(f), xl(f);
+    s.cancelable && s.preventDefault(), Kn(s.clientX, s.clientY);
+    const f = Yn(s.clientX, s.clientY);
+    Xn(f), Zt(f), nc(f);
   }
-  async function a(s) {
-    if (!D || s.pointerId != null && s.pointerId !== D.pointerId)
+  async function l(s) {
+    if (!W || s.pointerId != null && s.pointerId !== W.pointerId)
       return;
-    t(n).off("pointermove.presetTransferDrag pointerup.presetTransferDrag pointercancel.presetTransferDrag"), Ui();
-    const c = D.started;
-    if (D = null, !c) {
-      Zn(), It(), zt(), Et();
+    t(n).off("pointermove.presetTransferDrag pointerup.presetTransferDrag pointercancel.presetTransferDrag"), xs();
+    const c = W.started;
+    if (W = null, !c) {
+      Qn(), Vt(), Ut(), Ft();
       return;
     }
     s.preventDefault();
     try {
-      await li();
+      await ai();
     } finally {
-      t("#preset-transfer-modal").removeClass("pt-dragging"), It(), zt(), Et();
+      t("#preset-transfer-modal").removeClass("pt-dragging"), Vt(), Ut(), Ft();
     }
   }
   o.off("pointerdown.presetTransferDrag").on("pointerdown.presetTransferDrag", ".entry-item", (s) => {
@@ -8083,9 +8383,9 @@ function Vi(e) {
     const p = c.data("side");
     if (!p || s.button != null && s.button !== 0 && s.pointerType !== "touch" && s.pointerType !== "pen")
       return;
-    yt = s.clientX, ce = s.clientY;
+    Bt = s.clientX, pe = s.clientY;
     const u = s.pointerType === "touch" || s.pointerType === "pen";
-    D = {
+    W = {
       apiInfo: e,
       side: p,
       itemElement: s.currentTarget,
@@ -8094,17 +8394,17 @@ function Vi(e) {
       startY: s.clientY,
       started: !1,
       isTouch: u
-    }, u && (ke = setTimeout(() => {
-      D && !D.started && i();
-    }, 500)), t(n).off("pointermove.presetTransferDrag pointerup.presetTransferDrag pointercancel.presetTransferDrag").on("pointermove.presetTransferDrag", l).on("pointerup.presetTransferDrag pointercancel.presetTransferDrag", a);
+    }, u && (_e = setTimeout(() => {
+      W && !W.started && i();
+    }, 500)), t(n).off("pointermove.presetTransferDrag pointerup.presetTransferDrag pointercancel.presetTransferDrag").on("pointermove.presetTransferDrag", a).on("pointerup.presetTransferDrag pointercancel.presetTransferDrag", l);
   });
 }
-const Fi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const ys = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  initDragDrop: Vi
+  initDragDrop: vs
 }, Symbol.toStringTag, { value: "Module" }));
-function Hi(e, t) {
-  const r = v(), n = r("#left-preset"), o = r("#right-preset"), i = r("#load-entries"), l = r("#preset-update-to-right"), a = r("#preset-update-to-left");
+function ws(e, t) {
+  const r = v(), n = r("#left-preset"), o = r("#right-preset"), i = r("#load-entries"), a = r("#preset-update-to-right"), l = r("#preset-update-to-left");
   s(), d();
   function s() {
     if (r("#preset-transfer-font-size-style").length)
@@ -8184,30 +8484,57 @@ function Hi(e, t) {
     </style>`);
   }
   function d() {
-    const x = r("#preset-transfer-modal .modal-header"), w = x.find(".font-size-control");
-    if (!x.length || !w.length)
+    const x = r("#preset-transfer-modal .modal-header"), P = x.find(".font-size-control");
+    if (!x.length || !P.length)
       return;
-    x.find(".font-size-wrapper").length || w.wrap('<div class="font-size-wrapper"></div>');
-    const k = x.find(".font-size-wrapper");
-    let I = k.find(".pt-header-mini-actions");
-    I.length || (I = r('<div class="pt-header-mini-actions"></div>'), k.prepend(I));
-    let B = r("#font-size-toggle");
-    B.length ? B.closest(".pt-header-mini-actions").length || I.append(B) : (B = r(
+    x.find(".font-size-wrapper").length || P.wrap('<div class="font-size-wrapper"></div>');
+    const E = x.find(".font-size-wrapper");
+    let j = E.find(".pt-header-mini-actions");
+    j.length || (j = r('<div class="pt-header-mini-actions"></div>'), E.prepend(j));
+    let _ = r("#font-size-toggle");
+    _.length ? _.closest(".pt-header-mini-actions").length || j.append(_) : (_ = r(
       '<button id="font-size-toggle" class="font-size-toggle" type="button" title="调节字体大小">Aa</button>'
-    ), I.append(B)), w.removeClass("open").attr("aria-hidden", "true").hide(), B.off("click.presetTransferFontSize").on("click.presetTransferFontSize", function(O) {
-      O.preventDefault(), O.stopPropagation(), w.hasClass("open") ? w.removeClass("open").attr("aria-hidden", "true").hide() : w.addClass("open").attr("aria-hidden", "false").show();
-    }), r(document).off("click.presetTransferFontSize").on("click.presetTransferFontSize", function(O) {
-      r(O.target).closest("#preset-transfer-modal .font-size-wrapper").length || w.removeClass("open").attr("aria-hidden", "true").hide();
+    ), j.append(_)), P.removeClass("open").attr("aria-hidden", "true").hide(), _.off("click.presetTransferFontSize").on("click.presetTransferFontSize", function(z) {
+      z.preventDefault(), z.stopPropagation(), P.hasClass("open") ? P.removeClass("open").attr("aria-hidden", "true").hide() : P.addClass("open").attr("aria-hidden", "false").show();
+    }), r(document).off("click.presetTransferFontSize").on("click.presetTransferFontSize", function(z) {
+      r(z.target).closest("#preset-transfer-modal .font-size-wrapper").length || P.removeClass("open").attr("aria-hidden", "true").hide();
     }), t.on("remove.fontSize", () => {
       r(document).off("click.presetTransferFontSize");
-    }), sl(t);
+    }), Vl(t);
   }
-  function c() {
-    const x = localStorage.getItem("preset-transfer-search-content-main"), w = localStorage.getItem("preset-transfer-search-content-left"), k = localStorage.getItem("preset-transfer-search-content-right");
-    r("#search-content-main").prop("checked", x !== "false"), r("#search-content-left").prop("checked", w !== "false"), r("#search-content-right").prop("checked", k !== "false");
+  function c(x) {
+    const { globalSearch: P, includeContent: E } = x || Re();
+    r(".pt-search-settings-popover").each(function() {
+      const j = r(this);
+      j.find(".pt-search-opt-global").prop("checked", !!P), j.find(".pt-search-opt-content").prop("checked", !!E);
+    });
   }
-  function p() {
-    r("#entries-container, #single-container, #dual-container").hide(), r(".search-section, .left-search-container, .right-search-container").hide(), r("#left-entries-list, #right-entries-list, #single-entries-list").empty(), r("#left-selection-count, #right-selection-count, #single-selection-count").text(""), r("#entry-search, #left-entry-search-inline, #right-entry-search-inline").val(""), r("#left-show-new, #right-show-new").removeClass("showing-new").find(".btn-icon").text(""), Object.assign(window, {
+  function p(x) {
+    const P = r(`.pt-search-settings-btn[data-pt-search-context="${x}"]`), E = r(`.pt-search-settings-popover[data-pt-search-context="${x}"]`);
+    !P.length || !E.length || (r(".pt-search-settings-popover").hide(), E.show());
+  }
+  function u() {
+    r(".pt-search-settings-popover").hide();
+  }
+  function f(x) {
+    return x === "left" ? r("#left-entry-search-inline").closest(".search-input-wrapper") : x === "right" ? r("#right-entry-search-inline").closest(".search-input-wrapper") : r("#entry-search").closest(".search-input-wrapper");
+  }
+  function g(x) {
+    const P = Re(), E = !!P.includeContent, j = !!P.globalSearch, z = r(x === "left" ? "#left-entry-search-inline" : x === "right" ? "#right-entry-search-inline" : "#entry-search").val(), A = f(x);
+    if (j) {
+      x === "left" ? fe("left", "") : x === "right" ? fe("right", "") : Jt(""), Dl({
+        apiInfo: e,
+        context: x,
+        wrapperSelector: A,
+        searchTerm: z,
+        includeContent: E
+      });
+      return;
+    }
+    Dr(), Lr(), x === "left" ? fe("left", z) : x === "right" ? fe("right", z) : Jt(z);
+  }
+  function b() {
+    r("#entries-container, #single-container, #dual-container").hide(), r(".search-section, .left-search-container, .right-search-container").hide(), r("#left-entries-list, #right-entries-list, #single-entries-list").empty(), r("#left-selection-count, #right-selection-count, #single-selection-count").text(""), r("#entry-search, #left-entry-search-inline, #right-entry-search-inline").val(""), Dr(), Lr(), u(), window.ptWorldbookPickTarget = null, r("#left-side, #right-side").removeClass("transfer-target"), r("#left-show-new, #right-show-new").removeClass("showing-new").find(".btn-icon").text(""), Object.assign(window, {
       leftEntries: [],
       rightEntries: [],
       singleEntries: [],
@@ -8216,110 +8543,124 @@ function Hi(e, t) {
       singlePresetData: null
     });
   }
-  function u(x) {
-    const w = r("#preset-transfer-modal")[0];
-    w && w.style.setProperty("--pt-font-size", x + "px"), r("#font-size-display").text(x + "px"), localStorage.setItem("preset-transfer-font-size", x);
+  function m(x) {
+    const P = r("#preset-transfer-modal")[0];
+    P && P.style.setProperty("--pt-font-size", x + "px"), r("#font-size-display").text(x + "px"), localStorage.setItem("preset-transfer-font-size", x);
   }
-  function f() {
-    const x = localStorage.getItem("preset-transfer-font-size"), w = x ? parseInt(x) : 16;
-    r("#font-size-slider").val(w), u(w);
+  function h() {
+    const x = localStorage.getItem("preset-transfer-font-size"), P = x ? parseInt(x) : 16;
+    r("#font-size-slider").val(P), m(P);
   }
-  p(), Ii(), f();
-  function m() {
-    const x = n.val(), w = o.val(), k = !!(x && w) && nl(x, w).match;
-    t.find('.preset-update-slot[data-side="left"]').toggle(k), t.find('.preset-update-slot[data-side="right"]').toggle(k), l.prop("hidden", !k).prop("disabled", !k), a.prop("hidden", !k).prop("disabled", !k);
+  b(), ss(), h();
+  function y() {
+    const x = n.val(), P = o.val(), E = !!(x && P) && Al(x, P).match;
+    t.find('.preset-update-slot[data-side="left"]').toggle(E), t.find('.preset-update-slot[data-side="right"]').toggle(E), a.prop("hidden", !E).prop("disabled", !E), l.prop("hidden", !E).prop("disabled", !E);
   }
-  m();
-  const b = te(function() {
+  y();
+  const w = he(function() {
     const x = parseInt(r("#font-size-slider").val());
-    u(x);
+    m(x);
   }, 100);
-  r("#font-size-slider").on("input", b), r("#get-current-left").on("click", function(x) {
-    x.preventDefault(), x.stopPropagation(), cn("left");
+  r("#font-size-slider").on("input", w), r("#get-current-left").on("click", function(x) {
+    x.preventDefault(), x.stopPropagation(), $n("left");
   }), r("#get-current-right").on("click", function(x) {
-    x.preventDefault(), x.stopPropagation(), cn("right");
+    x.preventDefault(), x.stopPropagation(), $n("right");
   }), n.add(o).on("change", function() {
     const x = r(this);
     x.is("#left-preset");
-    const w = x.val();
-    x.data("previous-value"), i.prop("disabled", !n.val() && !o.val()), m(), p(), vt(), w && tr(w), x.data("previous-value", w);
-  }), i.on("click", () => W(e)), r("#batch-delete-presets").on("click", async () => {
-    const x = M();
+    const P = x.val();
+    x.data("previous-value"), i.prop("disabled", !n.val() && !o.val()), y(), b(), Tt(), P && ur(P), x.data("previous-value", P);
+  }), i.on("click", () => L(e)), r("#batch-delete-presets").on("click", async () => {
+    const x = B();
     if (!x) {
       alert("无法获取当前API信息，请确保 SillyTavern 已正确加载");
       return;
     }
-    const w = re();
+    const P = D();
     try {
-      w.id === "worldbook" ? await bl() : Qo(x);
-    } catch (k) {
-      console.error("批量删除打开失败:", k), alert("批量删除打开失败: " + k.message);
+      P.id === "worldbook" ? await tc() : Xo(x);
+    } catch (E) {
+      console.error("批量删除打开失败:", E), alert("批量删除打开失败: " + E.message);
     }
-  }), l.on("click", () => {
-    Cn(e, n.val(), o.val());
   }), a.on("click", () => {
-    Cn(e, o.val(), n.val());
+    Wn(e, n.val(), o.val());
+  }), l.on("click", () => {
+    Wn(e, o.val(), n.val());
   });
-  const g = te(function() {
-    ir(r("#entry-search").val());
-  }, 300), h = te(function() {
-    Fe("left", r("#left-entry-search-inline").val());
-  }, 300), y = te(function() {
-    Fe("right", r("#right-entry-search-inline").val());
+  const C = he(function(x) {
+    g(x);
   }, 300);
-  r("#entry-search").on("input", g), r("#left-entry-search-inline").on("input", h), r("#right-entry-search-inline").on("input", y), r("#search-content-main").on("change", function() {
-    localStorage.setItem("preset-transfer-search-content-main", r(this).is(":checked")), g();
-  }), r("#search-content-left").on("change", function() {
-    localStorage.setItem("preset-transfer-search-content-left", r(this).is(":checked")), h();
-  }), r("#search-content-right").on("change", function() {
-    localStorage.setItem("preset-transfer-search-content-right", r(this).is(":checked")), y();
+  r("#entry-search").on("input", () => C("main")), r("#left-entry-search-inline").on("input", () => C("left")), r("#right-entry-search-inline").on("input", () => C("right")), c(Re()), r(".pt-search-settings-btn").on("click", function(x) {
+    x.preventDefault(), x.stopPropagation();
+    const P = r(this).data("pt-search-context"), j = r(`.pt-search-settings-popover[data-pt-search-context="${P}"]`).is(":visible");
+    u(), j || p(P);
+  }), r(".pt-search-settings-popover").on("click", function(x) {
+    x.stopPropagation();
+  }), r(".pt-search-settings-popover .pt-search-opt-global, .pt-search-settings-popover .pt-search-opt-content").on(
+    "change",
+    function() {
+      const x = r(this).closest(".pt-search-settings-popover"), P = x.find(".pt-search-opt-global").is(":checked"), E = x.find(".pt-search-opt-content").is(":checked"), j = Rl({ globalSearch: P, includeContent: E });
+      c(j), r("#left-entry-search-inline").is(":visible") && r("#left-entry-search-inline").val() && g("left"), r("#right-entry-search-inline").is(":visible") && r("#right-entry-search-inline").val() && g("right"), r("#entry-search").is(":visible") && r("#entry-search").val() && g("main");
+    }
+  ), r(document).off("click.ptSearchSettings").on("click.ptSearchSettings", function() {
+    u();
   });
   let S;
   r("#left-display-mode, #right-display-mode, #single-display-mode").on("change", function() {
-    r(this), vt(), clearTimeout(S), S = setTimeout(() => {
-      W(e);
+    r(this), Tt(), clearTimeout(S), S = setTimeout(() => {
+      L(e);
     }, 150);
-  }), r("#auto-close-modal, #auto-enable-entry").on("change", vt), c();
-  const { isMobile: P } = G();
-  if (P) {
+  }), r("#auto-close-modal, #auto-enable-entry").on("change", Tt), t.on("remove.ptSearchSettings", () => {
+    r(document).off("click.ptSearchSettings");
+  });
+  const { isMobile: k } = K();
+  if (k) {
     const x = () => {
       window.innerHeight <= 680 && window.innerWidth > window.innerHeight && window.innerWidth / window.innerHeight >= 1.4444444444444444 ? r("#dual-container").addClass("mobile-dual-view") : r("#dual-container").removeClass("mobile-dual-view");
     };
     x(), window.addEventListener("resize", x);
   }
   if (r("#left-select-all").on("click", () => {
-    r("#left-entries-list .entry-checkbox").prop("checked", !0), J();
+    r("#left-entries-list .entry-checkbox").prop("checked", !0), X();
   }), r("#left-select-none").on("click", () => {
-    r("#left-entries-list .entry-checkbox").prop("checked", !1), J();
-  }), r("#left-show-new").on("click", () => _n(e, "left")), r("#left-edit").on("click", () => mt(e, "left")), r("#left-delete").on("click", () => bt(e, "left")), r("#left-copy").on("click", () => gt("left", e)), r("#transfer-to-right").on("click", () => un(e, "left", "right")), r("#right-select-all").on("click", () => {
-    r("#right-entries-list .entry-checkbox").prop("checked", !0), J();
+    r("#left-entries-list .entry-checkbox").prop("checked", !1), X();
+  }), D().id === "worldbook" ? r("#left-show-new").on("click", () => vt(e, "left")) : r("#left-show-new").on("click", () => Dn(e, "left")), r("#left-edit").on("click", () => yt(e, "left")), r("#left-delete").on("click", () => $t(e, "left")), r("#left-copy").on("click", () => xt("left", e)), r("#transfer-to-right").on("click", () => _n(e, "left", "right")), r("#right-select-all").on("click", () => {
+    r("#right-entries-list .entry-checkbox").prop("checked", !0), X();
   }), r("#right-select-none").on("click", () => {
-    r("#right-entries-list .entry-checkbox").prop("checked", !1), J();
-  }), r("#right-show-new").on("click", () => _n(e, "right")), r("#right-edit").on("click", () => mt(e, "right")), r("#right-delete").on("click", () => bt(e, "right")), r("#right-copy").on("click", () => gt("right", e)), r("#transfer-to-left").on("click", () => un(e, "right", "left")), r("#compare-entries").on("click", () => Jn(e)), r("#single-select-all").on("click", () => {
-    r("#single-entries-list .entry-checkbox").prop("checked", !0), J();
+    r("#right-entries-list .entry-checkbox").prop("checked", !1), X();
+  }), D().id === "worldbook" ? r("#right-show-new").on("click", () => vt(e, "right")) : r("#right-show-new").on("click", () => Dn(e, "right")), r("#right-edit").on("click", () => yt(e, "right")), r("#right-delete").on("click", () => $t(e, "right")), r("#right-copy").on("click", () => xt("right", e)), r("#transfer-to-left").on("click", () => _n(e, "right", "left")), r("#left-side, #right-side").off("click.ptWorldbookPickTarget").on("click.ptWorldbookPickTarget", function(x) {
+    const P = D();
+    if ((P == null ? void 0 : P.id) !== "worldbook" || !window.ptWorldbookPickTarget) return;
+    const E = r(x.target);
+    if (E.closest(".pt-global-search-panel, .pt-search-settings-popover, .pt-search-settings-btn").length || E.closest(".entry-item, .create-here-btn, .entry-checkbox").length) return;
+    x.preventDefault(), x.stopPropagation();
+    const j = this.id === "left-side" ? "left" : "right";
+    Jn(j);
+  }), r("#compare-entries").on("click", () => Hn(e)), r("#single-select-all").on("click", () => {
+    r("#single-entries-list .entry-checkbox").prop("checked", !0), X();
   }), r("#single-select-none").on("click", () => {
-    r("#single-entries-list .entry-checkbox").prop("checked", !1), J();
-  }), r("#single-edit").on("click", () => mt(e, "single")), r("#single-delete").on("click", () => bt(e, "single")), r("#single-copy").on("click", () => gt("single", e)), r("#single-move").on("click", () => ko("single", e)), r("#close-modal").on("click", () => {
+    r("#single-entries-list .entry-checkbox").prop("checked", !1), X();
+  }), D().id === "worldbook" && r("#single-show-new").on("click", () => vt(e, "single")), r("#single-edit").on("click", () => yt(e, "single")), r("#single-delete").on("click", () => $t(e, "single")), r("#single-copy").on("click", () => xt("single", e)), r("#single-move").on("click", () => yo("single", e)), r("#close-modal").on("click", () => {
     t.remove();
   }), t.on("click", (x) => {
     x.target === t[0] && t.remove();
   }), r(document).on("keydown.preset-transfer", (x) => {
     x.key === "Escape" && (t.remove(), r(document).off("keydown.preset-transfer"));
-  }), G().isMobile) {
+  }), K().isMobile) {
     const x = r("body").css("overflow");
     r("body").css("overflow", "hidden"), t.on("remove", () => r("body").css("overflow", x));
   }
   t.css("display", "flex");
   try {
-    re().capabilities.supportsMove && Vi(e);
+    D().capabilities.supportsMove && vs(e);
   } catch (x) {
     console.warn("PresetTransfer: 初始化拖拽功能失败", x);
   }
 }
-const Gi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const $s = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  bindTransferEvents: Hi
-}, Symbol.toStringTag, { value: "Module" })), zn = {
+  bindTransferEvents: ws
+}, Symbol.toStringTag, { value: "Module" })), Un = {
   // HTML转义函数，防止XSS
   escapeHtml(e) {
     const t = document.createElement("div");
@@ -8328,9 +8669,9 @@ const Gi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   // 生成预设预览（显示原始HTML标签）
   generatePreview(e, t = 5) {
     return e.slice(0, t).map((n) => {
-      const o = n.content || "", i = o.length > 200 ? o.substring(0, 200) + "..." : o, l = this.escapeHtml(n.name || "未命名"), a = this.escapeHtml(i);
-      return `${l}
-${a}`;
+      const o = n.content || "", i = o.length > 200 ? o.substring(0, 200) + "..." : o, a = this.escapeHtml(n.name || "未命名"), l = this.escapeHtml(i);
+      return `${a}
+${l}`;
     }).join(`
 
 ` + "─".repeat(50) + `
@@ -8353,14 +8694,14 @@ ${a}`;
   },
   // 渲染可见范围内的条目
   renderVisibleEntries(e, t, r = !1) {
-    const n = A.getVars(), { entries: o, itemHeight: i, visibleCount: l, renderBuffer: a } = e, s = Math.max(0, Math.floor(t / i) - a), d = Math.min(o.length, s + l + a * 2), c = o.slice(s, d), p = s * i;
+    const n = N.getVars(), { entries: o, itemHeight: i, visibleCount: a, renderBuffer: l } = e, s = Math.max(0, Math.floor(t / i) - l), d = Math.min(o.length, s + a + l * 2), c = o.slice(s, d), p = s * i;
     return {
       html: c.map((u, f) => {
-        const m = s + f, b = u.content || "", g = b.length > 300 ? b.substring(0, 300) + "..." : b, h = this.escapeHtml(u.name || "未命名"), y = this.escapeHtml(g);
+        const g = s + f, b = u.content || "", m = b.length > 300 ? b.substring(0, 300) + "..." : b, h = this.escapeHtml(u.name || "未命名"), y = this.escapeHtml(m);
         return `
           <div class="virtual-entry-item" style="
             position: absolute;
-            top: ${m * i}px;
+            top: ${g * i}px;
             left: 0;
             right: 0;
             height: ${i - 10}px;
@@ -8387,7 +8728,7 @@ ${a}`;
   },
   // 预设效果预览
   previewPresetEffect(e) {
-    const t = Le(e, "default"), r = t.reduce((n, o) => n + this.estimateTokens(o.content || ""), 0);
+    const t = We(e, "default"), r = t.reduce((n, o) => n + this.estimateTokens(o.content || ""), 0);
     return {
       totalEntries: t.length,
       totalTokens: r,
@@ -8399,17 +8740,17 @@ ${a}`;
   checkBasicWarnings(e) {
     const t = [], r = e.filter((i) => !i.content || !i.content.trim());
     r.length > 0 && t.push(`发现 ${r.length} 个空条目`);
-    const n = e.map((i) => i.name).filter(Boolean), o = n.filter((i, l) => n.indexOf(i) !== l);
+    const n = e.map((i) => i.name).filter(Boolean), o = n.filter((i, a) => n.indexOf(i) !== a);
     return o.length > 0 && t.push(`发现重名条目: ${[...new Set(o)].join(", ")}`), t;
   },
   // 显示预览界面
   showPreviewModal(e, t) {
-    const r = v(), n = A.getVars();
-    q();
+    const r = v(), n = N.getVars();
+    Y();
     try {
-      const o = N(e, t), i = this.previewPresetEffect(o);
+      const o = O(e, t), i = this.previewPresetEffect(o);
       r("#preview-modal").remove();
-      const l = `
+      const a = `
         <div id="preview-modal" style="--pt-font-size: ${n.fontSize}; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; height: calc(var(--pt-vh, 1vh) * 100); background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px); z-index: 10004; display: flex; align-items: center; justify-content: center; padding: ${n.margin}; padding-top: calc(${n.margin} + env(safe-area-inset-top)); padding-bottom: calc(${n.margin} + env(safe-area-inset-bottom));">
           <div style="background: ${n.bgColor}; border-radius: ${n.borderRadius}; padding: ${n.padding}; max-width: 800px; width: 100%; max-height: ${n.maxHeight}; max-height: 80dvh; max-height: calc(var(--pt-vh, 1vh) * 80); overflow-y: auto; color: ${n.textColor}; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
             <div style="text-align: center; margin-bottom: ${n.margin}; padding-bottom: ${n.paddingSmall}; border-bottom: 1px solid ${n.borderColor};">
@@ -8430,7 +8771,7 @@ ${a}`;
             ${i.warnings.length > 0 ? `
               <div style="margin-bottom: 20px; padding: 16px; background: ${n.sectionBg}; border: 1px solid ${n.borderColor}; border-radius: 8px;">
                 <h4 style="margin: 0 0 12px 0; font-size: var(--pt-font-size); font-weight: 600; color: ${n.textColor};">注意事项</h4>
-                ${i.warnings.map((m) => `<div style="color: ${n.textColor}; margin-bottom: 4px;">• ${m}</div>`).join("")}
+                ${i.warnings.map((g) => `<div style="color: ${n.textColor}; margin-bottom: 4px;">• ${g}</div>`).join("")}
               </div>
             ` : ""}
 
@@ -8454,90 +8795,90 @@ ${a}`;
           </div>
         </div>
       `;
-      r("body").append(l);
-      const a = Le(o, "default"), s = this.createVirtualScrollPreview(a), d = r("#virtual-scroll-container"), c = r("#virtual-scroll-content");
+      r("body").append(a);
+      const l = We(o, "default"), s = this.createVirtualScrollPreview(l), d = r("#virtual-scroll-container"), c = r("#virtual-scroll-content");
       c.css("height", s.totalHeight + "px");
       const p = this.renderVisibleEntries(s, 0, !1);
       c.html(p.html);
       let u = null, f = -1;
       d.on("scroll", () => {
         u && clearTimeout(u), u = setTimeout(() => {
-          const m = d.scrollTop(), b = Math.max(0, Math.floor(m / s.itemHeight) - s.renderBuffer);
+          const g = d.scrollTop(), b = Math.max(0, Math.floor(g / s.itemHeight) - s.renderBuffer);
           if (b !== f) {
-            const g = this.renderVisibleEntries(s, m, !1);
-            c.html(g.html), f = b;
+            const m = this.renderVisibleEntries(s, g, !1);
+            c.html(m.html), f = b;
           }
         }, 16);
       }), r("#close-preview").on("click", () => {
         r("#preview-modal").remove();
-      }), r("#preview-modal").on("click", function(m) {
-        m.target === this && r(this).remove();
+      }), r("#preview-modal").on("click", function(g) {
+        g.target === this && r(this).remove();
       });
     } catch (o) {
       console.error("预览失败:", o), alert("预览失败: " + o.message);
     }
   }
-}, qi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+}, ks = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  QuickPreview: zn
+  QuickPreview: Un
 }, Symbol.toStringTag, { value: "Module" }));
-function Ji(e) {
+function Ss(e) {
   console.log("初始化增强功能..."), setTimeout(() => {
     try {
-      Ki(e), console.log("增强功能初始化完成");
+      Ps(e), console.log("增强功能初始化完成");
     } catch (t) {
       console.error("增强功能初始化失败", t);
     }
   }, 500);
 }
-function Ki(e) {
+function Ps(e) {
   const t = v();
   if (!t("#left-preview-btn").length) {
     const r = t(`
       <button id="left-preview-btn" class="get-current-btn" title="预览预设">
-        ${br()}
+        ${_r()}
       </button>
     `);
     r.on("click", () => {
       const n = t("#left-preset").val();
-      n ? zn.showPreviewModal(e, n) : alert("请先选择左侧预设");
+      n ? Un.showPreviewModal(e, n) : alert("请先选择左侧预设");
     }), t("#get-current-left").after(r);
   }
   if (!t("#right-preview-btn").length) {
     const r = t(`
       <button id="right-preview-btn" class="get-current-btn" title="预览预设">
-        ${br()}
+        ${_r()}
       </button>
     `);
     r.on("click", () => {
       const n = t("#right-preset").val();
-      n ? zn.showPreviewModal(e, n) : alert("请先选择右侧预设");
+      n ? Un.showPreviewModal(e, n) : alert("请先选择右侧预设");
     }), t("#get-current-right").after(r);
   }
 }
-const Yi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const _s = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  addPreviewButtons: Ki,
-  initializeEnhancedFeatures: Ji
+  addPreviewButtons: Ps,
+  initializeEnhancedFeatures: Ss
 }, Symbol.toStringTag, { value: "Module" }));
-async function xe({ adapterKey: e = "preset" } = {}) {
-  ia(e);
-  const t = re();
+async function we({ adapterKey: e = "preset" } = {}) {
+  $a(e);
+  const t = D();
   console.log("开始创建转移UI...");
-  const r = M();
+  const r = B();
   if (!r) {
     console.error("无法获取API信息"), alert("无法获取当前API信息，请确保 SillyTavern 已正确加载");
     return;
   }
   console.log("API信息获取成功，预设数量:", r.presetNames.length);
-  const n = await Ge().listContainers(r);
+  const n = await be().listContainers(r);
   if (n.length < 1) {
     alert("至少需要 1 个预设才能进行操作");
     return;
   }
-  const o = v(), { isMobile: i, isSmallScreen: l, isPortrait: a } = G();
-  q();
-  const s = await Si().then((p) => p.manifest).catch(() => null), d = `
+  const o = v(), { isMobile: i, isSmallScreen: a, isPortrait: l } = K();
+  Y();
+  const s = await Ki().then((p) => p.manifest).catch(() => null), d = `
         <div id="preset-transfer-modal">
             <div class="transfer-modal-content">
                 <div class="modal-header">
@@ -8566,7 +8907,7 @@ async function xe({ adapterKey: e = "preset" } = {}) {
                                 ${r.presetNames.map((p) => `<option value="${p}">${p}</option>`).join("")}
                             </select>
                             <button id="get-current-left" class="get-current-btn" title="获取当前预设">
-                                ${hr()}
+                                ${Pr()}
                             </button>
                         </div>
                     </div>
@@ -8582,7 +8923,7 @@ async function xe({ adapterKey: e = "preset" } = {}) {
                                 ${r.presetNames.map((p) => `<option value="${p}">${p}</option>`).join("")}
                             </select>
                             <button id="get-current-right" class="get-current-btn" title="获取当前预设">
-                                ${hr()}
+                                ${Pr()}
                             </button>
                         </div>
                     </div>
@@ -8608,10 +8949,19 @@ async function xe({ adapterKey: e = "preset" } = {}) {
                         <div class="search-section">
                             <div class="search-input-wrapper">
                                 <input type="text" id="entry-search" placeholder="搜索条目...">
-                                <label class="search-content-toggle">
-                                    <input type="checkbox" id="search-content-main" checked>
-                                    <span>含内容</span>
-                                </label>
+                                <button type="button" class="pt-search-settings-btn" data-pt-search-context="main" title="搜索选项">
+                                    ${fn()}
+                                </button>
+                                <div class="pt-search-settings-popover" data-pt-search-context="main" style="display:none;">
+                                    <label class="pt-search-option">
+                                        <input type="checkbox" class="pt-search-opt-global">
+                                        <span>跨预设搜索</span>
+                                    </label>
+                                    <label class="pt-search-option">
+                                        <input type="checkbox" class="pt-search-opt-content">
+                                        <span>含内容（可能卡顿）</span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -8628,6 +8978,11 @@ async function xe({ adapterKey: e = "preset" } = {}) {
                                         </button>
                                         <button id="single-select-none" class="selection-btn">
                                             <span class="btn-icon"></span> 不选
+                                        </button>
+                                    </div>
+                                    <div class="control-row">
+                                        <button id="single-show-new" class="selection-btn" style="display: none;">
+                                            <span class="btn-icon"></span> 新建
                                         </button>
                                     </div>
                                     <div class="display-options">
@@ -8682,10 +9037,19 @@ async function xe({ adapterKey: e = "preset" } = {}) {
                             <div class="left-search-container" style="display: none;">
                                 <div class="search-input-wrapper">
                                     <input type="text" id="left-entry-search-inline" placeholder="搜索左侧条目...">
-                                    <label class="search-content-toggle">
-                                        <input type="checkbox" id="search-content-left" checked>
-                                        <span>含内容</span>
-                                    </label>
+                                    <button type="button" class="pt-search-settings-btn" data-pt-search-context="left" title="搜索选项">
+                                        ${fn()}
+                                    </button>
+                                    <div class="pt-search-settings-popover" data-pt-search-context="left" style="display:none;">
+                                        <label class="pt-search-option">
+                                            <input type="checkbox" class="pt-search-opt-global">
+                                            <span>跨预设搜索</span>
+                                        </label>
+                                        <label class="pt-search-option">
+                                            <input type="checkbox" class="pt-search-opt-content">
+                                            <span>含内容（可能卡顿）</span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                             <div id="left-entries-list" class="entries-list"></div>
@@ -8730,10 +9094,19 @@ async function xe({ adapterKey: e = "preset" } = {}) {
                             <div class="right-search-container" style="display: none;">
                                 <div class="search-input-wrapper">
                                     <input type="text" id="right-entry-search-inline" placeholder="搜索右侧条目...">
-                                    <label class="search-content-toggle">
-                                        <input type="checkbox" id="search-content-right" checked>
-                                        <span>含内容</span>
-                                    </label>
+                                    <button type="button" class="pt-search-settings-btn" data-pt-search-context="right" title="搜索选项">
+                                        ${fn()}
+                                    </button>
+                                    <div class="pt-search-settings-popover" data-pt-search-context="right" style="display:none;">
+                                        <label class="pt-search-option">
+                                            <input type="checkbox" class="pt-search-opt-global">
+                                            <span>跨预设搜索</span>
+                                        </label>
+                                        <label class="pt-search-option">
+                                            <input type="checkbox" class="pt-search-opt-content">
+                                            <span>含内容（可能卡顿）</span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                             <div id="right-entries-list" class="entries-list"></div>
@@ -8763,52 +9136,62 @@ async function xe({ adapterKey: e = "preset" } = {}) {
   c.attr("data-pt-adapter", t.id);
   try {
     c.find(".modal-header h2").text(t.ui.toolTitle);
-    const p = c.find(".preset-selection .preset-field"), u = p.eq(0).find("label span"), f = p.eq(1).find("label span");
-    u.eq(0).text(`左侧${t.ui.containerLabel}`), u.eq(1).text(`选择要管理的${t.ui.containerLabel}`), f.eq(0).text(`右侧${t.ui.containerLabel}`), f.eq(1).text(`选择要管理的${t.ui.containerLabel}`);
-    const m = [`<option value="">请选择${t.ui.containerLabel}</option>`].concat(n.map((b) => `<option value="${b}">${b}</option>`)).join("");
-    if (o("#left-preset").html(m), o("#right-preset").html(m), o("#batch-delete-presets").text(`批量删除${t.ui.containerLabel}`), t.id === "worldbook") {
-      const b = (g) => {
-        const h = o(g);
-        if (!h.length) return;
-        h.attr("title", `双击搜索${t.ui.containerLabel}`);
-        const y = "pt-worldbook-name-datalist";
-        let S = o(`#${y}`);
-        S.length === 0 && (S = o("<datalist>").attr("id", y), o("body").append(S)), h.off("dblclick.ptWorldbookSearch"), h.on("dblclick.ptWorldbookSearch", function(P) {
-          P.preventDefault(), P.stopPropagation();
-          const x = o(this);
-          if (x.data("pt-search-active")) return;
-          x.data("pt-search-active", !0);
-          const w = x.find("option").map((_, E) => String((E == null ? void 0 : E.value) ?? "")).get().filter(Boolean);
-          S.empty();
-          for (const _ of w)
-            o("<option>").attr("value", _).appendTo(S);
-          const k = String(x.val() ?? ""), I = o("<input>").attr({
+    const p = t.id === "worldbook" ? "跨世界书搜索" : "跨预设搜索";
+    c.find(".pt-search-settings-popover .pt-search-opt-global").each(function() {
+      o(this).closest("label").find("span").last().text(p);
+    });
+    const u = c.find(".preset-selection .preset-field"), f = u.eq(0).find("label span"), g = u.eq(1).find("label span");
+    f.eq(0).text(`左侧${t.ui.containerLabel}`), f.eq(1).text(`选择要管理的${t.ui.containerLabel}`), g.eq(0).text(`右侧${t.ui.containerLabel}`), g.eq(1).text(`选择要管理的${t.ui.containerLabel}`);
+    const b = [`<option value="">请选择${t.ui.containerLabel}</option>`].concat(n.map((m) => `<option value="${m}">${m}</option>`)).join("");
+    if (o("#left-preset").html(b), o("#right-preset").html(b), o("#batch-delete-presets").text(`批量删除${t.ui.containerLabel}`), t.id === "worldbook") {
+      try {
+        o("#entries-container .entries-header h4").text("双向世界书管理"), o("#entries-container .entries-header p").text(
+          "提示：左右两侧显示不同世界书的条目，可以互相转移、编辑、删除；点击上方“新建”可在当前世界书中创建条目。"
+        ), o("#left-show-new").attr("title", "在左侧世界书中新建条目").html('<span class="btn-icon"></span> 新建'), o("#right-show-new").attr("title", "在右侧世界书中新建条目").html('<span class="btn-icon"></span> 新建'), o("#single-show-new").show().attr("title", "在当前世界书中新建条目").html('<span class="btn-icon"></span> 新建');
+      } catch {
+      }
+      const m = (h) => {
+        const y = o(h);
+        if (!y.length) return;
+        y.attr("title", `双击搜索${t.ui.containerLabel}`);
+        const w = "pt-worldbook-name-datalist";
+        let C = o(`#${w}`);
+        C.length === 0 && (C = o("<datalist>").attr("id", w), o("body").append(C)), y.off("dblclick.ptWorldbookSearch"), y.on("dblclick.ptWorldbookSearch", function(S) {
+          S.preventDefault(), S.stopPropagation();
+          const k = o(this);
+          if (k.data("pt-search-active")) return;
+          k.data("pt-search-active", !0);
+          const x = k.find("option").map((z, A) => String((A == null ? void 0 : A.value) ?? "")).get().filter(Boolean);
+          C.empty();
+          for (const z of x)
+            o("<option>").attr("value", z).appendTo(C);
+          const P = String(k.val() ?? ""), E = o("<input>").attr({
             type: "text",
-            list: y,
+            list: w,
             placeholder: `搜索${t.ui.containerLabel}...`
-          }).addClass("pt-container-search-input").val(k), B = (_) => {
-            const E = String(_ ?? "").trim();
-            if (!E) return null;
-            const T = w.find((Z) => Z === E);
+          }).addClass("pt-container-search-input").val(P), j = (z) => {
+            const A = String(z ?? "").trim();
+            if (!A) return null;
+            const T = x.find((ce) => ce === A);
             if (T) return T;
-            const j = E.toLowerCase(), Ae = w.filter((Z) => String(Z).toLowerCase().includes(j));
-            return Ae.length === 1 ? Ae[0] : null;
-          }, O = (_ = !1) => {
-            const E = B(I.val());
-            I.remove(), x.show(), x.data("pt-search-active", !1), _ && E && x.val(E).trigger("change");
+            const je = A.toLowerCase(), F = x.filter((ce) => String(ce).toLowerCase().includes(je));
+            return F.length === 1 ? F[0] : null;
+          }, _ = (z = !1) => {
+            const A = j(E.val());
+            E.remove(), k.show(), k.data("pt-search-active", !1), z && A && k.val(A).trigger("change");
           };
-          x.after(I).hide(), I.focus().select(), I.on("keydown", (_) => {
-            if (_.key === "Escape") {
-              _.preventDefault(), O(!1);
+          k.after(E).hide(), E.focus().select(), E.on("keydown", (z) => {
+            if (z.key === "Escape") {
+              z.preventDefault(), _(!1);
               return;
             }
-            _.key === "Enter" && (_.preventDefault(), O(!0));
-          }), I.on("blur", () => {
-            O(!0);
+            z.key === "Enter" && (z.preventDefault(), _(!0));
+          }), E.on("blur", () => {
+            _(!0);
           });
         });
       };
-      b("#left-preset"), b("#right-preset");
+      m("#left-preset"), m("#right-preset");
     }
     t.capabilities.supportsBatchDeleteContainers || o("#batch-delete-presets").hide(), t.capabilities.supportsCompare || o("#compare-entries").hide(), t.capabilities.supportsEdit || o("#left-edit, #right-edit, #single-edit").hide(), t.capabilities.supportsCopy || o("#left-copy, #right-copy, #single-copy").hide(), t.capabilities.supportsMove || o("#single-move").hide(), t.capabilities.supportsUninsertedMode || (o('#left-display-mode option[value="show_uninserted"]').remove(), o('#right-display-mode option[value="show_uninserted"]').remove(), o('#single-display-mode option[value="show_uninserted"]').remove()), t.id !== "preset" && o("#get-current-left, #get-current-right, #left-preview-btn, #right-preview-btn").remove(), o(`#pt-adapter-style-${t.id}`).length === 0 && o("head").append(`
         <style id="pt-adapter-style-${t.id}">
@@ -8820,15 +9203,106 @@ async function xe({ adapterKey: e = "preset" } = {}) {
   } catch (p) {
     console.warn("PresetTransfer: adapter UI tweaks failed", p);
   }
-  c.find('.preset-update-slot[data-side="left"]').append(o("#preset-update-to-left")), c.find('.preset-update-slot[data-side="right"]').append(o("#preset-update-to-right")), c.find(".preset-update-slot").hide(), o("#preset-update-to-right, #preset-update-to-left").prop("hidden", !0), o("#close-modal").text("关闭"), Hn(i, l, a), Hi(r, o("#preset-transfer-modal")), t.id === "preset" && Ji(r);
+  c.find('.preset-update-slot[data-side="left"]').append(o("#preset-update-to-left")), c.find('.preset-update-slot[data-side="right"]').append(o("#preset-update-to-right")), c.find(".preset-update-slot").hide(), o("#preset-update-to-right, #preset-update-to-left").prop("hidden", !0), o("#close-modal").text("关闭"), Fn(i, a, l), ws(r, o("#preset-transfer-modal")), t.id === "preset" && Ss(r);
 }
-const Xi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Cs = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  createTransferUI: xe
-}, Symbol.toStringTag, { value: "Module" }));
-async function vl(e, t, r, n) {
+  createTransferUI: we
+}, Symbol.toStringTag, { value: "Module" })), Es = "preset-transfer-extension-settings";
+function rc() {
+  const e = v(), t = e("#extensions_settings");
+  return t.length ? t : e("#extensions_settings2");
+}
+function oc() {
+  var e, t;
   try {
-    const o = N(e, t);
+    return ((t = (e = M.API).getLoadedPresetName) == null ? void 0 : t.call(e)) ?? null;
+  } catch {
+    return null;
+  }
+}
+function ic() {
+  return `
+    <div id="${Es}" class="extension_container">
+      <div class="inline-drawer">
+        <div class="inline-drawer-toggle inline-drawer-header">
+          <b>转移工具</b>
+          <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+        </div>
+        <div class="inline-drawer-content">
+          <div class="flex-container flexFlowColumn flexGap5">
+            <div class="flex-container flexGap5 alignItemsCenter wide100p" style="flex-wrap: wrap;">
+              <button id="pt-export-preset-bundle" class="menu_button" style="white-space: nowrap;">导出预设正则包</button>
+              <button id="pt-import-preset-bundle" class="menu_button" style="white-space: nowrap;">导入预设正则包</button>
+              <input type="file" id="pt-import-preset-bundle-file" accept=".json" style="display: none;">
+            </div>
+            <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-entry-states-panel">
+              <input id="pt-enable-entry-states-panel" type="checkbox" class="checkbox">
+              <span>条目状态</span>
+            </label>
+            <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-regex-binding">
+              <input id="pt-enable-regex-binding" type="checkbox" class="checkbox">
+              <span>预设正则</span>
+            </label>
+            <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-entry-grouping">
+              <input id="pt-enable-entry-grouping" type="checkbox" class="checkbox">
+              <span>条目分组</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function sc(e) {
+  const t = v();
+  t("#pt-enable-entry-states-panel").prop("checked", !!e.entryStatesPanelEnabled), t("#pt-enable-regex-binding").prop("checked", !!e.regexBindingEnabled), t("#pt-enable-entry-grouping").prop("checked", !!e.entryGroupingEnabled);
+}
+function ac() {
+  const e = v();
+  e("#pt-enable-entry-states-panel").off("input.pt").on("input.pt", function() {
+    El(e(this).prop("checked")), De();
+  }), e("#pt-enable-entry-grouping").off("input.pt").on("input.pt", function() {
+    zl(e(this).prop("checked")), De();
+  }), e("#pt-enable-regex-binding").off("input.pt").on("input.pt", async function() {
+    await Il(e(this).prop("checked")), De();
+  }), e("#pt-export-preset-bundle").off("click.pt").on("click.pt", async function() {
+    try {
+      const t = oc();
+      if (!t) {
+        window.toastr && toastr.error("请先选择一个预设");
+        return;
+      }
+      await Ui(t);
+    } catch (t) {
+      console.error("导出预设正则包失败", t), window.toastr && toastr.error("导出失败: " + ((t == null ? void 0 : t.message) ?? t));
+    }
+  }), e("#pt-import-preset-bundle").off("click.pt").on("click.pt", function() {
+    e("#pt-import-preset-bundle-file").trigger("click");
+  }), e("#pt-import-preset-bundle-file").off("change.pt").on("change.pt", async function(t) {
+    var n, o;
+    const r = (o = (n = t == null ? void 0 : t.target) == null ? void 0 : n.files) == null ? void 0 : o[0];
+    if (r)
+      try {
+        await Fi(r);
+      } catch (i) {
+        console.error("导入预设正则包失败", i), window.toastr && toastr.error("导入失败: " + ((i == null ? void 0 : i.message) ?? i));
+      } finally {
+        e(this).val("");
+      }
+  });
+}
+function yn() {
+  const e = v(), t = rc();
+  if (!(t != null && t.length)) return !1;
+  if (e(`#${Es}`).length) return !0;
+  t.append(ic());
+  const r = Zi();
+  return sc(r), ac(), !0;
+}
+async function lc(e, t, r, n) {
+  try {
+    const o = O(e, t);
     if (!o) throw new Error("无法获取预设数据");
     o.prompts || (o.prompts = []);
     const i = o.prompts.findIndex(
@@ -8838,9 +9312,9 @@ async function vl(e, t, r, n) {
       throw new Error(`未找到条目 "${r.name}"`);
     if (o.prompts.find((s, d) => d !== i && s.name === n.name))
       throw new Error(`条目名称 "${n.name}" 已存在`);
-    const a = o.prompts[i];
+    const l = o.prompts[i];
     o.prompts[i] = {
-      ...a,
+      ...l,
       // 保留所有现有字段
       name: n.name,
       role: n.role,
@@ -8850,135 +9324,104 @@ async function vl(e, t, r, n) {
       injection_order: n.injection_order,
       injection_trigger: n.injection_trigger,
       // 确保保留其他可能的字段如 forbid_overrides, system_prompt 等
-      forbid_overrides: a.forbid_overrides || !1,
-      system_prompt: a.system_prompt || !1,
-      marker: a.marker || !1
+      forbid_overrides: l.forbid_overrides || !1,
+      system_prompt: l.system_prompt || !1,
+      marker: l.marker || !1
     }, await e.presetManager.savePreset(t, o), console.log(`条目 "${r.name}" 已更新为 "${n.name}"`);
   } catch (o) {
     throw console.error("保存条目更改失败:", o), o;
   }
 }
-const Qi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const zs = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  saveEntryChanges: vl
-}, Symbol.toStringTag, { value: "Module" })), lr = "preset-transfer-settings";
-function wt() {
-  return {
-    autoCloseModal: !0,
-    autoEnableEntry: !0,
-    leftDisplayMode: "default",
-    rightDisplayMode: "default",
-    singleDisplayMode: "default"
-  };
-}
-function yl(e) {
-  try {
-    localStorage.setItem(lr, JSON.stringify(e));
-  } catch (t) {
-    console.warn("保存设置失败:", t);
-  }
-}
-function wl() {
-  try {
-    const e = localStorage.getItem(lr);
-    return e ? { ...wt(), ...JSON.parse(e) } : wt();
-  } catch (e) {
-    return console.warn("加载设置失败，使用默认设置:", e), wt();
-  }
-}
-const Zi = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-  __proto__: null,
-  STORAGE_KEY: lr,
-  getDefaultSettings: wt,
-  loadTransferSettings: wl,
-  saveTransferSettings: yl
+  saveEntryChanges: lc
 }, Symbol.toStringTag, { value: "Module" }));
 window.PresetTransfer = {
-  Utils: Nr,
-  APICompat: Ss,
-  Constants: _s,
-  CommonStyles: Vr,
-  Theme: Yo,
-  PresetManager: Fr,
-  BatchDelete: ei,
-  NewVersionFields: go,
-  EntryStates: Kr,
-  EntryGrouping: hi,
-  DragDropCore: ci,
-  RegexBinding: to,
-  ImportExport: wi,
-  GlobalListener: xi,
-  AIAssistant: ti,
-  MainUI: Xi,
-  RegexUI: bi,
-  NativePanel: io,
-  CompareModal: Lo,
-  EditModal: Ko,
-  PresetUpdateModal: Ri,
-  BatchEditor: ho,
-  QuickPreview: qi,
-  StylesApplication: so,
-  DragDropUI: si,
-  EntryGroupingUI: Pi,
-  EntryOperations: Io,
-  CoreOperations: zo,
-  CopyMove: Po,
-  FindReplace: Ho,
-  EntrySaving: Qi,
-  PresetUpdate: Di,
-  EntryDisplay: Uo,
-  UIUpdates: Do,
-  SearchFilter: Ei,
-  EventBinding: Gi,
-  CompareEvents: jo,
-  DragDropEvents: Fi,
-  SettingsManager: Zi,
-  SettingsApplication: Mi,
-  EnhancedFeatures: Yi,
-  BatchModifications: bo
+  Utils: Jr,
+  APICompat: Zs,
+  Constants: ea,
+  CommonStyles: to,
+  Theme: Ko,
+  PresetManager: ro,
+  BatchDelete: Zo,
+  NewVersionFields: po,
+  EntryStates: vi,
+  EntryGrouping: _i,
+  DragDropCore: li,
+  RegexBinding: Ai,
+  ImportExport: Hi,
+  GlobalListener: Wi,
+  AIAssistant: ei,
+  MainUI: Cs,
+  RegexUI: Li,
+  NativePanel: Oi,
+  CompareModal: Oo,
+  EditModal: Jo,
+  PresetUpdateModal: hs,
+  BatchEditor: fo,
+  QuickPreview: ks,
+  StylesApplication: no,
+  DragDropUI: ii,
+  EntryGroupingUI: Qi,
+  EntryOperations: zo,
+  CoreOperations: Po,
+  CopyMove: ko,
+  FindReplace: Vo,
+  EntrySaving: zs,
+  PresetUpdate: ms,
+  EntryDisplay: Wo,
+  UIUpdates: Lo,
+  SearchFilter: is,
+  EventBinding: $s,
+  CompareEvents: Ao,
+  DragDropEvents: ys,
+  SettingsManager: Yi,
+  SettingsApplication: as,
+  EnhancedFeatures: _s,
+  BatchModifications: go
 };
 try {
   const e = [
-    Nr,
-    Vr,
-    Yo,
-    Fr,
-    ei,
-    go,
-    Kr,
-    hi,
-    ci,
+    Jr,
     to,
-    wi,
-    xi,
-    ti,
-    Xi,
-    bi,
-    io,
-    Lo,
     Ko,
-    Ri,
-    ho,
-    qi,
-    so,
-    si,
-    Pi,
-    Io,
+    ro,
+    Zo,
+    po,
+    vi,
+    _i,
+    li,
+    Ai,
+    Hi,
+    Wi,
+    ei,
+    Cs,
+    Li,
+    Oi,
+    Oo,
+    Jo,
+    hs,
+    fo,
+    ks,
+    no,
+    ii,
+    Qi,
     zo,
     Po,
-    Ho,
-    Qi,
-    Di,
-    Uo,
-    Do,
-    Ei,
-    Gi,
-    jo,
-    Fi,
-    Zi,
-    Mi,
+    ko,
+    Vo,
+    zs,
+    ms,
+    Wo,
+    Lo,
+    is,
+    $s,
+    Ao,
+    ys,
     Yi,
-    bo
+    as,
+    _s,
+    go
   ];
   for (const t of e)
     for (const [r, n] of Object.entries(t))
@@ -8986,7 +9429,7 @@ try {
 } catch (e) {
   console.warn("PresetTransfer: 无法将模块函数名挂到 window 上，将只通过 window.PresetTransfer 访问。", e);
 }
-function $l() {
+function cc() {
   try {
     const e = (v == null ? void 0 : v()) ?? window.jQuery;
     if (!e) {
@@ -9007,7 +9450,7 @@ function $l() {
       t.append(r), r.on("click", async (n) => {
         n.preventDefault(), n.stopPropagation(), e("#extensionsMenu").fadeOut(200);
         try {
-          await (xe == null ? void 0 : xe({ adapterKey: "preset" }));
+          await (we == null ? void 0 : we({ adapterKey: "preset" }));
         } catch (o) {
           console.error("PresetTransfer: 创建 UI 失败", o), alert("创建预设转移工具界面失败：" + o.message);
         }
@@ -9022,7 +9465,7 @@ function $l() {
       t.append(r), r.on("click", async (n) => {
         n.preventDefault(), n.stopPropagation(), e("#extensionsMenu").fadeOut(200);
         try {
-          await (xe == null ? void 0 : xe({ adapterKey: "worldbook" }));
+          await (we == null ? void 0 : we({ adapterKey: "worldbook" }));
         } catch (o) {
           console.error("PresetTransfer: åˆ›å»º UI å¤±è´¥", o), alert("创建世界书转移工具界面失败：" + o.message);
         }
@@ -9111,11 +9554,11 @@ function $l() {
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
           border-radius: 8px !important;
         }
-        #preset-transfer-modal button:not(.theme-toggle-btn):not(.jump-btn):not(:disabled):hover {
+        #preset-transfer-modal button:not(.theme-toggle-btn):not(.jump-btn):not(.pt-search-settings-btn):not(:disabled):hover {
           transform: translateY(-1px) !important;
           box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
         }
-        #preset-transfer-modal button:not(.theme-toggle-btn):not(:disabled):active {
+        #preset-transfer-modal button:not(.theme-toggle-btn):not(.pt-search-settings-btn):not(:disabled):active {
           transform: translateY(0) !important;
           box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
         }
@@ -9130,47 +9573,35 @@ function $l() {
     console.error("PresetTransfer: 集成扩展菜单失败", e);
   }
 }
-async function es() {
+async function Is() {
   try {
-    console.log("预设转移工具开始初始化..."), Wa().catch(() => {
-    }), await kl(), $l();
+    console.log("预设转移工具开始初始化..."), fl().catch(() => {
+    }), await dc(), cc();
     try {
-      vn == null || void 0;
+      An == null || void 0;
     } catch (e) {
       console.log("主题初始化跳过：", e == null ? void 0 : e.message);
     }
     try {
-      he == null || he();
-    } catch {
-      console.warn("注入原生正则面板失败，将稍后重试"), setTimeout(() => {
-        try {
-          he == null || he();
-        } catch {
-        }
-      }, 1500);
+      let e = 0;
+      const t = () => {
+        e++, !(yn != null && yn()) && e < 10 && setTimeout(t, 500);
+      };
+      t();
+    } catch (e) {
+      console.warn("注入转移工具设置面板失败:", e);
     }
     try {
-      be == null || be(), console.log("全局预设监听器已启动");
+      De == null || De();
     } catch (e) {
-      console.warn("启动全局预设监听器失败:", e), setTimeout(() => {
-        try {
-          be == null || be(), console.log("全局预设监听器延迟启动成功");
-        } catch (t) {
-          console.error("全局预设监听器启动失败:", t);
-        }
-      }, 2e3);
-    }
-    try {
-      xt == null || xt(), console.log("条目分组功能已启动");
-    } catch (e) {
-      console.warn("启动条目分组功能失败:", e);
+      console.warn("应用功能开关失败:", e);
     }
     console.log("预设转移工具初始化完成");
   } catch (e) {
-    console.error("初始化失败:", e), setTimeout(es, 3e3);
+    console.error("初始化失败:", e), setTimeout(Is, 3e3);
   }
 }
-function kl() {
+function dc() {
   return new Promise((e) => {
     function t() {
       try {
@@ -9184,5 +9615,5 @@ function kl() {
   });
 }
 jQuery(async () => {
-  await es();
+  await Is();
 });

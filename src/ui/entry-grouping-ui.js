@@ -28,6 +28,7 @@ let lastAppliedGroupingPreset = null;
 let lastAppliedGroupingListNode = null;
 let applyGroupingQueued = false;
 let promptManagerHookInstalled = false;
+let entryGroupingEnabled = true;
 
 function computeGroupingSignature(presetName, orderedIdentifiers, groupings) {
   const listKey = orderedIdentifiers.join('\u001f');
@@ -55,7 +56,49 @@ function cleanupGroupingUi(listContainer) {
   listContainer.find('.pt-entry-group-header, .entry-group-header').remove();
 }
 
+function destroyEntryGrouping() {
+  entryGroupingEnabled = false;
+
+  try {
+    if (applyGroupingTimer) {
+      clearTimeout(applyGroupingTimer);
+      applyGroupingTimer = null;
+    }
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    if (listObserver) {
+      listObserver.disconnect();
+      listObserver = null;
+    }
+    if (panelObserver) {
+      panelObserver.disconnect();
+      panelObserver = null;
+    }
+  } catch {
+    /* ignore */
+  }
+
+  observedListNode = null;
+  observedPanelNode = null;
+  isApplyingGrouping = false;
+  applyGroupingQueued = false;
+  lastAppliedGroupingSignature = null;
+  lastAppliedGroupingPreset = null;
+  lastAppliedGroupingListNode = null;
+
+  try {
+    const listContainer = findListContainer();
+    if (listContainer?.length) cleanupGroupingUi(listContainer);
+  } catch {
+    /* ignore */
+  }
+}
+
 function queueApplyGrouping() {
+  if (!entryGroupingEnabled) return;
   if (applyGroupingQueued) return;
   applyGroupingQueued = true;
 
@@ -221,6 +264,7 @@ function isRelevantListMutation(mutation) {
 }
 
 function scheduleApplyGrouping(delay = 150) {
+  if (!entryGroupingEnabled) return;
   if (applyGroupingTimer) clearTimeout(applyGroupingTimer);
   if (delay <= 0) {
     applyGroupingTimer = null;
@@ -297,6 +341,7 @@ function setupPanelObserver() {
 
 // 初始化分组功能
 function initEntryGrouping() {
+  entryGroupingEnabled = true;
   installPromptManagerHook();
   setupPanelObserver();
 
@@ -359,6 +404,7 @@ function setupListObserver() {
 
 // 应用分组到条目列表
 function applyGroupingToList() {
+  if (!entryGroupingEnabled) return;
   const $ = getJQuery();
   const presetName = PT.API.getLoadedPresetName?.();
   if (!presetName) return;
@@ -809,5 +855,6 @@ function showGroupingMenu($item, x, y) {
 
 export {
   initEntryGrouping,
+  destroyEntryGrouping,
   applyGroupingToList,
 };

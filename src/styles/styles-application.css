@@ -412,24 +412,170 @@ select option {
     display: block;
 }
 
-#preset-transfer-modal .search-content-toggle {
+#preset-transfer-modal .pt-search-settings-btn {
     position: absolute;
     top: 50%;
+    right: 10px;
     transform: translateY(-50%);
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 4px;
-    font-weight: 500;
+    justify-content: center;
+    width: 34px;
+    height: 30px;
+    border-radius: 8px;
+    border: none;
+    background: var(--pt-accent-color-muted);
+    color: var(--pt-body-color);
     cursor: pointer;
-    white-space: nowrap;
-    pointer-events: all;
-    z-index: 1;
+    z-index: 2;
+    transition: all 0.3s ease;
+    transform: translateY(-50%) translateZ(0);
+    will-change: background-color, transform;
 }
 
-#preset-transfer-modal .search-content-toggle input[type="checkbox"] {
+#preset-transfer-modal .pt-search-settings-btn:hover {
+    filter: brightness(1.05);
+    transform: translateY(-50%) scale(1.05);
+}
+
+#preset-transfer-modal .pt-search-settings-btn:active {
+    filter: brightness(0.95);
+    transform: translateY(-50%) scale(0.98);
+}
+
+#preset-transfer-modal .pt-search-settings-btn .pt-icon {
+    width: 18px;
+    height: 18px;
+}
+
+#preset-transfer-modal .pt-search-settings-popover {
+    position: absolute;
+    right: 10px;
+    top: calc(100% + 8px);
+    min-width: 180px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--pt-border-color);
+    background: var(--pt-scrollbar-track-color);
+    color: var(--pt-body-color);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
+    z-index: 10006;
+}
+
+#preset-transfer-modal .pt-search-settings-popover .pt-search-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 8px 8px;
+    border-radius: 8px;
+    user-select: none;
+}
+
+#preset-transfer-modal .pt-search-settings-popover .pt-search-option:hover {
+    background: var(--pt-accent-color-muted);
+}
+
+#preset-transfer-modal .pt-search-settings-popover input[type="checkbox"] {
     accent-color: var(--pt-accent-color-muted);
     cursor: pointer;
     margin: 0;
+}
+
+#preset-transfer-modal .pt-global-search-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 8px);
+    border-radius: 12px;
+    border: 1px solid var(--pt-border-color);
+    background: var(--pt-scrollbar-track-color);
+    color: var(--pt-body-color);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
+    z-index: 10005;
+    max-height: 320px;
+    overflow: auto;
+}
+
+#preset-transfer-modal .pt-global-search-panel .pt-global-search-header {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--pt-border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: calc(var(--pt-font-size) * 0.75);
+    color: var(--pt-quote-color);
+}
+
+#preset-transfer-modal .pt-global-search-panel .pt-global-search-header .pt-global-search-title {
+    color: var(--pt-body-color);
+    font-weight: 600;
+}
+
+#preset-transfer-modal .pt-global-search-panel .pt-global-search-item {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--pt-border-color);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+#preset-transfer-modal .pt-global-search-panel .pt-global-search-item:last-child {
+    border-bottom: none;
+}
+
+#preset-transfer-modal .pt-global-search-panel .pt-global-search-item .pt-global-search-meta {
+    min-width: 0;
+    flex: 1;
+}
+
+#preset-transfer-modal .pt-global-search-panel .pt-global-search-item .pt-global-search-name {
+    font-weight: 700;
+    color: var(--pt-body-color);
+    font-size: calc(var(--pt-font-size) * 0.875);
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+#preset-transfer-modal .pt-global-search-panel .pt-global-search-item .pt-global-search-sub {
+    margin-top: 4px;
+    font-size: calc(var(--pt-font-size) * 0.75);
+    color: var(--pt-quote-color);
+    word-break: break-word;
+}
+
+#preset-transfer-modal .pt-global-search-panel .pt-global-search-item .pt-global-search-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+#preset-transfer-modal .pt-global-search-panel .pt-global-search-item .pt-global-search-transfer {
+    border: none;
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: var(--pt-accent-color);
+    color: var(--pt-body-color);
+    cursor: pointer;
+    font-weight: 700;
+    font-size: calc(var(--pt-font-size) * 0.75);
+    transition: opacity 0.15s ease, transform 0.05s ease;
+}
+
+#preset-transfer-modal .pt-global-search-panel .pt-global-search-item .pt-global-search-transfer:hover {
+    opacity: 0.92;
+}
+
+#preset-transfer-modal .pt-global-search-panel .pt-global-search-item .pt-global-search-transfer:active {
+    transform: translateY(1px);
+}
+
+#preset-transfer-modal .pt-global-search-panel .pt-global-search-item .pt-global-search-transfer:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
 }
 
 #preset-transfer-modal .selection-controls {

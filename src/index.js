@@ -29,6 +29,7 @@ import * as GlobalListener from './features/global-listener.js';
 import * as ImportExport from './features/import-export.js';
 import * as RegexBinding from './features/regex-binding.js';
 import { checkForExtensionUpdate } from './features/extension-update.js';
+import { applyTransferToolFeatureToggles } from './features/feature-toggles.js';
 
 // UI 模块
 import * as BatchEditor from './ui/batch-editor.js';
@@ -42,6 +43,7 @@ import * as PresetUpdateModal from './ui/preset-update-modal.js';
 import * as QuickPreview from './ui/quick-preview.js';
 import * as RegexUI from './ui/regex-ui.js';
 import * as StylesApplication from './ui/styles-application.js';
+import { initTransferToolsSettingsPanel } from './ui/transfer-tools-settings.js';
 
 // 操作模块
 import * as CopyMove from './operations/copy-move.js';
@@ -319,11 +321,11 @@ function integrateIntoExtensionsMenu() {
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
           border-radius: 8px !important;
         }
-        #preset-transfer-modal button:not(.theme-toggle-btn):not(.jump-btn):not(:disabled):hover {
+        #preset-transfer-modal button:not(.theme-toggle-btn):not(.jump-btn):not(.pt-search-settings-btn):not(:disabled):hover {
           transform: translateY(-1px) !important;
           box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
         }
-        #preset-transfer-modal button:not(.theme-toggle-btn):not(:disabled):active {
+        #preset-transfer-modal button:not(.theme-toggle-btn):not(.pt-search-settings-btn):not(:disabled):active {
           transform: translateY(0) !important;
           box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
         }
@@ -363,42 +365,25 @@ async function initPresetTransferIntegration() {
       console.log('主题初始化跳过：', error?.message);
     }
 
-    // 注入原生页面里的正则 / 条目状态折叠面板
+    // 在扩展设置页左侧注入“转移工具”折叠面板（用于集中管理开关/导入导出）
     try {
-      NativePanel.initNativeRegexPanelIntegration?.();
+      let settingsPanelAttempts = 0;
+      const tryInitSettingsPanel = () => {
+        settingsPanelAttempts++;
+        const ok = initTransferToolsSettingsPanel?.();
+        if (ok) return;
+        if (settingsPanelAttempts < 10) setTimeout(tryInitSettingsPanel, 500);
+      };
+      tryInitSettingsPanel();
     } catch (e) {
-      console.warn('注入原生正则面板失败，将稍后重试');
-      setTimeout(() => {
-        try {
-          NativePanel.initNativeRegexPanelIntegration?.();
-        } catch {
-          /* ignore */
-        }
-      }, 1500);
+      console.warn('注入转移工具设置面板失败:', e);
     }
 
-    // 启动全局预设监听器（负责绑定正则与条目状态随预设切换自动更新）
+    // 按开关状态启停：原生面板/预设监听/条目分组
     try {
-      GlobalListener.init?.();
-      console.log('全局预设监听器已启动');
-    } catch (error) {
-      console.warn('启动全局预设监听器失败:', error);
-      setTimeout(() => {
-        try {
-          GlobalListener.init?.();
-          console.log('全局预设监听器延迟启动成功');
-        } catch (retryError) {
-          console.error('全局预设监听器启动失败:', retryError);
-        }
-      }, 2000);
-    }
-
-    // 初始化条目分组功能
-    try {
-      EntryGroupingUI.initEntryGrouping?.();
-      console.log('条目分组功能已启动');
-    } catch (error) {
-      console.warn('启动条目分组功能失败:', error);
+      applyTransferToolFeatureToggles?.();
+    } catch (e) {
+      console.warn('应用功能开关失败:', e);
     }
 
     console.log('预设转移工具初始化完成');

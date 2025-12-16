@@ -127,6 +127,37 @@ export function hookPresetSaveToProtectExtensions() {
   }
 }
 
+export function unhookPresetSaveToProtectExtensions() {
+  try {
+    if (!hookInstalled) return;
+
+    if (hookInstallRetryTimer) {
+      clearTimeout(hookInstallRetryTimer);
+      hookInstallRetryTimer = null;
+    }
+
+    if (!originalSavePreset) {
+      hookInstalled = false;
+      return;
+    }
+
+    const apiInfo = getCurrentApiInfo?.();
+    const pm = apiInfo?.presetManager;
+    if (pm && typeof pm.savePreset === 'function') {
+      try {
+        pm.savePreset = originalSavePreset;
+      } catch {
+        /* ignore */
+      }
+    }
+
+    originalSavePreset = null;
+    hookInstalled = false;
+  } catch {
+    /* ignore */
+  }
+}
+
 export function sanitizeWorldBindings(list) {
   if (!Array.isArray(list)) return [];
   const result = [];

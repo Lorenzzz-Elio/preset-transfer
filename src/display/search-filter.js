@@ -1,5 +1,6 @@
 import { getJQuery } from '../core/utils.js';
 import { getActiveTransferAdapter } from '../transfer/transfer-context.js';
+import { loadSearchSettings } from '../settings/search-settings.js';
 import { updateSelectionCount } from './ui-updates.js';
 
 // Filter entries on both sides (and single mode) using the main search box.
@@ -24,7 +25,7 @@ function filterDualEntries(searchTerm) {
     return;
   }
 
-  const searchContent = $('#search-content-main').is(':checked');
+  const { includeContent } = loadSearchSettings();
 
   $(allListsSelector).each(function () {
     const $item = $(this);
@@ -54,7 +55,7 @@ function filterDualEntries(searchTerm) {
       }
     }
 
-    const matches = searchContent
+    const matches = includeContent
       ? name.includes(term) || contentText.toLowerCase().includes(term)
       : name.includes(term);
 
@@ -89,8 +90,7 @@ function filterSideEntries(side, searchTerm) {
     return;
   }
 
-  const searchContentId = side === 'left' ? '#search-content-left' : '#search-content-right';
-  const searchContent = $(searchContentId).is(':checked');
+  const { includeContent } = loadSearchSettings();
 
   $(listSelector).each(function () {
     const $item = $(this);
@@ -117,7 +117,7 @@ function filterSideEntries(side, searchTerm) {
       }
     }
 
-    const matches = searchContent
+    const matches = includeContent
       ? name.includes(term) || contentText.toLowerCase().includes(term)
       : name.includes(term);
 
