@@ -1,4 +1,4 @@
-import { getParentWindow, getSillyTavernContext } from './utils.js';
+import { getSillyTavernContext } from './utils.js';
 
 // Keep these values in-sync with SillyTavern's `scripts/extensions/regex/engine.js`.
 // We keep the mapping local so this extension can be built/bundled without importing ST internals.
@@ -106,70 +106,40 @@ function filterByEnableState(list, enableState) {
   return list;
 }
 
-let applyTimer = null;
-function requestApplyRegexChanges(context) {
-  // Debounce to avoid reloading/saving too aggressively during bulk imports.
-  if (applyTimer) clearTimeout(applyTimer);
-  applyTimer = setTimeout(() => {
+// Some third-party renderers (e.g. JS-Slash-Runner) rely on the native chat reload flow
+// (`reloadCurrentChat` -> `chatLoaded` -> message render events) to rebuild their DOM/iframes.
+// Preset Transfer historically only rerendered visible messages, which can leave those renderers
+// stuck showing the original code block source. Provide a native-like reload pathway.
+let reloadChatTimer = null;
+let reloadChatPromise = null;
+let reloadChatResolve = null;
+function requestReloadCurrentChat(context) {
+  const ctx = context ?? getSillyTavernContext();
+  if (typeof ctx?.reloadCurrentChat !== 'function') return null;
+
+  if (!reloadChatPromise) {
+    reloadChatPromise = new Promise(resolve => {
+      reloadChatResolve = resolve;
+    });
+  }
+
+  if (reloadChatTimer) clearTimeout(reloadChatTimer);
+  reloadChatTimer = setTimeout(async () => {
+    const done = reloadChatResolve;
+    reloadChatResolve = null;
+    reloadChatPromise = null;
+    reloadChatTimer = null;
+
     try {
-      context?.saveSettingsDebounced?.();
+      await ctx.reloadCurrentChat();
     } catch {
       /* ignore */
+    } finally {
+      done?.(true);
     }
-  }, 350);
-}
+  }, 150);
 
-let rerenderTimer = null;
-let rerenderGeneration = 0;
-let rerenderInProgress = false;
-
-function requestRerenderVisibleMessages(context) {
-  rerenderGeneration++;
-  const generation = rerenderGeneration;
-
-  if (rerenderTimer) clearTimeout(rerenderTimer);
-  rerenderTimer = setTimeout(() => {
-    void rerenderVisibleMessages(context, generation);
-  }, 120);
-}
-
-async function rerenderVisibleMessages(context, generation) {
-  if (rerenderInProgress) return;
-  rerenderInProgress = true;
-  try {
-    if (generation !== rerenderGeneration) return;
-    const ctx = context ?? getSillyTavernContext();
-    if (!ctx?.updateMessageBlock || !Array.isArray(ctx.chat)) return;
-
-    const root = getParentWindow?.() ?? window;
-    const doc = root?.document ?? document;
-    const nodes = doc.querySelectorAll?.('#chat [mesid]') ?? [];
-
-    // Only rerender messages currently in DOM to keep this fast (ST may truncate history in the UI).
-    for (const node of nodes) {
-      const idRaw = node?.getAttribute?.('mesid');
-      const messageId = Number(idRaw);
-      if (!Number.isFinite(messageId) || messageId < 0) continue;
-
-      const message = ctx.chat[messageId];
-      if (!message) continue;
-
-      try {
-        ctx.updateMessageBlock(messageId, message, { rerenderMessage: true });
-      } catch {
-        /* ignore single message failures */
-      }
-    }
-  } catch {
-    /* ignore */
-  } finally {
-    rerenderInProgress = false;
-  }
-
-  // If something requested another rerender while we were working, do one more pass.
-  if (generation !== rerenderGeneration) {
-    requestRerenderVisibleMessages(context);
-  }
+  return reloadChatPromise;
 }
 
 export function getGlobalTavernRegexesNative(opts = {}) {
@@ -249,8 +219,14 @@ export async function updateGlobalTavernRegexesWithNative(updater) {
   } catch {
     /* ignore */
   }
-  requestRerenderVisibleMessages(context);
-  requestApplyRegexChanges(context);
+
+  // Match ST native regex workflow: save settings and reload current chat to fully re-render.
+  try {
+    context?.saveSettingsDebounced?.();
+  } catch {
+    /* ignore */
+  }
+  void requestReloadCurrentChat(context);
 
   // Return the normalized PT view (with enabled + script_name).
   return getGlobalTavernRegexesNative({ scope: 'global', enable_state: 'all' });

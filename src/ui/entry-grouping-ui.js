@@ -1,7 +1,7 @@
 // 预设条目分组功能 - UI逻辑
 
 import { PT } from '../core/api-compat.js';
-import { ensureViewportCssVars, getJQuery } from '../core/utils.js';
+import { debounce, ensureViewportCssVars, getJQuery, getSillyTavernContext } from '../core/utils.js';
 import { getAllPresetGroupings, addPresetGrouping, updatePresetGrouping, removePresetGrouping } from '../features/entry-grouping.js';
 import { CommonStyles } from '../styles/common-styles.js';
 
@@ -29,6 +29,9 @@ let lastAppliedGroupingListNode = null;
 let applyGroupingQueued = false;
 let promptManagerHookInstalled = false;
 let entryGroupingEnabled = true;
+let themeObserver = null;
+let settingsUpdatedUnsubscribe = null;
+let themeRefreshTimeouts = [];
 
 function computeGroupingSignature(presetName, orderedIdentifiers, groupings) {
   const listKey = orderedIdentifiers.join('\u001f');
@@ -58,6 +61,7 @@ function cleanupGroupingUi(listContainer) {
 
 function destroyEntryGrouping() {
   entryGroupingEnabled = false;
+  teardownThemeReapplyListener();
 
   try {
     if (applyGroupingTimer) {
@@ -282,6 +286,86 @@ function scheduleApplyGrouping(delay = 150) {
   }, delay);
 }
 
+function clearThemeRefreshTimeouts() {
+  if (!themeRefreshTimeouts.length) return;
+  themeRefreshTimeouts.forEach((t) => clearTimeout(t));
+  themeRefreshTimeouts = [];
+}
+
+function triggerGroupingRefreshBurst() {
+  if (!entryGroupingEnabled) return;
+
+  // If the user toggles beautify/theme and immediately opens the preset panel,
+  // the prompt list may finish rendering asynchronously. Grouping UI won't re-apply
+  // unless we see a relevant DOM mutation, so do a short burst of regroup attempts.
+  clearThemeRefreshTimeouts();
+  scheduleApplyGrouping(0);
+  [120, 420, 900, 1800].forEach((delay) => {
+    themeRefreshTimeouts.push(setTimeout(() => scheduleApplyGrouping(0), delay));
+  });
+}
+
+function teardownThemeReapplyListener() {
+  clearThemeRefreshTimeouts();
+
+  try {
+    if (themeObserver) {
+      themeObserver.disconnect();
+      themeObserver = null;
+    }
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    settingsUpdatedUnsubscribe?.();
+  } catch {
+    /* ignore */
+  }
+  settingsUpdatedUnsubscribe = null;
+}
+
+function setupThemeReapplyListener() {
+  teardownThemeReapplyListener();
+
+  // 1) Prefer SillyTavern SETTINGS_UPDATED (covers most UI preset/theme/beautify switches).
+  try {
+    const context = getSillyTavernContext();
+    const eventSource = context?.eventSource;
+    const settingsEvent = context?.eventTypes?.SETTINGS_UPDATED;
+    if (eventSource?.on && settingsEvent) {
+      const handler = () => triggerGroupingRefreshBurst();
+      eventSource.on(settingsEvent, handler);
+      settingsUpdatedUnsubscribe = () => {
+        try {
+          eventSource.removeListener?.(settingsEvent, handler);
+        } catch {
+          /* ignore */
+        }
+      };
+    }
+  } catch {
+    /* ignore */
+  }
+
+  // 2) Fallback: observe root/body class/style changes (SmartTheme / beautify can be pure CSS vars).
+  const root = document.documentElement;
+  const body = document.body;
+  if (!root || !body) return;
+
+  const debounced = debounce(() => triggerGroupingRefreshBurst(), 200);
+  themeObserver = new MutationObserver((mutations) => {
+    if (!entryGroupingEnabled) return;
+    if (isApplyingGrouping) return;
+    if (mutations.some((m) => m.type === 'attributes' && (m.attributeName === 'style' || m.attributeName === 'class'))) {
+      debounced();
+    }
+  });
+
+  themeObserver.observe(root, { attributes: true, attributeFilter: ['style', 'class'] });
+  themeObserver.observe(body, { attributes: true, attributeFilter: ['style', 'class'] });
+}
+
 function setupToggleReapplyListener() {
   const $ = getJQuery();
   // Re-apply grouping after toggling enabled/disabled since the host may re-render the whole list.
@@ -344,6 +428,7 @@ function initEntryGrouping() {
   entryGroupingEnabled = true;
   installPromptManagerHook();
   setupPanelObserver();
+  setupThemeReapplyListener();
 
   // 设置 MutationObserver 监听列表变化
   setupListObserver();
@@ -565,8 +650,12 @@ function createGroupUI(groupItems, grouping, presetName, groupIndex) {
       <span class="pt-entry-group-toggle" aria-hidden="true"></span>
       <span class="pt-entry-group-name"></span>
       <span class="pt-entry-group-count"></span>
-      <button class="menu_button pt-entry-group-edit-btn" title="编辑分组">✏️</button>
-      <button class="menu_button pt-entry-group-clear-btn" title="取消分组">✖</button>
+      <button class="menu_button pt-icon-btn pt-entry-group-edit-btn" title="编辑分组" aria-label="编辑分组">
+        <span title="edit" class="fa-solid fa-pencil"></span>
+      </button>
+      <button class="menu_button pt-icon-btn pt-entry-group-clear-btn" title="删除分组" aria-label="删除分组">
+        <i class="fa-fw fa-solid fa-trash-can"></i>
+      </button>
     </div>
   `);
   groupHeader.find('.pt-entry-group-name').text(grouping.name || '分组');

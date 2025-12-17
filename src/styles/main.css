@@ -67,11 +67,22 @@
 
 .pt-entry-grouping-root .pt-entry-group-edit-btn,
 .pt-entry-grouping-root .pt-entry-group-clear-btn {
-  font-size: 10px;
-  padding: 2px 6px;
-  line-height: 1.2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  padding: 4px 8px;
+  line-height: 1;
+  font-size: 14px;
+}
+
+.pt-entry-grouping-root .pt-entry-group-edit-btn i,
+.pt-entry-grouping-root .pt-entry-group-edit-btn span,
+.pt-entry-grouping-root .pt-entry-group-clear-btn i,
+.pt-entry-grouping-root .pt-entry-group-clear-btn span {
+  pointer-events: none;
 }
 
 .pt-entry-grouping-root .pt-entry-group-clear-btn {
-  color: var(--pt-danger, #dc2626);
+  color: inherit;
 }
