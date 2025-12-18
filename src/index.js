@@ -28,6 +28,8 @@ import * as EntryGrouping from './features/entry-grouping.js';
 import * as GlobalListener from './features/global-listener.js';
 import * as ImportExport from './features/import-export.js';
 import * as RegexBinding from './features/regex-binding.js';
+import * as WorldbookCommon from './features/worldbook-common.js';
+import * as WorldbookCommonIntegration from './features/worldbook-common-integration.js';
 import { checkForExtensionUpdate } from './features/extension-update.js';
 import { applyTransferToolFeatureToggles } from './features/feature-toggles.js';
 
@@ -44,6 +46,8 @@ import * as QuickPreview from './ui/quick-preview.js';
 import * as RegexUI from './ui/regex-ui.js';
 import * as StylesApplication from './ui/styles-application.js';
 import { initTransferToolsSettingsPanel } from './ui/transfer-tools-settings.js';
+import * as WorldbookCommonPanel from './ui/worldbook-common-panel.js';
+import * as WorldbookCommonEventButton from './ui/worldbook-common-event-button.js';
 
 // 操作模块
 import * as CopyMove from './operations/copy-move.js';
@@ -90,6 +94,8 @@ registerPresetTransferNamespace({
   RegexBinding,
   ImportExport,
   GlobalListener,
+  WorldbookCommon,
+  WorldbookCommonIntegration,
   AIAssistant,
   MainUI,
   RegexUI,
@@ -118,6 +124,8 @@ registerPresetTransferNamespace({
   SettingsApplication,
   EnhancedFeatures,
   BatchModifications,
+  WorldbookCommonPanel,
+  WorldbookCommonEventButton,
 });
 
 // 兼容旧脚本里直接调用的全局函数名（不覆盖 SillyTavern 自带的同名函数）
@@ -134,6 +142,8 @@ exposeModuleMembersToWindow([
   RegexBinding,
   ImportExport,
   GlobalListener,
+  WorldbookCommon,
+  WorldbookCommonIntegration,
   AIAssistant,
   MainUI,
   RegexUI,
@@ -162,6 +172,8 @@ exposeModuleMembersToWindow([
   SettingsApplication,
   EnhancedFeatures,
   BatchModifications,
+  WorldbookCommonPanel,
+  WorldbookCommonEventButton,
 ]);
 
 startPresetTransferIntegration({

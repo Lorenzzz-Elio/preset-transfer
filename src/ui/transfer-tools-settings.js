@@ -1,5 +1,6 @@
 import { PT } from '../core/api-compat.js';
 import { getJQuery } from '../core/utils.js';
+import { getCssVar } from '../core/color-utils.js';
 import { exportPresetBundle, importPresetBundle } from '../features/import-export.js';
 import {
   applyTransferToolFeatureToggles,
@@ -7,6 +8,9 @@ import {
   setEntryGroupingEnabled,
   setEntryStatesPanelEnabled,
   setRegexBindingFeatureEnabled,
+  setWorldbookEntryGroupingEnabled,
+  setWorldbookCommonEnabled,
+  setWorldbookGroupingEnabled,
 } from '../features/feature-toggles.js';
 
 const CONTAINER_ID = 'preset-transfer-extension-settings';
@@ -28,6 +32,7 @@ function getCurrentPresetName() {
 }
 
 function renderPanel() {
+  const themeAccentColor = getCssVar('--SmartThemeEmColor', 'currentColor');
   return `
     <div id="${CONTAINER_ID}" class="extension_container">
       <div class="inline-drawer">
@@ -38,21 +43,37 @@ function renderPanel() {
         <div class="inline-drawer-content">
           <div class="flex-container flexFlowColumn flexGap5">
             <div class="flex-container flexGap5 alignItemsCenter wide100p" style="flex-wrap: wrap;">
-              <button id="pt-export-preset-bundle" class="menu_button" style="white-space: nowrap;">导出预设正则包</button>
-              <button id="pt-import-preset-bundle" class="menu_button" style="white-space: nowrap;">导入预设正则包</button>
+              <button id="pt-export-preset-bundle" class="menu_button" style="white-space: nowrap;">导出预设包</button>
+              <button id="pt-import-preset-bundle" class="menu_button" style="white-space: nowrap;">导入预设包</button>
               <input type="file" id="pt-import-preset-bundle-file" accept=".json" style="display: none;">
             </div>
+            <label class="checkbox_label alignItemsCenter flexGap5" for="pt-export-global-worldbooks">
+              <input id="pt-export-global-worldbooks" type="checkbox" style="accent-color: ${themeAccentColor};" />
+              <small>同时导出全局世界书</small>
+            </label>
             <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-entry-states-panel">
-              <input id="pt-enable-entry-states-panel" type="checkbox" class="checkbox">
-              <span>条目状态</span>
+              <input id="pt-enable-entry-states-panel" type="checkbox" style="accent-color: ${themeAccentColor};" />
+              <small>条目状态</small>
             </label>
             <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-regex-binding">
-              <input id="pt-enable-regex-binding" type="checkbox" class="checkbox">
-              <span>预设正则</span>
+              <input id="pt-enable-regex-binding" type="checkbox" style="accent-color: ${themeAccentColor};" />
+              <small>预设正则</small>
             </label>
             <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-entry-grouping">
-              <input id="pt-enable-entry-grouping" type="checkbox" class="checkbox">
-              <span>条目分组</span>
+              <input id="pt-enable-entry-grouping" type="checkbox" style="accent-color: ${themeAccentColor};" />
+              <small>条目分组</small>
+            </label>
+            <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-worldbook-grouping">
+              <input id="pt-enable-worldbook-grouping" type="checkbox" style="accent-color: ${themeAccentColor};" />
+              <small>世界书分组查看</small>
+            </label>
+            <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-worldbook-entry-grouping">
+              <input id="pt-enable-worldbook-entry-grouping" type="checkbox" style="accent-color: ${themeAccentColor};" />
+              <small>世界书条目分组</small>
+            </label>
+            <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-worldbook-common">
+              <input id="pt-enable-worldbook-common" type="checkbox" style="accent-color: ${themeAccentColor};" />
+              <small>世界书常用</small>
             </label>
           </div>
         </div>
@@ -66,6 +87,9 @@ function syncUiFromFlags(flags) {
   $('#pt-enable-entry-states-panel').prop('checked', !!flags.entryStatesPanelEnabled);
   $('#pt-enable-regex-binding').prop('checked', !!flags.regexBindingEnabled);
   $('#pt-enable-entry-grouping').prop('checked', !!flags.entryGroupingEnabled);
+  $('#pt-enable-worldbook-grouping').prop('checked', !!flags.worldbookGroupingEnabled);
+  $('#pt-enable-worldbook-entry-grouping').prop('checked', !!flags.worldbookEntryGroupingEnabled);
+  $('#pt-enable-worldbook-common').prop('checked', !!flags.worldbookCommonEnabled);
 }
 
 function bindEvents() {
@@ -85,6 +109,27 @@ function bindEvents() {
       applyTransferToolFeatureToggles();
     });
 
+  $('#pt-enable-worldbook-grouping')
+    .off('input.pt')
+    .on('input.pt', function () {
+      setWorldbookGroupingEnabled($(this).prop('checked'));
+      applyTransferToolFeatureToggles();
+    });
+
+  $('#pt-enable-worldbook-entry-grouping')
+    .off('input.pt')
+    .on('input.pt', function () {
+      setWorldbookEntryGroupingEnabled($(this).prop('checked'));
+      applyTransferToolFeatureToggles();
+    });
+
+  $('#pt-enable-worldbook-common')
+    .off('input.pt')
+    .on('input.pt', function () {
+      setWorldbookCommonEnabled($(this).prop('checked'));
+      applyTransferToolFeatureToggles();
+    });
+
   $('#pt-enable-regex-binding')
     .off('input.pt')
     .on('input.pt', async function () {
@@ -101,9 +146,10 @@ function bindEvents() {
           if (window.toastr) toastr.error('请先选择一个预设');
           return;
         }
-        await exportPresetBundle(presetName);
+        const includeGlobalWorldbooks = $('#pt-export-global-worldbooks').prop('checked');
+        await exportPresetBundle(presetName, { includeGlobalWorldbooks });
       } catch (e) {
-        console.error('导出预设正则包失败', e);
+        console.error('导出预设包失败', e);
         if (window.toastr) toastr.error('导出失败: ' + (e?.message ?? e));
       }
     });
@@ -122,7 +168,7 @@ function bindEvents() {
       try {
         await importPresetBundle(file);
       } catch (err) {
-        console.error('导入预设正则包失败', err);
+        console.error('导入预设包失败', err);
         if (window.toastr) toastr.error('导入失败: ' + (err?.message ?? err));
       } finally {
         $(this).val('');

@@ -10,7 +10,10 @@ import {
 } from './regex-binding.js';
 import * as NativePanel from '../ui/native-panel.js';
 import * as EntryGroupingUI from '../ui/entry-grouping-ui.js';
+import * as WorldbookEntryGroupingUI from '../ui/worldbook-entry-grouping-ui.js';
 import { unhookPresetSaveToProtectExtensions } from './entry-states.js';
+import * as WorldbookGrouping from './worldbook-grouping.js';
+import { setWorldbookCommonFeatureActive } from './worldbook-common-integration.js';
 
 function getCurrentPresetName() {
   try {
@@ -25,6 +28,9 @@ export function getTransferToolFeatureFlags() {
   return {
     entryStatesPanelEnabled: settings.entryStatesPanelEnabled !== false,
     entryGroupingEnabled: settings.entryGroupingEnabled !== false,
+    worldbookEntryGroupingEnabled: settings.worldbookEntryGroupingEnabled !== false,
+    worldbookGroupingEnabled: settings.worldbookGroupingEnabled !== false,
+    worldbookCommonEnabled: settings.worldbookCommonEnabled !== false,
     regexBindingEnabled: getRegexBindingEnabled() !== false,
   };
 }
@@ -38,6 +44,24 @@ export function setEntryStatesPanelEnabled(enabled) {
 export function setEntryGroupingEnabled(enabled) {
   const settings = loadTransferSettings();
   settings.entryGroupingEnabled = !!enabled;
+  saveTransferSettings(settings);
+}
+
+export function setWorldbookEntryGroupingEnabled(enabled) {
+  const settings = loadTransferSettings();
+  settings.worldbookEntryGroupingEnabled = !!enabled;
+  saveTransferSettings(settings);
+}
+
+export function setWorldbookGroupingEnabled(enabled) {
+  const settings = loadTransferSettings();
+  settings.worldbookGroupingEnabled = !!enabled;
+  saveTransferSettings(settings);
+}
+
+export function setWorldbookCommonEnabled(enabled) {
+  const settings = loadTransferSettings();
+  settings.worldbookCommonEnabled = !!enabled;
   saveTransferSettings(settings);
 }
 
@@ -88,4 +112,21 @@ export function applyTransferToolFeatureToggles() {
   } else {
     EntryGroupingUI.destroyEntryGrouping?.();
   }
+
+  // Worldbook entry grouping UI (World Info editor entries list)
+  if (flags.worldbookEntryGroupingEnabled) {
+    WorldbookEntryGroupingUI.initWorldbookEntryGroupingUi?.();
+  } else {
+    WorldbookEntryGroupingUI.destroyWorldbookEntryGroupingUi?.();
+  }
+
+  // Worldbook dropdown grouping (Worlds/Lorebooks panel)
+  if (flags.worldbookGroupingEnabled) {
+    WorldbookGrouping.initWorldbookGrouping?.();
+  } else {
+    WorldbookGrouping.destroyWorldbookGrouping?.();
+  }
+
+  // Worldbook common favorites (World Info entry header + panel)
+  void setWorldbookCommonFeatureActive(!!flags.worldbookCommonEnabled);
 }

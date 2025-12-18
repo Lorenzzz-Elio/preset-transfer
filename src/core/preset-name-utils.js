@@ -21,6 +21,9 @@ function extractPresetVersionInfo(presetName) {
   const versionToken = /v?\d+(?:\.\d+){0,3}(?:[a-z]\d*)?/gi;
   const matches = Array.from(raw.matchAll(versionToken));
 
+  // Treat a "boundary" as "not ASCII alphanumeric" so names like "永恒之镜1.6" are recognized.
+  const isVersionBoundary = ch => !ch || !/[a-z0-9]/i.test(ch);
+
   const isBoundary = ch => !ch || /[\s\-_–—~†·•|\\/()（）[\]【】{}<>《》“”"'`]/.test(ch);
 
   let picked = null;
@@ -30,7 +33,7 @@ function extractPresetVersionInfo(presetName) {
     if (idx < 0) continue;
     const before = raw[idx - 1];
     const after = raw[idx + m[0].length];
-    if (isBoundary(before) && isBoundary(after)) {
+    if (isVersionBoundary(before) && isVersionBoundary(after)) {
       picked = m;
       break;
     }

@@ -1,4 +1,4 @@
-import { ensureViewportCssVars, getCurrentApiInfo, getDeviceInfo, getJQuery } from '../core/utils.js';
+import { ensureViewportCssVars, escapeHtml, getCurrentApiInfo, getDeviceInfo, getJQuery } from '../core/utils.js';
 import { bindTransferEvents } from '../events/event-binding.js';
 import { loadLocalManifest } from '../features/extension-update.js';
 import { initializeEnhancedFeatures } from '../settings/enhanced-features.js';
@@ -47,7 +47,7 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
                         <span id="font-size-display">16px</span>
                     </div>
                     <div class="version-info">
-                        <span class="author">V1.0.0 by discord千秋梦</span>
+                        <span class="author">V${escapeHtml(String(extensionManifest?.version ?? 'dev'))} by discord千秋梦</span>
                     </div>
                 </div>
                 <div class="preset-selection">
@@ -324,7 +324,9 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
     $('#left-preset').html(optionsHtml);
     $('#right-preset').html(optionsHtml);
 
-    $('#batch-delete-presets').text(`批量删除${adapter.ui.containerLabel}`);
+    $('#batch-delete-presets').text(
+      adapter.id === 'worldbook' ? `批量管理${adapter.ui.containerLabel}` : `批量删除${adapter.ui.containerLabel}`,
+    );
 
     if (adapter.id === 'worldbook') {
       try {

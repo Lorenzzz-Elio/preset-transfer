@@ -15,7 +15,7 @@ import { deleteSelectedEntries } from '../ui/edit-modal.js';
 import { initExtensionUpdateUI } from '../ui/extension-update-modal.js';
 import { showPresetUpdateModal } from '../ui/preset-update-modal.js';
 import { updatePresetRegexStatus } from '../ui/regex-ui.js';
-import { createWorldbookBatchDeleteModal } from '../worldbook/batch-delete.js';
+import { createWorldbookBatchManageModal } from '../worldbook/batch-delete.js';
 import { loadSearchSettings, updateSearchSettings } from '../settings/search-settings.js';
 import { initDragDrop } from './drag-drop-events.js';
 function bindTransferEvents(apiInfo, modal) {
@@ -375,13 +375,14 @@ function bindTransferEvents(apiInfo, modal) {
     const adapter = getActiveTransferAdapter();
     try {
       if (adapter.id === 'worldbook') {
-        await createWorldbookBatchDeleteModal();
+        await createWorldbookBatchManageModal();
       } else {
         createBatchDeleteModal(currentApiInfo);
       }
     } catch (error) {
-      console.error('批量删除打开失败:', error);
-      alert('批量删除打开失败: ' + error.message);
+      const actionLabel = adapter.id === 'worldbook' ? '批量管理' : '批量删除';
+      console.error(`${actionLabel}打开失败:`, error);
+      alert(`${actionLabel}打开失败: ` + (error?.message ?? error));
     }
   });
 
@@ -488,11 +489,11 @@ function bindTransferEvents(apiInfo, modal) {
 
   // 左侧控制
   $('#left-select-all').on('click', () => {
-    $('#left-entries-list .entry-checkbox').prop('checked', true);
+    $('#left-entries-list .entry-item:visible .entry-checkbox').prop('checked', true);
     updateSelectionCount();
   });
   $('#left-select-none').on('click', () => {
-    $('#left-entries-list .entry-checkbox').prop('checked', false);
+    $('#left-entries-list .entry-item:visible .entry-checkbox').prop('checked', false);
     updateSelectionCount();
   });
 
@@ -509,11 +510,11 @@ function bindTransferEvents(apiInfo, modal) {
 
   // 右侧控制
   $('#right-select-all').on('click', () => {
-    $('#right-entries-list .entry-checkbox').prop('checked', true);
+    $('#right-entries-list .entry-item:visible .entry-checkbox').prop('checked', true);
     updateSelectionCount();
   });
   $('#right-select-none').on('click', () => {
-    $('#right-entries-list .entry-checkbox').prop('checked', false);
+    $('#right-entries-list .entry-item:visible .entry-checkbox').prop('checked', false);
     updateSelectionCount();
   });
 
@@ -550,11 +551,11 @@ function bindTransferEvents(apiInfo, modal) {
 
   // 单预设控制
   $('#single-select-all').on('click', () => {
-    $('#single-entries-list .entry-checkbox').prop('checked', true);
+    $('#single-entries-list .entry-item:visible .entry-checkbox').prop('checked', true);
     updateSelectionCount();
   });
   $('#single-select-none').on('click', () => {
-    $('#single-entries-list .entry-checkbox').prop('checked', false);
+    $('#single-entries-list .entry-item:visible .entry-checkbox').prop('checked', false);
     updateSelectionCount();
   });
 
