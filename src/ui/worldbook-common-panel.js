@@ -5,6 +5,7 @@ import {
     setWorldbookCommonEntriesEnabled,
     setWorldbookEntryFavorite,
 } from '../features/worldbook-common.js';
+import { syncWorldbookCommonFavoriteButton } from './worldbook-common-entry-ui.js';
 
 const MODAL_ID = 'pt-worldbook-common-modal';
 const STYLE_ID = 'pt-worldbook-common-modal-styles';
@@ -298,6 +299,7 @@ function bindRemoveButtons($modal) {
         const uid = String($row.data('uid') ?? '');
         await withRefreshLock(async () => {
             await setWorldbookEntryFavorite(worldbookName, uid, false);
+            syncWorldbookCommonFavoriteButton(worldbookName, uid, false);
             await refreshPanel();
         });
     });

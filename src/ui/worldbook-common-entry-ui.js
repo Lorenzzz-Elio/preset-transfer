@@ -10,6 +10,7 @@ let applyQueued = false;
 let syncInProgress = false;
 let currentWorldbookName = null;
 let currentFavorites = new Set();
+let favoritesDirtyWorldbooks = new Set();
 let favoritesChangedHandlerBound = false;
 let favoritesChangedHandler = null;
 
@@ -19,8 +20,10 @@ function bindFavoritesChangedHandler() {
         if (!enabled) return;
         const worldbookName = String(event?.detail?.worldbookName ?? '').trim();
         if (!worldbookName) return;
+        favoritesDirtyWorldbooks.add(worldbookName);
         if (!currentWorldbookName || currentWorldbookName !== worldbookName) return;
         currentFavorites = await getWorldbookFavoritesSet(worldbookName, { forceRefresh: true });
+        favoritesDirtyWorldbooks.delete(worldbookName);
         queueApply();
     };
 
@@ -100,6 +103,7 @@ function ensureFavoriteButton($entry, uid, isFavorite) {
                 tabindex: '0',
                 title: '加入世界书常用',
             })
+            .attr('data-uid', uid)
             .data('uid', uid);
 
         const $toggle = $headerRow.find('.killSwitch').first();
@@ -107,17 +111,77 @@ function ensureFavoriteButton($entry, uid, isFavorite) {
         else $headerRow.prepend($btn);
     }
 
+    $btn.attr('data-uid', uid);
+
     $btn.toggleClass('is-favorite', !!isFavorite);
     $btn.addClass('fa-star');
     $btn.toggleClass('fa-solid', !!isFavorite);
     $btn.toggleClass('fa-regular', !isFavorite);
 
     $btn.attr('title', isFavorite ? '从世界书常用移除' : '加入世界书常用');
+
+    bindFavoriteToggleEvents($btn);
 }
 
 async function refreshFavoritesForWorldbook(worldbookName) {
     currentWorldbookName = worldbookName;
     currentFavorites = await getWorldbookFavoritesSet(worldbookName, { forceRefresh: true });
+}
+
+async function handleFavoriteToggle($btn) {
+    const worldbookName = getCurrentWorldbookName();
+    if (!worldbookName) return;
+
+    const uid = String($btn.attr('data-uid') ?? $btn.data('uid') ?? '').trim();
+    if (!uid) return;
+
+    try {
+        await toggleWorldbookEntryFavorite(worldbookName, uid);
+        currentFavorites = await getWorldbookFavoritesSet(worldbookName, { forceRefresh: true });
+        queueApply();
+    } catch (err) {
+        console.error('PresetTransfer: failed to toggle worldbook common favorite', err);
+        if (window.toastr) toastr.error('操作失败: ' + (err?.message ?? err));
+    }
+}
+
+function bindFavoriteToggleEvents($btn) {
+    if (!$btn?.length) return;
+    const $ = getJQuery();
+    $btn.off('.pt-wb-common-fav');
+    $btn.on('click.pt-wb-common-fav', async function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        await handleFavoriteToggle($(this));
+    });
+    $btn.on('keydown.pt-wb-common-fav', function (e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        $(this).trigger('click');
+    });
+}
+
+export function syncWorldbookCommonFavoriteButton(worldbookName, uid, isFavorite) {
+    if (!enabled) return;
+    const name = String(worldbookName ?? '').trim();
+    const entryUid = String(uid ?? '').trim();
+    if (!name || !entryUid) return;
+    if (!currentWorldbookName || currentWorldbookName !== name) return;
+
+    if (isFavorite) currentFavorites.add(entryUid);
+    else currentFavorites.delete(entryUid);
+    favoritesDirtyWorldbooks.delete(name);
+
+    const $ = getJQuery();
+    const $list = findListContainer();
+    if (!$list.length) return;
+
+    $list.find('.world_entry').each(function () {
+        const found = getUidFromWorldEntryEl(this);
+        if (!found || found !== entryUid) return;
+        ensureFavoriteButton($(this), entryUid, isFavorite);
+        return false;
+    });
 }
 
 async function applyToList() {
@@ -131,9 +195,10 @@ async function applyToList() {
     const name = getCurrentWorldbookName();
     if (!name) return;
 
-    if (name !== currentWorldbookName) {
-        await refreshFavoritesForWorldbook(name);
-    }
+    const shouldForceRefresh = name !== currentWorldbookName || favoritesDirtyWorldbooks.has(name);
+    currentFavorites = await getWorldbookFavoritesSet(name, { forceRefresh: shouldForceRefresh });
+    currentWorldbookName = name;
+    favoritesDirtyWorldbooks.delete(name);
 
     $list.find('.world_entry').each(function () {
         const uid = getUidFromWorldEntryEl(this);
@@ -156,34 +221,6 @@ function bindEvents() {
     const $ = getJQuery();
     const $list = findListContainer();
     if (!$list.length) return false;
-
-    $list.off('click.pt-wb-common');
-    $list.on('click.pt-wb-common', '.pt-wb-common-fav-toggle', async function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const worldbookName = getCurrentWorldbookName();
-        if (!worldbookName) return;
-
-        const uid = String($(this).data('uid') ?? '').trim();
-        if (!uid) return;
-
-        try {
-            await toggleWorldbookEntryFavorite(worldbookName, uid);
-            currentFavorites = await getWorldbookFavoritesSet(worldbookName, { forceRefresh: true });
-            queueApply();
-        } catch (err) {
-            console.error('PresetTransfer: failed to toggle worldbook common favorite', err);
-            if (window.toastr) toastr.error('操作失败: ' + (err?.message ?? err));
-        }
-    });
-
-    $list.off('keydown.pt-wb-common');
-    $list.on('keydown.pt-wb-common', '.pt-wb-common-fav-toggle', function (e) {
-        if (e.key !== 'Enter' && e.key !== ' ') return;
-        e.preventDefault();
-        $(this).trigger('click');
-    });
 
     $('#world_editor_select')
         .off('change.pt-wb-common')
@@ -223,8 +260,7 @@ function detachFromList() {
         $('#world_editor_select').off('change.pt-wb-common');
         const $list = findListContainer();
         if ($list?.length) {
-            $list.off('click.pt-wb-common');
-            $list.off('keydown.pt-wb-common');
+            $list.find('.pt-wb-common-fav-toggle').off('.pt-wb-common-fav');
             $list.find('.pt-wb-common-fav-toggle').remove();
             $list.removeClass('pt-wb-common-root');
         }
@@ -305,5 +341,6 @@ export function destroyWorldbookCommonEntryUi() {
     applyQueued = false;
     currentWorldbookName = null;
     currentFavorites = new Set();
+    favoritesDirtyWorldbooks = new Set();
     syncInProgress = false;
 }

@@ -49,10 +49,14 @@ function applyThemeVarsToContainer($container) {
   const vars = CommonStyles.getVars();
   $container.addClass('pt-entry-grouping-root');
   const el = $container[0];
-  el.style.setProperty('--pt-section-bg', vars.sectionBg);
-  el.style.setProperty('--pt-border', vars.borderColor);
-  el.style.setProperty('--pt-text', vars.textColor);
-  el.style.setProperty('--pt-tip', vars.tipColor);
+  // Use dynamic references to SillyTavern theme variables so injected grouping
+  // follows beautify/theme changes immediately without requiring a re-render.
+  // We intentionally omit per-variable fallbacks here: if a SmartTheme var is missing,
+  // the CSS that consumes --pt-* already provides its own fallback values.
+  el.style.setProperty('--pt-section-bg', 'var(--SmartThemeBlurTintColor)');
+  el.style.setProperty('--pt-border', 'var(--SmartThemeBorderColor)');
+  el.style.setProperty('--pt-text', 'var(--SmartThemeBodyColor)');
+  el.style.setProperty('--pt-tip', 'var(--SmartThemeQuoteColor)');
 }
 
 function resetTempMarks() {
