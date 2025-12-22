@@ -3,6 +3,7 @@ import {
   ensureViewportCssVars,
   escapeHtml,
   getJQuery,
+  getSillyTavernContext,
 } from '../core/utils.js';
 import { CommonStyles } from '../styles/common-styles.js';
 import { bindWorldbookBatchOrderDnd, unbindWorldbookBatchOrderDnd } from '../core/worldbook-order-dnd.js';
@@ -191,8 +192,18 @@ function showTopGroupActionsDialog({ title, groupingEnabled, onRename, onToggleG
 
 async function createWorldbookBatchManageModal() {
   const $ = getJQuery();
+  let isClosed = false;
+
+  const areSetsEqual = (a, b) => {
+    if (a === b) return true;
+    if (!a || !b) return false;
+    if (a.size !== b.size) return false;
+    for (const v of a) if (!b.has(v)) return false;
+    return true;
+  };
 
   const closeModal = () => {
+    isClosed = true;
     try {
       unbindWorldbookBatchOrderDnd($('#batch-delete-modal')[0]);
     } catch {
@@ -209,7 +220,7 @@ async function createWorldbookBatchManageModal() {
 
   const vars = CommonStyles.getVars();
   let worldbookNames = await listWorldbooks();
-  const boundSet = await computeCharacterLinkedWorldbooks();
+  let boundSet = await computeCharacterLinkedWorldbooks();
 
   const existingNamesSet = new Set(worldbookNames.map((x) => String(x ?? '').trim()).filter(Boolean));
   let groupState = normalizeWorldbookGroupState(loadWorldbookGroupState());
@@ -294,6 +305,27 @@ async function createWorldbookBatchManageModal() {
     applyCollapseState();
     applyWorldbookSearchFilter();
     updateSelectedCount();
+  };
+
+  const refreshBoundSetInBackground = async () => {
+    try {
+      const ctx = getSillyTavernContext();
+      const characters = Array.isArray(ctx?.characters) ? ctx.characters : [];
+      const hasShallow = characters.some((c) => c?.shallow);
+      if (!hasShallow) return;
+    } catch {
+      // ignore
+    }
+
+    try {
+      const next = await computeCharacterLinkedWorldbooks({ unshallow: true });
+      if (isClosed) return;
+      if (areSetsEqual(boundSet, next)) return;
+      boundSet = next;
+      rerenderWorldbookList({ preserveChecked: true });
+    } catch {
+      // ignore
+    }
   };
 
   const getSelectedWorldbooks = () => {
@@ -564,6 +596,8 @@ async function createWorldbookBatchManageModal() {
   });
 
   rerenderWorldbookList({ preserveChecked: false });
+  // If characters are loaded in shallow mode (lazyLoadCharacters), refresh bindings progressively.
+  setTimeout(() => void refreshBoundSetInBackground(), 0);
 }
 
 export {

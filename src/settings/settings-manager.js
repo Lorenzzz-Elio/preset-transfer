@@ -16,6 +16,7 @@ function getDefaultSettings() {
     worldbookGroupingEnabled: true,
     worldbookCommonEnabled: true,
     worldbookCommonAutoGlobalBooks: [],
+    worldbookCharacterWorldCache: { version: 1, byAvatar: {} },
   };
 }
 

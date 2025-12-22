@@ -20,8 +20,8 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
   }
 
   console.log('API信息获取成功，预设数量:', apiInfo.presetNames.length);
-  const containerNames = await getTransferEngine().listContainers(apiInfo);
-  if (containerNames.length < 1) {
+  const initialContainerNames = adapter.id === 'preset' && Array.isArray(apiInfo.presetNames) ? apiInfo.presetNames.slice() : [];
+  if (adapter.id === 'preset' && initialContainerNames.length < 1) {
     alert('至少需要 1 个预设才能进行操作');
     return;
   }
@@ -298,6 +298,74 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
   const modal = $('#preset-transfer-modal');
   modal.attr('data-pt-adapter', adapter.id);
 
+  let containerNames = initialContainerNames;
+  const isLoadingContainers = adapter.id !== 'preset';
+  if (isLoadingContainers) containerNames = [];
+
+  const populateContainerOptions = (names, { loading = false } = {}) => {
+    const label = adapter?.ui?.containerLabel ?? '预设';
+    const placeholder = loading ? `正在加载${label}...` : `请选择${label}`;
+
+    const $left = $('#left-preset');
+    const $right = $('#right-preset');
+
+    $left.prop('disabled', !!loading);
+    $right.prop('disabled', !!loading);
+
+    const normalized = (Array.isArray(names) ? names : [])
+      .map((n) => String(n ?? '').trim())
+      .filter(Boolean);
+
+    const doc = $('#preset-transfer-modal')[0]?.ownerDocument ?? document;
+
+    const applyOptions = ($select) => {
+      const el = $select?.[0];
+      if (!el) return;
+
+      el.innerHTML = '';
+
+      const makeOption = (value, text) => {
+        const opt = doc.createElement('option');
+        opt.value = value;
+        opt.textContent = text;
+        return opt;
+      };
+
+      el.appendChild(makeOption('', placeholder));
+
+      if (normalized.length === 0) return;
+
+      const CHUNK_THRESHOLD = 900;
+      const CHUNK_SIZE = 300;
+
+      if (normalized.length <= CHUNK_THRESHOLD) {
+        const frag = doc.createDocumentFragment();
+        for (const name of normalized) frag.appendChild(makeOption(name, name));
+        el.appendChild(frag);
+        return;
+      }
+
+      let idx = 0;
+      const appendChunk = () => {
+        const frag = doc.createDocumentFragment();
+        const end = Math.min(normalized.length, idx + CHUNK_SIZE);
+        for (; idx < end; idx += 1) {
+          const name = normalized[idx];
+          frag.appendChild(makeOption(name, name));
+        }
+        el.appendChild(frag);
+        if (idx < normalized.length) requestAnimationFrame(appendChunk);
+      };
+
+      requestAnimationFrame(appendChunk);
+    };
+
+    applyOptions($left);
+    applyOptions($right);
+  };
+
+  populateContainerOptions(containerNames, { loading: isLoadingContainers });
+
   // Adapter-aware UI normalization (worldbook vs preset)
   try {
     modal.find('.modal-header h2').text(adapter.ui.toolTitle);
@@ -317,12 +385,7 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
     rightField.eq(0).text(`右侧${adapter.ui.containerLabel}`);
     rightField.eq(1).text(`选择要管理的${adapter.ui.containerLabel}`);
 
-    const optionsHtml = [`<option value="">请选择${adapter.ui.containerLabel}</option>`]
-      .concat(containerNames.map(name => `<option value="${name}">${name}</option>`))
-      .join('');
-
-    $('#left-preset').html(optionsHtml);
-    $('#right-preset').html(optionsHtml);
+    populateContainerOptions(containerNames, { loading: isLoadingContainers });
 
     $('#batch-delete-presets').text(
       adapter.id === 'worldbook' ? `批量管理${adapter.ui.containerLabel}` : `批量删除${adapter.ui.containerLabel}`,
@@ -485,6 +548,29 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
 
   applyStyles(isMobile, isSmallScreen, isPortrait);
   bindTransferEvents(apiInfo, $('#preset-transfer-modal'));
+
+  if (isLoadingContainers) {
+    // Avoid blocking UI during panel open: load container list async and then populate selects.
+    setTimeout(() => {
+      void (async () => {
+        try {
+          populateContainerOptions([], { loading: true });
+          const names = await getTransferEngine().listContainers(apiInfo);
+          if (!Array.isArray(names) || names.length < 1) {
+            alert(`至少需要 1 个${adapter.ui.containerLabel}才能进行操作`);
+            $('#close-modal').trigger('click');
+            return;
+          }
+          containerNames = names;
+          populateContainerOptions(containerNames, { loading: false });
+        } catch (error) {
+          console.error('PresetTransfer: failed to load containers', error);
+          alert(`加载${adapter.ui.containerLabel}列表失败: ` + (error?.message ?? error));
+          $('#close-modal').trigger('click');
+        }
+      })();
+    }, 0);
+  }
 
   // 初始化增强功能（包括“新增条目”过滤等）
   if (adapter.id === 'preset') {

@@ -226,6 +226,69 @@ function displayEntries(entries, side) {
        </div>
    </div>`;
 
+  if (entries.length > 260) {
+    const topHtml = renderPositionItem('top', '📍 插入到顶部');
+    const bottomHtml = renderPositionItem('bottom', '📍 插入到底部');
+    const hostId = `pt-${side}-entries-chunk-host`;
+
+    entriesList.html([topHtml, `<div id="${hostId}"></div>`, bottomHtml].join(''));
+    const host = entriesList.find(`#${hostId}`);
+
+    const buildDetailsText = (entry) => {
+      const role = entry?.role || 'system';
+      const position = entry?.injection_position || 'relative';
+      const depth = entry?.injection_depth ?? 4;
+      const order = entry?.injection_order ?? 100;
+      const triggers = entry?.injection_trigger?.join(', ') || '无';
+      return `${role} | ${position} | ${depth} | ${order} | ${triggers}`;
+    };
+
+    const renderEntryItem = (entry, index) => `
+         <div class="entry-item" data-index="${index}" data-side="${side}" data-identifier="${entry.identifier}" style="border-color: ${
+      vars.inputBorder
+    }; background: ${vars.inputBg}; transition: all 0.3s ease; cursor: pointer; position: relative; display: flex; align-items: center; padding: ${
+      isSmallScreen ? '8px 6px' : isMobile ? '8px 8px' : '12px 14px'
+    }; margin-bottom: ${isMobile ? '6px' : '6px'}; border: 1px solid ${vars.inputBorder}; border-radius: 8px; min-height: ${
+      isMobile ? '32px' : '40px'
+    };">
+             <input type="checkbox" class="entry-checkbox" style="margin-right: ${isMobile ? '8px' : '10px'}; width: ${
+      isMobile ? '14px' : '14px'
+    }; height: ${isMobile ? '14px' : '14px'}; accent-color: ${vars.accentColor}; cursor: pointer; position: relative; z-index: 10;">
+             <div style="flex: 1; ${isMobile ? 'min-width: 0;' : ''}">
+                 <div class="entry-name" style="font-weight: 600; color: ${vars.textColor}; font-size: ${
+      isSmallScreen ? '11px' : isMobile ? '11px' : '13px'
+    }; word-break: break-word; line-height: 1.2;">${entry.name}</div>
+                 ${
+                   isMobile
+                     ? ''
+                     : `<div class="entry-details" style="font-size: ${vars.fontSizeSmall}; color: ${vars.tipColor}; line-height: 1.4; margin-top: 2px;">${buildDetailsText(
+                         entry,
+                       )}</div>`
+                 }
+             </div>
+             <button class="create-here-btn" data-entry-index="${index}" data-entry-side="${side}" title="在此处新建">
+                 ${createNewIcon()}
+             </button>
+         </div>`;
+
+    const chunkSize = isMobile ? 60 : 160;
+    let startIndex = 0;
+    const renderChunk = () => {
+      const endIndex = Math.min(entries.length, startIndex + chunkSize);
+      let html = '';
+      for (let i = startIndex; i < endIndex; i += 1) {
+        html += renderEntryItem(entries[i], i);
+      }
+      host.append(html);
+      startIndex = endIndex;
+      if (startIndex < entries.length) requestAnimationFrame(renderChunk);
+    };
+
+    renderChunk();
+    bindEntryListEvents();
+    return;
+  }
+
   const entriesHtml = [
     renderPositionItem('top', '📍 插入到顶部'),
     ...(entries.length === 0
@@ -309,6 +372,7 @@ function displayEntries(entries, side) {
   });
 
   // 绑定事件
+  function bindEntryListEvents() {
   setTimeout(() => {
     const parentJQuery = getParentWindow().$;
     const entriesContainer = parentJQuery(containerSelector);
@@ -468,6 +532,9 @@ function displayEntries(entries, side) {
         });
     });
   }, 50);
+  }
+
+  bindEntryListEvents();
 }
 
 // 统一获取当前侧已选中的条目（优先按 identifier 对应，保证顺序稳定）

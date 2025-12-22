@@ -1,10 +1,11 @@
-import { debounce, getJQuery, getParentWindow } from './utils.js';
+import { debounce, getJQuery, getParentWindow, getSillyTavernContext } from './utils.js';
 import { CommonStyles } from '../styles/common-styles.js';
 import { computeCharacterLinkedWorldbooks } from './worldbook-api.js';
 import { loadWorldbookGroupState, normalizeWorldbookGroupState } from './worldbook-group-state.js';
 
 const openResultsObservers = new WeakMap();
 const lastRegroupAt = new WeakMap();
+const unshallowRefreshState = new WeakMap();
 const UI_STYLE_ID = 'pt-worldbook-grouping-ui-styles';
 const WORLD_EDITOR_DROPDOWN_WIDTH = '470px';
 const WORLD_EDITOR_DROPDOWN_CLASS = 'pt-world-editor-dropdown';
@@ -232,6 +233,37 @@ async function regroupOpenSelect2Results(selectEl) {
   const state = getOrCreateCollapseState(selectEl);
   const searchValue = getSelect2SearchValue();
   const forceExpandAll = searchValue.length > 0;
+
+  // In `lazyLoadCharacters` mode, the character list is shallow and doesn't include `extensions.world`.
+  // Kick off an async refresh once per open dropdown to populate cache and regroup without blocking UI.
+  try {
+    const ctx = getSillyTavernContext();
+    const characters = Array.isArray(ctx?.characters) ? ctx.characters : [];
+    const hasShallow = characters.some((c) => c?.shallow);
+    if (hasShallow) {
+      const st = unshallowRefreshState.get(selectEl) ?? { inFlight: false, done: false };
+      if (!st.inFlight && !st.done) {
+        st.inFlight = true;
+        unshallowRefreshState.set(selectEl, st);
+
+        void computeCharacterLinkedWorldbooks({ unshallow: true })
+          .catch(() => null)
+          .then(() => {
+            st.inFlight = false;
+            st.done = true;
+            unshallowRefreshState.set(selectEl, st);
+
+            // Only regroup if the dropdown is still open for this select.
+            const $stillOpen = getOpenSelect2ResultsRoot(selectEl);
+            if ($stillOpen?.length) {
+              void regroupOpenSelect2Results(selectEl);
+            }
+          });
+      }
+    }
+  } catch {
+    // ignore
+  }
 
   const observer = openResultsObservers.get(selectEl);
   if (observer) observer.disconnect();
