@@ -276,10 +276,24 @@ function bindTransferEvents(apiInfo, modal) {
 
   // 字体大小调节功能
   function adjustFontSize(size) {
-    const modal = $('#preset-transfer-modal')[0];
-    if (modal) {
-      modal.style.setProperty('--pt-font-size', size + 'px');
-    }
+    const targets = [
+      '#preset-transfer-modal',
+      '#edit-entry-modal',
+      '#compare-modal',
+      '#batch-delete-modal',
+      '#batch-edit-modal',
+      '#preview-modal',
+      '#find-replace-modal',
+      '#confirm-dialog-modal',
+      '#conflict-resolution-dialog',
+      '#ai-loading-overlay',
+    ];
+
+    targets.forEach(selector => {
+      const el = $(selector)[0];
+      if (el) el.style.setProperty('--pt-font-size', size + 'px');
+    });
+
     $('#font-size-display').text(size + 'px');
     localStorage.setItem('preset-transfer-font-size', size);
   }

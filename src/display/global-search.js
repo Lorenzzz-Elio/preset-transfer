@@ -31,9 +31,9 @@ function renderPanel($panel, data) {
     .map(r => {
       const disabled = r.disabled ? 'disabled' : '';
       const buttonText = '转移条目';
-      const sub = r.sub ? `<div class="pt-global-search-sub">${r.sub}</div>` : '';
+      const sub = r.sub ? `<div class="pt-global-search-sub">${escapeHtml(r.sub)}</div>` : '';
       return `
-        <div class="pt-global-search-item" data-pt-result-id="${r.id}">
+        <div class="pt-global-search-item" data-pt-result-id="${escapeHtml(r.id)}">
           <div class="pt-global-search-meta">
             <div class="pt-global-search-name">${escapeHtml(r.name || '')}</div>
             ${sub}

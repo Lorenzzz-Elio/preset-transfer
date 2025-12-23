@@ -1,6 +1,38 @@
-import { ensureViewportCssVars, getJQuery } from '../core/utils.js';
+import { ensureViewportCssVars, escapeHtml, getJQuery } from '../core/utils.js';
 import { CommonStyles } from '../styles/common-styles.js';
 import { ensureNewVersionFields } from '../preset/new-version-fields.js';
+
+function sanitizeConfirmDialogMessageHtml(message) {
+  const container = document.createElement('div');
+  container.innerHTML = String(message ?? '');
+
+  const allowedTags = new Set(['B', 'BR']);
+
+  const sanitizeNode = (node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return escapeHtml(node.nodeValue ?? '');
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return '';
+    }
+
+    const tag = node.tagName?.toUpperCase?.() ?? '';
+
+    if (!allowedTags.has(tag)) {
+      return escapeHtml(node.textContent ?? '');
+    }
+
+    if (tag === 'BR') {
+      return '<br>';
+    }
+
+    const childrenHtml = Array.from(node.childNodes).map(sanitizeNode).join('');
+    return `<${tag.toLowerCase()}>${childrenHtml}</${tag.toLowerCase()}>`;
+  };
+
+  return Array.from(container.childNodes).map(sanitizeNode).join('');
+}
 
 function updateCompareButton() {
   const $ = getJQuery();
@@ -29,6 +61,7 @@ function showConfirmDialog(message, onConfirm) {
   $('#confirm-dialog-modal').remove();
 
   const vars = CommonStyles.getVars();
+  const safeMessage = sanitizeConfirmDialogMessageHtml(message);
 
   const modalHtml = `
     <div id="confirm-dialog-modal" style="--pt-font-size:${vars.fontSize};position:fixed;top:0;left:0;width:100vw;height:100vh;height:100dvh;height:calc(var(--pt-vh, 1vh) * 100);background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);z-index:10010;display:flex;align-items:center;justify-content:center;padding:20px;padding-top:calc(20px + env(safe-area-inset-top));padding-bottom:calc(20px + env(safe-area-inset-bottom));animation:pt-fadeIn .2s ease-out">
@@ -36,7 +69,7 @@ function showConfirmDialog(message, onConfirm) {
             <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid ${vars.borderColor}">
                 <h4 style="margin:0;font-size:calc(var(--pt-font-size) * 1.125);font-weight:700;color:${vars.textColor};display:flex;align-items:center;gap:8px">确认操作</h4>
             </div>
-            <div style="margin:0;font-size:calc(var(--pt-font-size) * 0.9375);line-height:1.6;color:${vars.tipColor}">${message}</div>
+            <div style="margin:0;font-size:calc(var(--pt-font-size) * 0.9375);line-height:1.6;color:${vars.tipColor}">${safeMessage}</div>
             <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:24px">
                 <button id="confirm-dialog-ok" style="padding:10px 18px;border-radius:8px;cursor:pointer;font-size:${vars.fontSizeMedium};font-weight:600;transition:all .2s ease;background:${vars.inputBg};color:${vars.textColor};border:1px solid ${vars.inputBorder}">确认</button>
                 <button id="confirm-dialog-cancel" style="padding:10px 18px;border-radius:8px;cursor:pointer;font-size:${vars.fontSizeMedium};font-weight:600;transition:all .2s ease;background:${vars.inputBg};color:${vars.textColor};border:1px solid ${vars.inputBorder}">取消</button>

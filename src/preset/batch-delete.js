@@ -1,4 +1,4 @@
-import { getCurrentApiInfo, getJQuery, debounce } from '../core/utils.js';
+import { escapeAttr, escapeHtml, getCurrentApiInfo, getJQuery, debounce } from '../core/utils.js';
 import { CommonStyles } from '../styles/common-styles.js';
 async function batchDeletePresets(presetNames) {
   const results = [];
@@ -53,8 +53,8 @@ function createBatchDeleteModal(apiInfo) {
               .map(
                 name => `
               <label class="preset-item">
-                <input type="checkbox" value="${name}" ${name === 'in_use' ? 'disabled' : ''}>
-                <span class="preset-name">${name}</span>
+                <input type="checkbox" value="${escapeAttr(name)}" ${name === 'in_use' ? 'disabled' : ''}>
+                <span class="preset-name">${escapeHtml(name)}</span>
                 ${name === 'in_use' ? '<span class="current-badge">当前使用</span>' : ''}
               </label>
             `,
@@ -275,8 +275,8 @@ function bindBatchDeleteEvents() {
           .map(
             name => `
               <label class="preset-item">
-                <input type="checkbox" value="${name}" ${name === 'in_use' ? 'disabled' : ''}>
-                <span class="preset-name">${name}</span>
+                <input type="checkbox" value="${escapeAttr(name)}" ${name === 'in_use' ? 'disabled' : ''}>
+                <span class="preset-name">${escapeHtml(name)}</span>
                 ${name === 'in_use' ? '<span class="current-badge">当前使用</span>' : ''}
               </label>
             `,
@@ -294,7 +294,9 @@ function bindBatchDeleteEvents() {
         const currentRight = rightSelect.val();
 
         // 重新填充选项
-        const newOptions = refreshedApiInfo.presetNames.map(name => `<option value="${name}">${name}</option>`).join('');
+        const newOptions = refreshedApiInfo.presetNames
+          .map(name => `<option value="${escapeAttr(name)}">${escapeHtml(name)}</option>`)
+          .join('');
         leftSelect.html('<option value="">请选择预设</option>' + newOptions);
         rightSelect.html('<option value="">请选择预设</option>' + newOptions);
 

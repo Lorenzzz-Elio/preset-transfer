@@ -1,4 +1,4 @@
-import { ensureViewportCssVars, escapeHtml, getCurrentApiInfo, getDeviceInfo, getJQuery } from '../core/utils.js';
+import { ensureViewportCssVars, escapeAttr, escapeHtml, getCurrentApiInfo, getDeviceInfo, getJQuery } from '../core/utils.js';
 import { bindTransferEvents } from '../events/event-binding.js';
 import { loadLocalManifest } from '../features/extension-update.js';
 import { initializeEnhancedFeatures } from '../settings/enhanced-features.js';
@@ -60,7 +60,7 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
                         <div class="preset-input-group">
                             <select id="left-preset">
                                 <option value="">请选择预设</option>
-                                ${apiInfo.presetNames.map(name => `<option value="${name}">${name}</option>`).join('')}
+                                ${apiInfo.presetNames.map(name => `<option value="${escapeAttr(name)}">${escapeHtml(name)}</option>`).join('')}
                             </select>
                             <button id="get-current-left" class="get-current-btn" title="获取当前预设">
                                 ${getCurrentPresetIcon()}
@@ -76,7 +76,7 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
                         <div class="preset-input-group">
                             <select id="right-preset">
                                 <option value="">请选择预设</option>
-                                ${apiInfo.presetNames.map(name => `<option value="${name}">${name}</option>`).join('')}
+                                ${apiInfo.presetNames.map(name => `<option value="${escapeAttr(name)}">${escapeHtml(name)}</option>`).join('')}
                             </select>
                             <button id="get-current-right" class="get-current-btn" title="获取当前预设">
                                 ${getCurrentPresetIcon()}

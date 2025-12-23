@@ -1,4 +1,4 @@
-import { ensureViewportCssVars, escapeHtml, getDeviceInfo, getJQuery, highlightDiff } from '../core/utils.js';
+import { ensureViewportCssVars, escapeAttr, escapeHtml, getDeviceInfo, getJQuery, highlightDiff } from '../core/utils.js';
 import { isEntryDifferent, shouldHighlightPositionDifference, showConfirmDialog } from '../events/compare-events.js';
 import { copyEntryBetweenPresets, editEntryInPreset } from '../operations/entry-operations.js';
 import { ensureNewVersionFields } from '../preset/new-version-fields.js';
@@ -67,7 +67,7 @@ function createCompareModal(apiInfo, leftPreset, rightPreset, commonEntries) {
                         <div class="title-row">
                             <h2>预设比较</h2>
                         </div>
-                        <div class="compare-info">${leftPreset} vs ${rightPreset}</div>
+                        <div class="compare-info">${escapeHtml(leftPreset)} vs ${escapeHtml(rightPreset)}</div>
                     </div>
                     <div class="compare-stats">
                         <div class="stat-item">
@@ -97,9 +97,13 @@ function createCompareModal(apiInfo, leftPreset, rightPreset, commonEntries) {
                 </div>
             </div>
         </div>
-    `;
+  `;
 
   $('body').append(modalHtml);
+  const compareModalEl = document.getElementById('compare-modal');
+  if (compareModalEl) {
+    compareModalEl.style.setProperty('--pt-font-size', CommonStyles.getVars().fontSize);
+  }
 
   const $root = getJQuery()('#compare-modal');
 
@@ -140,7 +144,7 @@ function createCompareDetailHtml(side, presetName, entry, otherEntry) {
         <div class="compare-details">
             <div class="detail-row">
                 <span class="label">角色:</span>
-                <span class="value ${current.role !== other.role ? 'different' : ''}">${current.role || 'system'}</span>
+                <span class="value ${current.role !== other.role ? 'different' : ''}">${escapeHtml(current.role || 'system')}</span>
             </div>
             <div class="detail-row">
                 <span class="label">位置:</span>
@@ -148,25 +152,19 @@ function createCompareDetailHtml(side, presetName, entry, otherEntry) {
                   shouldHighlightPositionDifference(current.injection_position, other.injection_position)
                     ? 'different'
                     : ''
-                }">${current.injection_position || 'relative'}</span>
+                }">${escapeHtml(current.injection_position || 'relative')}</span>
             </div>
             <div class="detail-row">
                 <span class="label">深度:</span>
-                <span class="value ${current.injection_depth !== other.injection_depth ? 'different' : ''}">${
-    current.injection_depth ?? 4
-  }</span>
+                <span class="value ${current.injection_depth !== other.injection_depth ? 'different' : ''}">${escapeHtml(current.injection_depth ?? 4)}</span>
             </div>
             <div class="detail-row">
                 <span class="label">顺序:</span>
-                <span class="value ${current.injection_order !== other.injection_order ? 'different' : ''}">${
-    current.injection_order
-  }</span>
+                <span class="value ${current.injection_order !== other.injection_order ? 'different' : ''}">${escapeHtml(current.injection_order)}</span>
             </div>
             <div class="detail-row">
                 <span class="label">触发:</span>
-                <span class="value ${triggersDifferent ? 'different' : ''}">${
-    current.injection_trigger.join(', ') || '无'
-  }</span>
+                <span class="value ${triggersDifferent ? 'different' : ''}">${escapeHtml(current.injection_trigger.join(', ') || '无')}</span>
             </div>
             <div class="detail-row">
                 <span class="label">内容:</span>
@@ -182,15 +180,15 @@ function createCompareEntryHtml(entry, leftPreset, rightPreset) {
   return `
     <div class="compare-entry">
         <div class="compare-entry-header">
-            <h4>${entry.name}</h4>
+            <h4>${escapeHtml(entry.name)}</h4>
             ${
               entry.isDifferent
                 ? `
                 <div class="compare-actions">
-                    <button class="compare-action-btn" data-action="copy-right-to-left" data-entry-name="${entry.name}">覆盖左侧 ⬅️</button>
-                    <button class="compare-action-btn" data-action="copy-left-to-right" data-entry-name="${entry.name}">➡️ 覆盖右侧</button>
-                    <button class="compare-action-btn edit-btn" data-action="edit-left" data-entry-name="${entry.name}">✏️ 编辑左侧</button>
-                    <button class="compare-action-btn edit-btn" data-action="edit-right" data-entry-name="${entry.name}">✏️ 编辑右侧</button>
+                    <button class="compare-action-btn" data-action="copy-right-to-left" data-entry-name="${escapeAttr(entry.name)}">覆盖左侧 ⬅️</button>
+                    <button class="compare-action-btn" data-action="copy-left-to-right" data-entry-name="${escapeAttr(entry.name)}">➡️ 覆盖右侧</button>
+                    <button class="compare-action-btn edit-btn" data-action="edit-left" data-entry-name="${escapeAttr(entry.name)}">✏️ 编辑左侧</button>
+                    <button class="compare-action-btn edit-btn" data-action="edit-right" data-entry-name="${escapeAttr(entry.name)}">✏️ 编辑右侧</button>
                 </div>
             `
                 : ''
@@ -409,16 +407,20 @@ function bindCompareModalEvents(apiInfo, leftPreset, rightPreset, commonEntries)
 
     if (!entry) return;
 
+    const safeLeftPreset = escapeHtml(leftPreset);
+    const safeRightPreset = escapeHtml(rightPreset);
+    const safeEntryName = escapeHtml(entryName);
+
     switch (action) {
       case 'copy-left-to-right':
         showConfirmDialog(
-          `确定要用 <b>${leftPreset}</b> 的条目 "<b>${entryName}</b>" 覆盖 <b>${rightPreset}</b> 中的同名条目吗？此操作不可撤销。`,
+          `确定要用 <b>${safeLeftPreset}</b> 的条目 "<b>${safeEntryName}</b>" 覆盖 <b>${safeRightPreset}</b> 中的同名条目吗？此操作不可撤销。`,
           () => copyEntryBetweenPresets(apiInfo, leftPreset, rightPreset, entry.left, entryName),
         );
         break;
       case 'copy-right-to-left':
         showConfirmDialog(
-          `确定要用 <b>${rightPreset}</b> 的条目 "<b>${entryName}</b>" 覆盖 <b>${leftPreset}</b> 中的同名条目吗？此操作不可撤销。`,
+          `确定要用 <b>${safeRightPreset}</b> 的条目 "<b>${safeEntryName}</b>" 覆盖 <b>${safeLeftPreset}</b> 中的同名条目吗？此操作不可撤销。`,
           () => copyEntryBetweenPresets(apiInfo, rightPreset, leftPreset, entry.right, entryName),
         );
         break;

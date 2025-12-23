@@ -1,5 +1,5 @@
 import { NEW_FIELD_DEFAULTS } from '../core/constants.js';
-import { getCurrentApiInfo, getJQuery, getParentWindow } from '../core/utils.js';
+import { escapeAttr, escapeHtml, getCurrentApiInfo, getJQuery, getParentWindow } from '../core/utils.js';
 import { executeMoveToPosition } from '../operations/copy-move.js';
 import { performInsertNewEntry } from '../operations/core-operations.js';
 import { executeNewEntryAtPosition, executeTransferToPosition } from '../operations/entry-operations.js';
@@ -221,7 +221,11 @@ function displayEntries(entries, side) {
   }; border-radius: 8px; min-height: ${isMobile ? '50px' : '40px'};">
        <div style="flex: 1; text-align: center;">
            <div class="entry-name" style="font-weight: 600; color: ${vars.textColor}; font-size: ${
-    isSmallScreen ? '13px' : isMobile ? '14px' : '13px'
+    isSmallScreen
+      ? 'calc(var(--pt-font-size) * 0.8125)'
+      : isMobile
+      ? 'calc(var(--pt-font-size) * 0.875)'
+      : 'calc(var(--pt-font-size) * 0.8125)'
   }; line-height: 1.3;">${text}</div>
        </div>
    </div>`;
@@ -244,7 +248,7 @@ function displayEntries(entries, side) {
     };
 
     const renderEntryItem = (entry, index) => `
-         <div class="entry-item" data-index="${index}" data-side="${side}" data-identifier="${entry.identifier}" style="border-color: ${
+         <div class="entry-item" data-index="${index}" data-side="${side}" data-identifier="${escapeAttr(entry.identifier)}" style="border-color: ${
       vars.inputBorder
     }; background: ${vars.inputBg}; transition: all 0.3s ease; cursor: pointer; position: relative; display: flex; align-items: center; padding: ${
       isSmallScreen ? '8px 6px' : isMobile ? '8px 8px' : '12px 14px'
@@ -256,14 +260,16 @@ function displayEntries(entries, side) {
     }; height: ${isMobile ? '14px' : '14px'}; accent-color: ${vars.accentColor}; cursor: pointer; position: relative; z-index: 10;">
              <div style="flex: 1; ${isMobile ? 'min-width: 0;' : ''}">
                  <div class="entry-name" style="font-weight: 600; color: ${vars.textColor}; font-size: ${
-      isSmallScreen ? '11px' : isMobile ? '11px' : '13px'
-    }; word-break: break-word; line-height: 1.2;">${entry.name}</div>
+      isSmallScreen
+        ? 'calc(var(--pt-font-size) * 0.6875)'
+        : isMobile
+        ? 'calc(var(--pt-font-size) * 0.75)'
+        : 'calc(var(--pt-font-size) * 0.8125)'
+    }; word-break: break-word; line-height: 1.2;">${escapeHtml(entry.name)}</div>
                  ${
                    isMobile
                      ? ''
-                     : `<div class="entry-details" style="font-size: ${vars.fontSizeSmall}; color: ${vars.tipColor}; line-height: 1.4; margin-top: 2px;">${buildDetailsText(
-                         entry,
-                       )}</div>`
+                     : `<div class="entry-details" style="font-size: calc(var(--pt-font-size) * 0.75); color: ${vars.tipColor}; line-height: 1.4; margin-top: 2px;">${escapeHtml(buildDetailsText(entry))}</div>`
                  }
              </div>
              <button class="create-here-btn" data-entry-index="${index}" data-entry-side="${side}" title="在此处新建">
@@ -296,14 +302,12 @@ function displayEntries(entries, side) {
           `<div style="color: ${vars.tipColor}; text-align: center; padding: ${
             isMobile ? '30px 15px' : '40px 20px'
           }; font-size: ${
-            isMobile ? '14px' : '13px'
+            isMobile ? 'calc(var(--pt-font-size) * 0.875)' : 'calc(var(--pt-font-size) * 0.8125)'
           }; font-weight: 500;"><div style="font-size: calc(var(--pt-font-size) * 3); margin-bottom: 15px; opacity: 0.3;">📭</div><div>没有条目</div></div>`,
         ]
       : entries.map(
           (entry, index) => `
-         <div class="entry-item" data-index="${index}" data-side="${side}" data-identifier="${
-            entry.identifier
-          }" style="border-color: ${vars.inputBorder}; background: ${
+         <div class="entry-item" data-index="${index}" data-side="${side}" data-identifier="${escapeAttr(entry.identifier)}" style="border-color: ${vars.inputBorder}; background: ${
             vars.inputBg
           }; transition: all 0.3s ease; cursor: pointer; position: relative; display: flex; align-items: center; padding: ${
             isSmallScreen ? '8px 6px' : isMobile ? '8px 8px' : '12px 14px'
@@ -317,8 +321,12 @@ function displayEntries(entries, side) {
           }; cursor: pointer; position: relative; z-index: 10;">
              <div style="flex: 1; ${isMobile ? 'min-width: 0;' : ''}">
                  <div class="entry-name" style="font-weight: 600; color: ${vars.textColor}; font-size: ${
-            isSmallScreen ? '11px' : isMobile ? '11px' : '13px'
-          }; word-break: break-word; line-height: 1.2;">${entry.name}${
+            isSmallScreen
+              ? 'calc(var(--pt-font-size) * 0.6875)'
+              : isMobile
+              ? 'calc(var(--pt-font-size) * 0.75)'
+              : 'calc(var(--pt-font-size) * 0.8125)'
+          }; word-break: break-word; line-height: 1.2;">${escapeHtml(entry.name)}${
             entry.isUninserted
               ? ' <span style="color: ${vars.accentColor}; font-size: calc(var(--pt-font-size) * 0.625);">🔸未插入</span>'
               : ''
@@ -326,14 +334,14 @@ function displayEntries(entries, side) {
                  ${
                    isMobile
                      ? ''
-                     : `<div class="entry-details" style="font-size: ${vars.fontSizeSmall}; color: ${
-                         vars.tipColor
-                       }; line-height: 1.4; margin-top: 2px;">
-                     <span>👤 ${entry.role || 'system'}</span>
-                     <span style="margin-left: 8px;">📍 ${entry.injection_position || 'relative'}</span>
-                     <span style="margin-left: 8px;">🔢 ${entry.injection_depth ?? 4}</span>
-                     <span style="margin-left: 8px;">#️⃣ ${entry.injection_order ?? 100}</span>
-                     <span style="margin-left: 8px;">⚡️ ${entry.injection_trigger?.join(', ') || '无'}</span>
+                     : `<div class="entry-details" style="font-size: calc(var(--pt-font-size) * 0.75); color: ${
+                          vars.tipColor
+                        }; line-height: 1.4; margin-top: 2px;">
+                     <span>👤 ${escapeHtml(entry.role || 'system')}</span>
+                     <span style="margin-left: 8px;">📍 ${escapeHtml(entry.injection_position || 'relative')}</span>
+                     <span style="margin-left: 8px;">🔢 ${escapeHtml(entry.injection_depth ?? 4)}</span>
+                     <span style="margin-left: 8px;">#️⃣ ${escapeHtml(entry.injection_order ?? 100)}</span>
+                     <span style="margin-left: 8px;">⚡️ ${escapeHtml(entry.injection_trigger?.join(', ') || '无')}</span>
                  </div>`
                  }
              </div>

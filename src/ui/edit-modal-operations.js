@@ -1,4 +1,4 @@
-import { getJQuery, getCurrentApiInfo } from '../core/utils.js';
+import { escapeHtml, getJQuery, getCurrentApiInfo } from '../core/utils.js';
 import { getPresetDataFromManager, getPromptEntries } from '../preset/preset-manager.js';
 import { loadAndDisplayEntries, getSelectedEntries } from '../display/entry-display.js';
 import { getActiveTransferAdapter } from '../transfer/transfer-context.js';
@@ -28,7 +28,7 @@ async function deleteSelectedEntries(apiInfo, side) {
   }
 
   showConfirmDialog(
-    `确定要从${containerLabel} "${presetName}" 中删除 ${selectedEntries.length} 个条目吗？此操作不可撤销。`,
+    `确定要从${escapeHtml(containerLabel)} "${escapeHtml(presetName)}" 中删除 ${selectedEntries.length} 个条目吗？此操作不可撤销。`,
     async () => {
       try {
         const deleteButton = side === 'single' ? '#single-delete' : `#${side}-delete`;

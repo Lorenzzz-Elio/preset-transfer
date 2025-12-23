@@ -1,7 +1,7 @@
 // ==================== 预设包导入导出功能 ====================
 
 import { PT } from '../core/api-compat.js';
-import { ensureViewportCssVars, generateUUID, getCurrentApiInfo, getJQuery, getSillyTavernContext } from '../core/utils.js';
+import { ensureViewportCssVars, escapeHtml, generateUUID, getCurrentApiInfo, getJQuery, getSillyTavernContext } from '../core/utils.js';
 import { getCssVar } from '../core/color-utils.js';
 import { getPresetRegexBindings, getAllAvailableRegexes, savePresetRegexBindings } from './regex-binding.js';
 import { getPresetDataFromManager } from '../preset/preset-manager.js';
@@ -303,6 +303,7 @@ async function showConflictResolutionDialog(bundleData, existingPreset, conflict
 
   return new Promise(resolve => {
     const presetName = bundleData.metadata.presetName;
+    const safePresetName = escapeHtml(String(presetName ?? ''));
     const hasWorldbooks = Array.isArray(bundleData?.worldbooks?.items) && bundleData.worldbooks.items.length > 0;
     const worldbookCount = bundleData?.worldbooks?.items?.length ?? 0;
     const hasConflicts =
@@ -333,7 +334,7 @@ async function showConflictResolutionDialog(bundleData, existingPreset, conflict
               existingPreset
                 ? `
               <div style="margin-bottom: 16px; padding: 12px; background: ${vars.sectionBg}; border-radius: 8px;">
-                <strong>预设冲突：</strong> "${presetName}" 已存在
+                <strong>预设冲突：</strong> "${safePresetName}" 已存在
               </div>
             `
                 : ''
@@ -347,7 +348,7 @@ async function showConflictResolutionDialog(bundleData, existingPreset, conflict
                 <div style="margin-top: 8px; font-size: ${vars.fontSizeSmall}; color: ${vars.tipColor};">
                   ${conflictingRegexes
                     .slice(0, 3)
-                    .map(r => r.scriptName)
+                    .map(r => escapeHtml(String(r?.scriptName ?? r?.script_name ?? '')))
                     .join(', ')}${conflictingRegexes.length > 3 ? '...' : ''}
                 </div>
               </div>
@@ -405,10 +406,10 @@ async function showConflictResolutionDialog(bundleData, existingPreset, conflict
           </div>
 
           <div style="display: flex; gap: 12px; justify-content: center;">
-            <button id="confirm-import" style="background: ${vars.accentMutedColor}; color: ${vars.textColor}; border: 1px solid ${vars.borderColor}; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: ${
+            <button id="confirm-import" style="background: ${vars.accentMutedColor}; color: ${vars.textColor}; border: 1px solid ${vars.borderColor}; padding: calc(var(--pt-font-size) * 0.75) calc(var(--pt-font-size) * 1.5); border-radius: 8px; cursor: pointer; font-weight: 600; font-size: ${
               vars.fontSizeMedium
             };">确认导入</button>
-            <button id="cancel-import" style="background: ${vars.accentMutedColor}; color: ${vars.textColor}; border: 1px solid ${vars.borderColor}; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: ${
+            <button id="cancel-import" style="background: ${vars.accentMutedColor}; color: ${vars.textColor}; border: 1px solid ${vars.borderColor}; padding: calc(var(--pt-font-size) * 0.75) calc(var(--pt-font-size) * 1.5); border-radius: 8px; cursor: pointer; font-weight: 600; font-size: ${
               vars.fontSizeMedium
             };">取消</button>
           </div>

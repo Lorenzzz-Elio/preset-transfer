@@ -81,6 +81,15 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+function escapeAttr(text) {
+  return String(text ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Internal helper: do a token-based diff inside the changed region only.
 function highlightDiffTokens(oldStr, newStr) {
   const a = (oldStr || '').split(/(\s+)/); // keep whitespace tokens
@@ -318,6 +327,7 @@ export {
   getDeviceInfo,
   ensureViewportCssVars,
   escapeHtml,
+  escapeAttr,
   highlightDiff,
   escapeRegExp,
   generateUUID,

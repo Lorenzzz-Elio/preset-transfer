@@ -160,7 +160,7 @@ const QuickPreview = {
       }; border-bottom: 1px solid ${vars.borderColor};">
               <h3 style="margin: 0 0 8px 0; font-size: ${
                 vars.fontSizeLarge
-              }; font-weight: 700;">预设预览 - ${presetName}</h3>
+              }; font-weight: 700;">预设预览 - ${this.escapeHtml(presetName)}</h3>
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: ${
@@ -188,7 +188,7 @@ const QuickPreview = {
               <div style="margin-bottom: 20px; padding: 16px; background: ${vars.sectionBg}; border: 1px solid ${vars.borderColor}; border-radius: 8px;">
                 <h4 style="margin: 0 0 12px 0; font-size: var(--pt-font-size); font-weight: 600; color: ${vars.textColor};">注意事项</h4>
                 ${preview.warnings
-                  .map(warning => `<div style="color: ${vars.textColor}; margin-bottom: 4px;">• ${warning}</div>`)
+                  .map(warning => `<div style="color: ${vars.textColor}; margin-bottom: 4px;">• ${this.escapeHtml(warning)}</div>`)
                   .join('')}
               </div>
             `

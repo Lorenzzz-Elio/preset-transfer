@@ -150,8 +150,8 @@ const BatchEditor = {
           </div>
 
           <div style="display: flex; gap: 12px; justify-content: center;">
-            <button id="apply-batch-edit" style="padding: 12px 24px; background: ${vars.sectionBg}; color: ${vars.textColor}; border: 1px solid ${vars.borderColor}; border-radius: 8px; font-size: ${vars.fontSizeMedium}; font-weight: 600; cursor: pointer;">应用</button>
-            <button id="cancel-batch-edit" style="padding: 12px 24px; background: ${vars.sectionBg}; color: ${vars.textColor}; border: 1px solid ${vars.borderColor}; border-radius: 8px; font-size: ${vars.fontSizeMedium}; font-weight: 600; cursor: pointer;">❌ 取消</button>
+            <button id="apply-batch-edit" style="padding: calc(var(--pt-font-size) * 0.75) calc(var(--pt-font-size) * 1.5); background: ${vars.sectionBg}; color: ${vars.textColor}; border: 1px solid ${vars.borderColor}; border-radius: 8px; font-size: ${vars.fontSizeMedium}; font-weight: 600; cursor: pointer;">应用</button>
+            <button id="cancel-batch-edit" style="padding: calc(var(--pt-font-size) * 0.75) calc(var(--pt-font-size) * 1.5); background: ${vars.sectionBg}; color: ${vars.textColor}; border: 1px solid ${vars.borderColor}; border-radius: 8px; font-size: ${vars.fontSizeMedium}; font-weight: 600; cursor: pointer;">❌ 取消</button>
           </div>
         </div>
       </div>

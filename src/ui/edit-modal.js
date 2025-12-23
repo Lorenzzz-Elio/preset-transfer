@@ -158,6 +158,10 @@ function createEditEntryModal(
     `;
 
   $('body').append(modalHtml);
+  const editModalEl = $('#edit-entry-modal')[0];
+  if (editModalEl) {
+    editModalEl.style.setProperty('--pt-font-size', vars.fontSize);
+  }
 
   // Remove decorative icon and emoji from the header/cancel button
   const headerRow = $('#edit-entry-modal .edit-modal-header > div').first();
@@ -292,13 +296,18 @@ function applyEditModalStyles(isMobile, isSmallScreen, isPortrait) {
             padding-top: ${isMobile ? '16px' : '24px'};
         }
         #edit-entry-modal .edit-modal-actions button {
-            padding: ${isMobile ? '12px 16px' : '12px 22px'};
+            padding: ${
+              isMobile
+                ? 'calc(var(--pt-font-size) * 0.75) calc(var(--pt-font-size) * 1.0)'
+                : 'calc(var(--pt-font-size) * 0.75) calc(var(--pt-font-size) * 1.375)'
+            };
+            min-height: ${isMobile ? 'calc(var(--pt-font-size) * 2.5)' : 'calc(var(--pt-font-size) * 2.25)'};
             flex: ${isMobile ? '1' : '0'};
         }
         #edit-entry-modal #save-entry-changes,
         #edit-entry-modal #cancel-edit,
         #edit-entry-modal #find-replace-btn {
-            min-width: ${isMobile ? 'auto' : '130px'};
+            min-width: ${isMobile ? 'auto' : 'calc(var(--pt-font-size) * 8)'};
         }
     `;
 
