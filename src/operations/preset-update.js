@@ -344,7 +344,7 @@ function buildRunLabel(run, promptMap) {
 
 async function performPresetUpdateMerge(apiInfo, sourcePreset, targetPreset, options = {}) {
   const {
-    preserveEnabled = true,
+    preserveEnabled = false,
     selectedIdentifiers = null,
   } = options;
 
@@ -472,7 +472,7 @@ async function performPresetUpdateMerge(apiInfo, sourcePreset, targetPreset, opt
       .filter(identifier => identifiersToInsertIntoOrder.has(identifier))
       .map(identifier => ({
         identifier,
-        enabled: preserveEnabled && sourceEnabledMap.has(identifier) ? sourceEnabledMap.get(identifier) : true,
+        enabled: preserveEnabled && sourceEnabledMap.has(identifier) ? sourceEnabledMap.get(identifier) : false,
       }));
 
     if (orderEntries.length === 0) continue;

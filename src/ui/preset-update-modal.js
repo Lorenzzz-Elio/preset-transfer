@@ -17,11 +17,6 @@ function showPresetUpdateModal(apiInfo, sourcePreset, targetPreset) {
 
   const vars = CommonStyles.getVars();
 
-  const preserveEnabledDefault =
-    localStorage.getItem('preset-transfer-pu-preserve-enabled') === null
-      ? true
-      : localStorage.getItem('preset-transfer-pu-preserve-enabled') !== 'false';
-
   const modalHtml = `
     <div id="preset-update-modal" style="--pt-font-size:${vars.fontSize};">
       <div class="preset-update-modal-content">
@@ -32,27 +27,20 @@ function showPresetUpdateModal(apiInfo, sourcePreset, targetPreset) {
           </div>
           <div class="preset-update-info">
             <div><span class="label">旧版/来源：</span><span class="value">${escapeHtml(sourcePreset)}</span></div>
-            <div><span class="label">新版/目标：</span><span class="value">${escapeHtml(targetPreset)}</span></div>
-          </div>
-          <div class="preset-update-options">
-            <label class="pu-option">
-              <input type="checkbox" id="pu-preserve-enabled" ${preserveEnabledDefault ? 'checked' : ''}>
-              <span>保留旧版启用状态</span>
-            </label>
-          </div>
-          <div class="preset-update-toolbar">
-            <div class="pu-search">
-              <input type="text" id="pu-search" placeholder="搜索缺失条目（名称/内容）...">
-              <span class="pu-search-hint" id="pu-search-hint"></span>
-            </div>
-            <div class="pu-toolbar-actions">
-              <button type="button" class="pu-btn" id="pu-select-all">全选</button>
-              <button type="button" class="pu-btn" id="pu-select-none">不选</button>
-              <button type="button" class="pu-btn" id="pu-refresh">重新计算</button>
-            </div>
-          </div>
-          <div class="preset-update-summary" id="pu-summary"></div>
-        </div>
+             <div><span class="label">新版/目标：</span><span class="value">${escapeHtml(targetPreset)}</span></div>
+           </div>
+           <div class="preset-update-toolbar">
+             <div class="pu-search">
+               <input type="text" id="pu-search" placeholder="搜索缺失条目（名称/内容）...">
+               <span class="pu-search-hint" id="pu-search-hint"></span>
+             </div>
+             <div class="pu-toolbar-actions">
+               <button type="button" class="pu-btn" id="pu-select-all">全选</button>
+               <button type="button" class="pu-btn" id="pu-select-none">不选</button>
+             </div>
+           </div>
+           <div class="preset-update-summary" id="pu-summary"></div>
+         </div>
         <div class="preset-update-body" id="pu-body">
           <div class="pu-loading">正在计算差异...</div>
         </div>
@@ -98,22 +86,12 @@ function showPresetUpdateModal(apiInfo, sourcePreset, targetPreset) {
 
     modal.on('input.pu', '#pu-search', debouncedSearch);
 
-    modal.on('click.pu', '#pu-refresh', e => {
-      e.preventDefault();
-      refreshPlan();
-    });
-
     // Manual toggle for checkboxes to avoid theme/global CSS interference with native checkbox clicks.
     modal.on('click.pu', '.pu-option', function (e) {
       e.preventDefault();
       const $input = $(this).find('input[type="checkbox"]').first();
       if (!$input.length) return;
       $input.prop('checked', !$input.prop('checked')).trigger('change');
-    });
-
-    modal.on('change.pu', '#pu-preserve-enabled', function () {
-      localStorage.setItem('preset-transfer-pu-preserve-enabled', $(this).prop('checked'));
-      refreshPlan();
     });
 
     modal.on('click.pu', '#pu-select-all', e => {
@@ -162,7 +140,6 @@ function showPresetUpdateModal(apiInfo, sourcePreset, targetPreset) {
   function renderPlan(plan) {
     const $body = $('#pu-body');
     const missingCount = plan?.missingCount ?? 0;
-    const preserveEnabled = $('#pu-preserve-enabled').prop('checked');
 
     if (!plan || !Array.isArray(plan.groups) || plan.groups.length === 0 || missingCount === 0) {
       $body.html('<div class="pu-empty">没有检测到需要补全的条目。</div>');
@@ -178,8 +155,7 @@ function showPresetUpdateModal(apiInfo, sourcePreset, targetPreset) {
             const name = entry?.name || '(未命名)';
             const sourceEnabledKnown = entry?.enabledInSource === true || entry?.enabledInSource === false;
             const sourceEnabledText = sourceEnabledKnown ? (entry.enabledInSource ? '是' : '否') : '未知';
-            const finalEnabled = preserveEnabled && sourceEnabledKnown ? entry.enabledInSource : true;
-            const finalEnabledText = finalEnabled ? '是' : '否';
+            const finalEnabledText = '否';
 
             const contentRaw = typeof entry?.content === 'string' ? entry.content : '';
             const contentSnippet = contentRaw
@@ -296,8 +272,6 @@ function showPresetUpdateModal(apiInfo, sourcePreset, targetPreset) {
     const selectedIdentifiers = getSelectedIdentifiers();
     if (selectedIdentifiers.length === 0) return;
 
-    const preserveEnabled = $('#pu-preserve-enabled').prop('checked');
-
     const confirmMessage = `确定将选中的 <b>${selectedIdentifiers.length}</b> 个条目从 <b>${escapeHtml(
       sourcePreset,
     )}</b> 转移到 <b>${escapeHtml(targetPreset)}</b> 吗？`;
@@ -309,7 +283,6 @@ function showPresetUpdateModal(apiInfo, sourcePreset, targetPreset) {
 
       try {
         const result = await performPresetUpdateMerge(apiInfo, sourcePreset, targetPreset, {
-          preserveEnabled,
           selectedIdentifiers,
         });
 

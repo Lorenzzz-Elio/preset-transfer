@@ -1,6 +1,7 @@
 import { ensureViewportCssVars, getDeviceInfo, getJQuery, escapeHtml } from '../core/utils.js';
 import { loadAndDisplayEntries } from '../display/entry-display.js';
 import { CommonStyles } from '../styles/common-styles.js';
+import { initWorldbookEntryAIAssistant } from './entry-ai-assistant.js';
 
 let worldInfoModulePromise = null;
 
@@ -88,7 +89,10 @@ function createWorldbookEditEntryModal(apiInfo, worldbookName, entry) {
           <div class="pt-wi-row">
             <label class="pt-wi-label">触发策略</label>
             <div class="pt-wi-inline">
-              <label class="pt-wi-inline-check"><input type="checkbox" id="pt-wi-constant" ${raw.constant ? 'checked' : ''}> 常驻</label>
+              <select id="pt-wi-trigger-mode" title="选择条目的触发方式">
+                <option value="keywords" ${raw.constant ? '' : 'selected'}>关键词</option>
+                <option value="constant" ${raw.constant ? 'selected' : ''}>常驻</option>
+              </select>
               <select id="pt-wi-selective-logic" title="当存在次关键词(keysecondary)时的匹配逻辑；常驻时无效">
                 <option value="0" ${Number(raw.selectiveLogic ?? 0) === 0 ? 'selected' : ''} title="AND_ANY">与任意</option>
                 <option value="3" ${Number(raw.selectiveLogic ?? 0) === 3 ? 'selected' : ''} title="AND_ALL">与所有</option>
@@ -117,6 +121,20 @@ function createWorldbookEditEntryModal(apiInfo, worldbookName, entry) {
           <div class="pt-wi-row">
             <label class="pt-wi-label" for="pt-wi-content">内容</label>
             <textarea id="pt-wi-content" rows="${isMobile ? 10 : 12}" placeholder="世界书条目内容...">${escapeHtml(String(raw.content ?? entry?.content ?? ''))}</textarea>
+          </div>
+
+          <div class="pt-wi-row pt-wi-ai-assistant">
+            <label class="pt-wi-label">AI 辅助</label>
+            <div class="pt-wi-ai-controls">
+              <select id="pt-wi-ai-style-entry-selector" title="选择一个世界书条目作为风格参考">
+                <option value="">使用当前条目作为参考</option>
+              </select>
+              <textarea id="pt-wi-ai-additional-prompt" rows="3" placeholder="（可选）输入附加提示词，如“保留某些关键句”、“更精简/更详细”..."></textarea>
+              <div class="pt-wi-ai-buttons">
+                <button id="pt-wi-ai-convert-btn" type="button" class="pt-wi-ai-btn" disabled>格式转换</button>
+                <button id="pt-wi-ai-create-btn" type="button" class="pt-wi-ai-btn" disabled>辅助创作</button>
+              </div>
+            </div>
           </div>
 
           <div class="pt-wi-grid">
@@ -301,6 +319,49 @@ function createWorldbookEditEntryModal(apiInfo, worldbookName, entry) {
       line-height: 1.5;
     }
 
+    #pt-worldbook-edit-modal .pt-wi-ai-assistant {
+      padding: ${vars.paddingSmall};
+      background: ${vars.sectionBg};
+      border: 1px solid ${vars.borderColor};
+      border-radius: ${vars.borderRadiusSmall};
+    }
+
+    #pt-worldbook-edit-modal .pt-wi-ai-controls {
+      display: flex;
+      flex-direction: column;
+      gap: ${vars.gap};
+      margin-top: 6px;
+    }
+
+    #pt-worldbook-edit-modal .pt-wi-ai-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: ${vars.gap};
+    }
+
+    #pt-worldbook-edit-modal .pt-wi-ai-btn {
+      background-color: ${vars.sectionBg};
+      border: 1px solid ${vars.borderColor};
+      padding: ${vars.buttonPaddingSmall};
+      border-radius: ${vars.buttonRadius};
+      cursor: pointer;
+      font-weight: 700;
+      color: ${vars.textColor};
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      min-height: ${vars.isMobile ? '40px' : '44px'};
+    }
+
+    #pt-worldbook-edit-modal .pt-wi-ai-btn:hover:not(:disabled) {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    #pt-worldbook-edit-modal .pt-wi-ai-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     #pt-worldbook-edit-modal .pt-wi-inline {
       display: flex;
       gap: 10px;
@@ -371,6 +432,8 @@ function createWorldbookEditEntryModal(apiInfo, worldbookName, entry) {
 
   $('head').append(`<style id="pt-worldbook-edit-modal-styles">${styles}</style>`);
 
+  initWorldbookEntryAIAssistant(apiInfo, worldbookName);
+
   $('#pt-wi-comment').on('input', function () {
     const nextName = String($(this).val() ?? '').trim() || '未命名条目';
     $('#pt-worldbook-edit-modal .pt-wi-current-value').text(nextName).attr('title', nextName);
@@ -385,11 +448,12 @@ function createWorldbookEditEntryModal(apiInfo, worldbookName, entry) {
   updatePositionDependentFields();
 
   const updateSelectiveLogicAvailability = () => {
-    const isConstant = $('#pt-wi-constant').is(':checked');
+    const isConstant = String($('#pt-wi-trigger-mode').val() ?? '') === 'constant';
     const hasSecondary = normalizeArrayInput($('#pt-wi-keysecondary').val()).length > 0;
     $('#pt-wi-selective-logic').prop('disabled', isConstant || !hasSecondary);
+    $('#pt-wi-key, #pt-wi-keysecondary').prop('disabled', isConstant);
   };
-  $('#pt-wi-constant').on('change', updateSelectiveLogicAvailability);
+  $('#pt-wi-trigger-mode').on('change', updateSelectiveLogicAvailability);
   $('#pt-wi-keysecondary').on('input', updateSelectiveLogicAvailability);
   updateSelectiveLogicAvailability();
 
@@ -429,7 +493,7 @@ function createWorldbookEditEntryModal(apiInfo, worldbookName, entry) {
       }
 
       const enabled = $('#pt-wi-enabled').is(':checked');
-      const constant = $('#pt-wi-constant').is(':checked');
+      const constant = String($('#pt-wi-trigger-mode').val() ?? '') === 'constant';
       const selectiveLogic = Number($('#pt-wi-selective-logic').val());
 
       target.disable = !enabled;
