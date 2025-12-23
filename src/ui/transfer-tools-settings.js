@@ -8,6 +8,7 @@ import {
   setEntryGroupingEnabled,
   setEntryStatesPanelEnabled,
   setRegexBindingFeatureEnabled,
+  setRegexScriptGroupingEnabled,
   setWorldbookEntryGroupingEnabled,
   setWorldbookCommonEnabled,
   setWorldbookGroupingEnabled,
@@ -59,6 +60,10 @@ function renderPanel() {
               <input id="pt-enable-regex-binding" type="checkbox" style="accent-color: ${themeAccentColor};" />
               <small>预设正则</small>
             </label>
+            <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-regex-script-grouping">
+              <input id="pt-enable-regex-script-grouping" type="checkbox" style="accent-color: ${themeAccentColor};" />
+              <small>正则分组</small>
+            </label>
             <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-entry-grouping">
               <input id="pt-enable-entry-grouping" type="checkbox" style="accent-color: ${themeAccentColor};" />
               <small>条目分组</small>
@@ -86,6 +91,7 @@ function syncUiFromFlags(flags) {
   const $ = getJQuery();
   $('#pt-enable-entry-states-panel').prop('checked', !!flags.entryStatesPanelEnabled);
   $('#pt-enable-regex-binding').prop('checked', !!flags.regexBindingEnabled);
+  $('#pt-enable-regex-script-grouping').prop('checked', !!flags.regexScriptGroupingEnabled);
   $('#pt-enable-entry-grouping').prop('checked', !!flags.entryGroupingEnabled);
   $('#pt-enable-worldbook-grouping').prop('checked', !!flags.worldbookGroupingEnabled);
   $('#pt-enable-worldbook-entry-grouping').prop('checked', !!flags.worldbookEntryGroupingEnabled);
@@ -134,6 +140,13 @@ function bindEvents() {
     .off('input.pt')
     .on('input.pt', async function () {
       await setRegexBindingFeatureEnabled($(this).prop('checked'));
+      applyTransferToolFeatureToggles();
+    });
+
+  $('#pt-enable-regex-script-grouping')
+    .off('input.pt')
+    .on('input.pt', function () {
+      setRegexScriptGroupingEnabled($(this).prop('checked'));
       applyTransferToolFeatureToggles();
     });
 

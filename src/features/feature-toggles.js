@@ -10,6 +10,7 @@ import {
 } from './regex-binding.js';
 import * as NativePanel from '../ui/native-panel.js';
 import * as EntryGroupingUI from '../ui/entry-grouping-ui.js';
+import * as RegexScriptGroupingUI from '../ui/regex-script-grouping-ui.js';
 import * as WorldbookEntryGroupingUI from '../ui/worldbook-entry-grouping-ui.js';
 import { unhookPresetSaveToProtectExtensions } from './entry-states.js';
 import * as WorldbookGrouping from './worldbook-grouping.js';
@@ -31,6 +32,7 @@ export function getTransferToolFeatureFlags() {
     worldbookEntryGroupingEnabled: settings.worldbookEntryGroupingEnabled !== false,
     worldbookGroupingEnabled: settings.worldbookGroupingEnabled !== false,
     worldbookCommonEnabled: settings.worldbookCommonEnabled !== false,
+    regexScriptGroupingEnabled: settings.regexScriptGroupingEnabled === true,
     regexBindingEnabled: getRegexBindingEnabled() !== false,
   };
 }
@@ -62,6 +64,12 @@ export function setWorldbookGroupingEnabled(enabled) {
 export function setWorldbookCommonEnabled(enabled) {
   const settings = loadTransferSettings();
   settings.worldbookCommonEnabled = !!enabled;
+  saveTransferSettings(settings);
+}
+
+export function setRegexScriptGroupingEnabled(enabled) {
+  const settings = loadTransferSettings();
+  settings.regexScriptGroupingEnabled = !!enabled;
   saveTransferSettings(settings);
 }
 
@@ -111,6 +119,13 @@ export function applyTransferToolFeatureToggles() {
     EntryGroupingUI.initEntryGrouping?.();
   } else {
     EntryGroupingUI.destroyEntryGrouping?.();
+  }
+
+  // Native Regex scripts grouping UI
+  if (flags.regexScriptGroupingEnabled) {
+    RegexScriptGroupingUI.initRegexScriptGroupingUi?.();
+  } else {
+    RegexScriptGroupingUI.destroyRegexScriptGroupingUi?.();
   }
 
   // Worldbook entry grouping UI (World Info editor entries list)

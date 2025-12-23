@@ -4,6 +4,7 @@ import { PT } from '../core/api-compat.js';
 import { ensureViewportCssVars, escapeHtml, generateUUID, getCurrentApiInfo, getJQuery, getSillyTavernContext } from '../core/utils.js';
 import { getCssVar } from '../core/color-utils.js';
 import { getPresetRegexBindings, getAllAvailableRegexes, savePresetRegexBindings } from './regex-binding.js';
+import { exportRegexScriptGroupingsForBundle, importRegexScriptGroupingsFromBundle } from './regex-script-grouping.js';
 import { getPresetDataFromManager } from '../preset/preset-manager.js';
 import { CommonStyles } from '../styles/common-styles.js';
 
@@ -167,6 +168,8 @@ async function exportPresetBundle(presetName, { includeGlobalWorldbooks = false 
     const allRegexes = getAllAvailableRegexes();
     const boundIds = Array.isArray(bindings.exclusive) ? bindings.exclusive.map(String) : [];
     const boundRegexes = allRegexes.filter(regex => boundIds.includes(String(regex.id)));
+    const orderedIds = allRegexes.map(r => String(r?.id ?? '')).filter(Boolean);
+    const regexScriptGroupings = exportRegexScriptGroupingsForBundle(boundIds, orderedIds);
 
     const worldbooks = includeGlobalWorldbooks ? await exportGlobalWorldbooks() : null;
 
@@ -182,6 +185,7 @@ async function exportPresetBundle(presetName, { includeGlobalWorldbooks = false 
       },
       preset: preset,
       regexes: boundRegexes,
+      regexScriptGroupings,
       bindings: {
         version: 2,
         bound: Array.isArray(bindings.bound) ? bindings.bound : [],
@@ -542,6 +546,13 @@ async function executeImport(bundleData, action, prefix, { importWorldbooks = tr
         await savePresetRegexBindings(presetName, updatedBindings);
       } catch (bindingError) {}
     }, 500);
+
+    // Restore regex grouping metadata (if present in bundle) after ids were remapped.
+    try {
+      await importRegexScriptGroupingsFromBundle(bundleData.regexScriptGroupings, importedRegexIds);
+    } catch (e) {
+      console.warn('导入正则分组失败:', e);
+    }
 
     let worldbookResult = null;
     if (importWorldbooks && bundleData?.worldbooks?.items?.length) {
