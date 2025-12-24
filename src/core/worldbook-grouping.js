@@ -6,6 +6,7 @@ import { loadWorldbookGroupState, normalizeWorldbookGroupState } from './worldbo
 const openResultsObservers = new WeakMap();
 const lastRegroupAt = new WeakMap();
 const unshallowRefreshState = new WeakMap();
+const openDropdownShields = new WeakMap();
 const UI_STYLE_ID = 'pt-worldbook-grouping-ui-styles';
 const WORLD_EDITOR_DROPDOWN_WIDTH = '470px';
 const WORLD_EDITOR_DROPDOWN_CLASS = 'pt-world-editor-dropdown';
@@ -78,7 +79,7 @@ function injectWorldbookGroupingUiStyles() {
       cursor: default;
     }
     .select2-results .pt-wb-group > .select2-results__group::before {
-      content: '▸';
+      content: "\\25B6";
       transform: rotate(90deg);
       transition: transform 0.15s ease;
       opacity: 0.85;
@@ -209,6 +210,55 @@ function clearWorldEditorDropdownMobileClamp(selectEl) {
   dropdownEl.style.removeProperty('width');
   dropdownEl.style.removeProperty('max-width');
   dropdownEl.style.removeProperty('transform');
+}
+
+function isCoarsePointer() {
+  const win = getParentWindow();
+  try {
+    if (typeof win?.matchMedia === 'function') {
+      return !!win.matchMedia('(pointer: coarse)').matches;
+    }
+  } catch {
+    // ignore
+  }
+  return Boolean(win?.navigator?.maxTouchPoints) || (win?.innerWidth ?? window.innerWidth) <= 768;
+}
+
+function installOpenDropdownInteractionShield(selectEl) {
+  if (!selectEl || selectEl.id !== 'world_editor_select') return;
+  if (!isCoarsePointer()) return;
+
+  const $ = getJQuery();
+  const dropdownEl = getSelect2DropdownElement(selectEl);
+  if (!dropdownEl) return;
+
+  const existing = openDropdownShields.get(selectEl);
+  if (existing?.dropdownEl === dropdownEl) return;
+
+  const events = 'touchstart.pt-wb-shield pointerdown.pt-wb-shield mousedown.pt-wb-shield click.pt-wb-shield';
+  const stopBubble = (e) => e.stopPropagation();
+
+  const $dropdown = $(dropdownEl);
+  $dropdown.off(events).on(events, stopBubble);
+  $dropdown.find('.select2-search').off(events).on(events, stopBubble);
+  $dropdown.find('.select2-search__field').off(events).on(events, stopBubble);
+  $dropdown.find('.select2-results').off(events).on(events, stopBubble);
+
+  openDropdownShields.set(selectEl, { dropdownEl, events });
+}
+
+function uninstallOpenDropdownInteractionShield(selectEl) {
+  const st = openDropdownShields.get(selectEl);
+  if (!st?.dropdownEl) return;
+
+  const $ = getJQuery();
+  const $dropdown = $(st.dropdownEl);
+  $dropdown.off(st.events);
+  $dropdown.find('.select2-search').off(st.events);
+  $dropdown.find('.select2-search__field').off(st.events);
+  $dropdown.find('.select2-results').off(st.events);
+
+  openDropdownShields.delete(selectEl);
 }
 
 function getSelect2SearchValue() {
@@ -605,6 +655,7 @@ function installSelect2GroupingHandlers(selectEl) {
     .off('select2:open.pt-wb-grouping')
     .on('select2:open.pt-wb-grouping', () => {
       applyWorldEditorDropdownMobileClamp(selectEl);
+      installOpenDropdownInteractionShield(selectEl);
       startCloseOnHideMonitor();
       regroupDebounced();
       setTimeout(ensureObserver, 0);
@@ -612,6 +663,7 @@ function installSelect2GroupingHandlers(selectEl) {
     .off('select2:close.pt-wb-grouping')
     .on('select2:close.pt-wb-grouping', () => {
       stopCloseOnHideMonitor();
+      uninstallOpenDropdownInteractionShield(selectEl);
       const $results = getOpenSelect2ResultsRoot(selectEl);
       $results?.off?.('click.pt-wb-grouping');
       stopObserver();
@@ -627,6 +679,7 @@ function uninstallSelect2GroupingHandlers(selectEl) {
   $select.removeData('ptWorldbookGroupingCloseMonitorStop');
   $select.removeData('ptWorldbookGroupingBound');
   $select.off('.pt-wb-grouping');
+  uninstallOpenDropdownInteractionShield(selectEl);
   const observer = openResultsObservers.get(selectEl);
   if (observer) observer.disconnect();
   openResultsObservers.delete(selectEl);
