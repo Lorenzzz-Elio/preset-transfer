@@ -43,4 +43,18 @@ function gearIcon() {
   `;
 }
 
-export { createNewIcon, gearIcon, getCurrentPresetIcon, previewPresetIcon };
+function regexGroupIcon() {
+  // "Group" icon - bracket + list lines
+  return `
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pt-icon pt-icon-regex-group">
+      <path d="M4 8v8"></path>
+      <path d="M4 8h3"></path>
+      <path d="M4 16h3"></path>
+      <line x1="10" y1="8" x2="20" y2="8"></line>
+      <line x1="10" y1="12" x2="20" y2="12"></line>
+      <line x1="10" y1="16" x2="20" y2="16"></line>
+    </svg>
+  `;
+}
+
+export { createNewIcon, gearIcon, getCurrentPresetIcon, previewPresetIcon, regexGroupIcon };

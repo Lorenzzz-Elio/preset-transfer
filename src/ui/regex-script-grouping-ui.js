@@ -4,7 +4,6 @@ import { PT } from '../core/api-compat.js';
 import { debounce, ensureViewportCssVars, escapeAttr, getJQuery, getParentWindow } from '../core/utils.js';
 import { CommonStyles } from '../styles/common-styles.js';
 import {
-  addRegexScriptGrouping,
   addRegexScriptGroupingFromMembers,
   getAllRegexScriptGroupings,
   getRegexScriptGroupingGroupedIdSet,
@@ -12,13 +11,19 @@ import {
   setRegexScriptGroupingMembersBulk,
   updateRegexScriptGrouping,
 } from '../features/regex-script-grouping.js';
+import {
+  bindRegexBulkGroupButton,
+  clearRegexBulkSelection,
+  ensureRegexBulkGroupButtonInjected,
+  getSelectedGlobalRegexIds,
+  removeRegexBulkGroupButton,
+  unbindRegexBulkGroupButton,
+} from './regex-bulk-group-button.js';
 
-const MENU_CLASS = 'pt-regex-grouping-menu';
 const HEADER_CLASS = 'pt-regex-group-header';
 const REGEX_GROUP_BUNDLE_TYPE = 'preset_transfer_regex_group_bundle';
 const REGEX_GROUP_BUNDLE_FILE_PREFIX = 'pt-regex-group-';
 
-const tempMarks = { start: null, end: null };
 let uiEnabled = false;
 let domObserver = null;
 let listObserver = null;
@@ -58,8 +63,6 @@ function ensureRegexGroupingStyles() {
   $('head').append(`
     <style id="pt-regex-grouping-styles">
       .pt-regex-grouping-root .pt-regex-in-group { box-shadow: inset 3px 0 0 var(--pt-accent); }
-      .pt-regex-grouping-root .pt-regex-group-mark-start { outline: 2px solid var(--pt-accent); outline-offset: 2px; }
-      .pt-regex-grouping-root .pt-regex-group-mark-end { outline: 2px dashed var(--pt-accent); outline-offset: 2px; }
       .pt-regex-grouping-root .${HEADER_CLASS} {
         user-select: none;
         border: 1px solid var(--pt-border);
@@ -92,7 +95,7 @@ function getOrderedIds($list) {
 function cleanupGroupingUi($list) {
   $list.find(`.${HEADER_CLASS}`).remove();
   $list.find('.regex-script-label').each(function () {
-    this.classList.remove('pt-regex-group-mark-start', 'pt-regex-group-mark-end', 'pt-regex-in-group');
+    this.classList.remove('pt-regex-in-group');
     this.removeAttribute('data-pt-group-id');
     this.style.removeProperty('display');
   });
@@ -165,17 +168,6 @@ function computeSignature(orderedIds, groupings) {
   return `${listKey}\u001c${groupingKey}`;
 }
 
-function applyTempMarks($list) {
-  if (!$list?.length) return;
-  $list.find('.regex-script-label').removeClass('pt-regex-group-mark-start pt-regex-group-mark-end');
-  if (tempMarks.start) {
-    $list.children(`#${escapeCssId(tempMarks.start)}`).addClass('pt-regex-group-mark-start');
-  }
-  if (tempMarks.end) {
-    $list.children(`#${escapeCssId(tempMarks.end)}`).addClass('pt-regex-group-mark-end');
-  }
-}
-
 function pauseListObserver() {
   try {
     listObserver?.disconnect?.();
@@ -241,7 +233,6 @@ function setupThemeObserver() {
       if ($list.length) {
         ensureRegexGroupingStyles();
         applyThemeVars($list);
-        applyTempMarks($list);
       }
     }, 120),
   );
@@ -541,7 +532,6 @@ function applyGroupingToList() {
     const currentHeaderCount = $list.children(`.${HEADER_CLASS}`).length;
 
     if (signature === lastAppliedSignature && (expectedGroupCount === 0 || currentHeaderCount >= expectedGroupCount)) {
-      applyTempMarks($list);
       return;
     }
 
@@ -589,7 +579,6 @@ function applyGroupingToList() {
     }
 
     lastAppliedSignature = signature;
-    applyTempMarks($list);
   } finally {
     resumeListObserver();
     isApplying = false;
@@ -609,11 +598,6 @@ function queueApplyGrouping() {
     applyGroupingToList();
     installRegexGroupImportInterceptor();
   });
-}
-
-function resetTempMarks() {
-  tempMarks.start = null;
-  tempMarks.end = null;
 }
 
 function showInputDialog(title, defaultValue, callback) {
@@ -663,10 +647,13 @@ function showInputDialog(title, defaultValue, callback) {
   });
 }
 
-function showConfirmDialog(title, body, callback) {
+function showConfirmDialog(title, body, callback, options = {}) {
   const $ = getJQuery();
   const vars = CommonStyles.getVars();
   ensureViewportCssVars();
+
+  const okText = String(options?.okText ?? '确定');
+  const cancelText = String(options?.cancelText ?? '取消');
 
   const dialog = $(`
     <div class="pt-regex-grouping-confirm-dialog" style="
@@ -680,8 +667,8 @@ function showConfirmDialog(title, body, callback) {
         <div style="font-weight: 700; margin-bottom: 10px;">${title}</div>
         <div style="opacity: .9; margin-bottom: 14px;">${body}</div>
         <div style="display: flex; flex-direction: row; gap: 8px; justify-content: flex-end;">
-          <button class="dialog-cancel menu_button" style="padding: 6px 16px; white-space: nowrap;">取消</button>
-          <button class="dialog-confirm menu_button" style="padding: 6px 16px; white-space: nowrap;">删除</button>
+          <button class="dialog-cancel menu_button" style="padding: 6px 16px; white-space: nowrap;">${cancelText}</button>
+          <button class="dialog-confirm menu_button" style="padding: 6px 16px; white-space: nowrap;">${okText}</button>
         </div>
       </div>
     </div>
@@ -853,168 +840,106 @@ function installRegexGroupImportInterceptor() {
   );
 }
 
-function showGroupingMenu($item, x, y) {
-  const $ = getJQuery();
-  const id = String($item.attr('id') ?? '');
-  if (!id) return;
+function isMemberSelectionContiguous(memberIds, orderedIds) {
+  const indices = memberIds
+    .map((id) => orderedIds.indexOf(String(id)))
+    .filter((idx) => idx >= 0)
+    .sort((a, b) => a - b);
 
-  $(`.${MENU_CLASS}`).remove();
+  if (indices.length !== memberIds.length) return null;
+  if (indices.length <= 1) return true;
 
+  return indices[indices.length - 1] - indices[0] + 1 === indices.length;
+}
+
+async function moveSelectedRegexScriptsTogether(memberIds) {
+  const selectedSet = new Set(memberIds.map(String));
+  if (selectedSet.size === 0) return;
+
+  await PT.API.updateTavernRegexesWith((regexes) => {
+    const list = Array.isArray(regexes) ? regexes : [];
+    if (list.length === 0) return list;
+
+    const selected = [];
+    const others = [];
+    let firstSelectedIndex = -1;
+
+    for (let i = 0; i < list.length; i++) {
+      const script = list[i];
+      const id = String(script?.id ?? '');
+      const isSelected = id && selectedSet.has(id);
+
+      if (isSelected) {
+        if (firstSelectedIndex === -1) firstSelectedIndex = i;
+        selected.push(script);
+      } else {
+        others.push(script);
+      }
+    }
+
+    if (selected.length === 0) return list;
+    const insertAt = firstSelectedIndex < 0 ? 0 : Math.min(firstSelectedIndex, others.length);
+    return [...others.slice(0, insertAt), ...selected, ...others.slice(insertAt)];
+  });
+}
+
+async function handleBulkGroupButtonClick() {
   const $list = findRegexListContainer();
   if (!$list.length) return;
+
+  const memberIds = getSelectedGlobalRegexIds();
+  if (memberIds.length === 0) {
+    if (window.toastr) toastr.warning('请先在 Bulk Edit 中勾选要分组的正则');
+    return;
+  }
 
   const orderedIds = getOrderedIds($list);
   const grouped = getRegexScriptGroupingGroupedIdSet(orderedIds);
+  const hasOverlap = memberIds.some((id) => grouped.has(String(id)));
+  if (hasOverlap) {
+    if (window.toastr) toastr.warning('选中的正则包含已分组项，请先取消分组后再创建新分组');
+    return;
+  }
 
-  const isMarkedStart = tempMarks.start === id;
-  const isMarkedEnd = tempMarks.end === id;
-  const hasMarks = !!tempMarks.start || !!tempMarks.end;
-  const vars = CommonStyles.getVars();
-
-  const menu = $(`
-    <div class="${MENU_CLASS}" style="
-      position: fixed; left: ${x}px; top: ${y}px;
-      background: ${vars.bgColor}; border: 1px solid ${vars.borderColor};
-      border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 10004; padding: 4px; min-width: 160px;
-      color: ${vars.textColor};">
-      <div class="menu-item set-start" style="padding: 8px 12px; cursor: pointer; border-radius: 6px; font-size: 14px;">${isMarkedStart ? '取消分组开始标记' : '设为分组开始'}</div>
-      <div class="menu-item set-end" style="padding: 8px 12px; cursor: pointer; border-radius: 6px; font-size: 14px;">${isMarkedEnd ? '取消分组结束标记' : '设为分组结束'}</div>
-      ${hasMarks ? `<div class="menu-item clear-marks" style="padding: 8px 12px; cursor: pointer; border-radius: 6px; font-size: 14px; opacity: .9;">清除标记</div>` : ''}
-    </div>
-  `);
-
-  const panelContainer = findRegexPanelContainer();
-  (panelContainer.length ? panelContainer : $('body')).append(menu);
-  menu.on('pointerdown mousedown click', (e) => e.stopPropagation());
-
-  const parentWindow = getParentWindow();
-  const menuRect = menu[0].getBoundingClientRect();
-  if (menuRect.right > parentWindow.innerWidth) menu.css('left', (x - menuRect.width) + 'px');
-  if (menuRect.bottom > parentWindow.innerHeight) menu.css('top', (y - menuRect.height) + 'px');
-
-  menu.find('.menu-item').hover(
-    function () { $(this).css('background', vars.sectionBg); },
-    function () { $(this).css('background', 'transparent'); },
-  );
-
-  const handleMarkComplete = async (isStart) => {
-    const otherMark = isStart ? tempMarks.end : tempMarks.start;
-    if (otherMark !== null) {
-      showInputDialog('请输入分组名称', '分组', async (groupName) => {
-        const startId = tempMarks.start;
-        const endId = tempMarks.end;
-        if (!startId || !endId) {
-          resetTempMarks();
-          if (window.toastr) toastr.error('分组锚点无效，请重试');
-          queueApplyGrouping();
-          return;
-        }
-
-        const ok = await addRegexScriptGrouping(startId, endId, groupName, orderedIds);
-        resetTempMarks();
-        if (!ok) {
-          if (window.toastr) toastr.error('创建分组失败：范围包含已分组正则或锚点不可解析');
-        } else if (window.toastr) {
-          toastr.success('分组已创建');
-        }
-        setTimeout(queueApplyGrouping, 50);
-      });
+  showInputDialog('创建分组', '分组', async (groupNameRaw) => {
+    const groupName = String(groupNameRaw ?? '').trim();
+    if (!groupName) {
+      if (window.toastr) toastr.warning('分组名称不能为空');
       return;
     }
 
-    if (window.toastr) {
-      toastr.info(`已标记分组${isStart ? '开始' : '结束'}，请继续标记分组${isStart ? '结束' : '开始'}`);
-    }
-    queueApplyGrouping();
-  };
-
-  menu.find('.set-start').on('click', async (e) => {
-    e.stopPropagation();
-    if (grouped.has(id) && tempMarks.start !== id) {
-      if (window.toastr) toastr.info('该正则已在分组中，不能作为分组起点');
-      return;
-    }
-    tempMarks.start = tempMarks.start === id ? null : id;
-    menu.remove();
-    $(document).off('click.pt-regex-grouping-menu');
-    if (tempMarks.start) await handleMarkComplete(true);
-    else queueApplyGrouping();
-  });
-
-  menu.find('.set-end').on('click', async (e) => {
-    e.stopPropagation();
-    if (grouped.has(id) && tempMarks.end !== id) {
-      if (window.toastr) toastr.info('该正则已在分组中，不能作为分组终点');
-      return;
-    }
-    tempMarks.end = tempMarks.end === id ? null : id;
-    menu.remove();
-    $(document).off('click.pt-regex-grouping-menu');
-    if (tempMarks.end) await handleMarkComplete(false);
-    else queueApplyGrouping();
-  });
-
-  menu.find('.clear-marks').on('click', (e) => {
-    e.stopPropagation();
-    resetTempMarks();
-    menu.remove();
-    $(document).off('click.pt-regex-grouping-menu');
-    if (window.toastr) toastr.info('已清除标记');
-    queueApplyGrouping();
-  });
-
-  setTimeout(() => {
-    $(document).one('click.pt-regex-grouping-menu', (e) => {
-      if (!$(e.target).closest(`.${MENU_CLASS}`).length) {
-        menu.remove();
-        $(document).off('click.pt-regex-grouping-menu');
+    const createGroup = async () => {
+      const ok = await addRegexScriptGroupingFromMembers(memberIds, groupName, { collapsed: true });
+      if (!ok) {
+        if (window.toastr) toastr.error('创建分组失败：所选正则可能与已有分组冲突');
+        return false;
       }
-    });
-  }, 100);
-}
+      if (window.toastr) toastr.success('分组已创建');
+      queueApplyGrouping();
+      clearRegexBulkSelection();
+      return true;
+    };
 
-function bindTripleClickEvents() {
-  const $ = getJQuery();
-  const $list = findRegexListContainer();
-  if (!$list.length) return;
-
-  $list.off('click.pt-regex-grouping');
-
-  let clickCount = 0;
-  let lastClickedId = null;
-  let clickTimer = null;
-  const thresholdMs = 1000;
-
-  const resetClickState = () => {
-    clickCount = 0;
-    lastClickedId = null;
-  };
-
-  $list.on('click.pt-regex-grouping', '.regex-script-label', function (e) {
-    const $target = $(e.target);
-    if ($target.closest('.menu_button, .disable_regex, .regex_bulk_checkbox, .drag-handle').length) return;
-
-    const id = String($(this).attr('id') ?? '');
-    if (!id) return;
-
-    if (clickTimer) clearTimeout(clickTimer);
-
-    if (lastClickedId === id) clickCount++;
-    else {
-      clickCount = 1;
-      lastClickedId = id;
-    }
-
-    if (clickCount >= 3) {
-      resetClickState();
-      e.preventDefault();
-      e.stopPropagation();
-      showGroupingMenu($(this), e.clientX, e.clientY);
+    const contiguous = isMemberSelectionContiguous(memberIds, orderedIds);
+    if (contiguous === null) {
+      if (window.toastr) toastr.error('无法定位所选正则，请刷新后重试');
       return;
     }
 
-    clickTimer = setTimeout(resetClickState, thresholdMs);
+    if (contiguous) {
+      await createGroup();
+      return;
+    }
+
+    try {
+      await moveSelectedRegexScriptsTogether(memberIds);
+    } catch (e) {
+      console.warn('[RegexGrouping] move selected scripts failed:', e);
+      if (window.toastr) toastr.error('移动所选正则失败');
+      return;
+    }
+    await createGroup();
+
   });
 }
 
@@ -1208,10 +1133,9 @@ function installHeaderEvents() {
       }
 
       await removeRegexScriptGrouping(groupId);
-      resetTempMarks();
       queueApplyGrouping();
       if (window.toastr) toastr.success('已删除分组及其所有正则');
-    });
+    }, { okText: '删除' });
   });
 
   $list.on('click.pt-regex-group-header', `.${HEADER_CLASS} .pt-regex-group-ungroup`, async function (e) {
@@ -1222,7 +1146,6 @@ function installHeaderEvents() {
     if (!groupId) return;
 
     await removeRegexScriptGrouping(groupId);
-    resetTempMarks();
     queueApplyGrouping();
     if (window.toastr) toastr.info('已取消分组');
   });
@@ -1317,7 +1240,7 @@ function setupDomObserver() {
       if (!$list.length) return;
       if (observedListNode === $list[0]) return;
       setupListObserver();
-      bindTripleClickEvents();
+      ensureRegexBulkGroupButtonInjected();
       installHeaderEvents();
       queueApplyGrouping();
     }, 200),
@@ -1331,11 +1254,12 @@ export function initRegexScriptGroupingUi() {
   setupDomObserver();
   setupThemeObserver();
   setupToggleReapplyListener();
+  bindRegexBulkGroupButton(handleBulkGroupButtonClick);
+  ensureRegexBulkGroupButtonInjected();
 
   const $list = findRegexListContainer();
   if ($list.length) {
     setupListObserver();
-    bindTripleClickEvents();
     installHeaderEvents();
     applyGroupingToList();
     installRegexGroupImportInterceptor();
@@ -1347,6 +1271,12 @@ export function destroyRegexScriptGroupingUi() {
   teardownThemeObserver();
   toggleReapplyBound = false;
   try {
+    unbindRegexBulkGroupButton();
+    removeRegexBulkGroupButton();
+  } catch {
+    /* ignore */
+  }
+  try {
     const $ = getJQuery();
     const parentWindow = getParentWindow();
     const doc = parentWindow?.document ?? document;
@@ -1357,7 +1287,6 @@ export function destroyRegexScriptGroupingUi() {
   try {
     const $list = findRegexListContainer();
     if ($list.length) {
-      $list.off('click.pt-regex-grouping');
       $list.off('click.pt-regex-group-header');
       cleanupGroupingUi($list);
     }
@@ -1380,11 +1309,5 @@ export function destroyRegexScriptGroupingUi() {
   }
   domObserver = null;
 
-  resetTempMarks();
   lastAppliedSignature = null;
-  try {
-    getJQuery()?.(`.${MENU_CLASS}`)?.remove?.();
-  } catch {
-    /* ignore */
-  }
 }
