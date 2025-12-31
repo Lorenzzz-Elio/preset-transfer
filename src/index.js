@@ -27,10 +27,12 @@ import * as EntryStates from './features/entry-states.js';
 import * as EntryGrouping from './features/entry-grouping.js';
 import * as GlobalListener from './features/global-listener.js';
 import * as ImportExport from './features/import-export.js';
+import * as PresetStitchAutomation from './features/preset-stitch-automation.js';
 import * as RegexBinding from './features/regex-binding.js';
 import * as WorldbookCommon from './features/worldbook-common.js';
 import * as WorldbookCommonIntegration from './features/worldbook-common-integration.js';
 import { checkForExtensionUpdate } from './features/extension-update.js';
+import { initExportSanitizer } from './features/export-sanitizer.js';
 import { applyTransferToolFeatureToggles } from './features/feature-toggles.js';
 
 // UI 模块
@@ -41,7 +43,6 @@ import * as EditModal from './ui/edit-modal.js';
 import * as EntryGroupingUI from './ui/entry-grouping-ui.js';
 import * as MainUI from './ui/main-ui.js';
 import * as NativePanel from './ui/native-panel.js';
-import * as PresetUpdateModal from './ui/preset-update-modal.js';
 import * as QuickPreview from './ui/quick-preview.js';
 import * as RegexUI from './ui/regex-ui.js';
 import * as StylesApplication from './ui/styles-application.js';
@@ -55,7 +56,6 @@ import * as CoreOperations from './operations/core-operations.js';
 import * as EntryOperations from './operations/entry-operations.js';
 import * as EntrySaving from './operations/entry-saving.js';
 import * as FindReplace from './operations/find-replace.js';
-import * as PresetUpdate from './operations/preset-update.js';
 
 // 显示模块
 import * as EntryDisplay from './display/entry-display.js';
@@ -93,6 +93,7 @@ registerPresetTransferNamespace({
   DragDropCore,
   RegexBinding,
   ImportExport,
+  PresetStitchAutomation,
   GlobalListener,
   WorldbookCommon,
   WorldbookCommonIntegration,
@@ -102,7 +103,6 @@ registerPresetTransferNamespace({
   NativePanel,
   CompareModal,
   EditModal,
-  PresetUpdateModal,
   BatchEditor,
   QuickPreview,
   StylesApplication,
@@ -113,7 +113,6 @@ registerPresetTransferNamespace({
   CopyMove,
   FindReplace,
   EntrySaving,
-  PresetUpdate,
   EntryDisplay,
   UIUpdates,
   SearchFilter,
@@ -141,6 +140,7 @@ exposeModuleMembersToWindow([
   DragDropCore,
   RegexBinding,
   ImportExport,
+  PresetStitchAutomation,
   GlobalListener,
   WorldbookCommon,
   WorldbookCommonIntegration,
@@ -150,7 +150,6 @@ exposeModuleMembersToWindow([
   NativePanel,
   CompareModal,
   EditModal,
-  PresetUpdateModal,
   BatchEditor,
   QuickPreview,
   StylesApplication,
@@ -161,7 +160,6 @@ exposeModuleMembersToWindow([
   CopyMove,
   FindReplace,
   EntrySaving,
-  PresetUpdate,
   EntryDisplay,
   UIUpdates,
   SearchFilter,
@@ -180,6 +178,8 @@ startPresetTransferIntegration({
   MainUI,
   Theme,
   checkForExtensionUpdate,
+  initExportSanitizer,
   initTransferToolsSettingsPanel,
   applyTransferToolFeatureToggles,
+  initPresetStitchAutomation: PresetStitchAutomation.initPresetStitchAutomation,
 });

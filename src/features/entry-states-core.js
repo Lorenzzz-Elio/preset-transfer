@@ -229,13 +229,37 @@ export async function savePresetEntryStates(presetName, states) {
     }
 
     if (apiInfo && apiInfo.presetManager) {
-      const presetObj = apiInfo.presetManager.getCompletionPresetByName(presetName);
+      const presetManager = apiInfo.presetManager;
+      const presetObj = presetManager.getCompletionPresetByName?.(presetName);
       if (!presetObj) throw new Error(`预设 "${presetName}" 不存在`);
+
+      // Avoid `updateList()` because it triggers a preset re-select/change,
+      // which can unintentionally apply full API config. Prefer the dedicated
+      // extension writer (SillyTavern >= 1.13) when available.
+      if (typeof presetManager.writePresetExtensionField === 'function') {
+        await presetManager.writePresetExtensionField({ name: presetName, path: 'entryStates', value: normalizedStates });
+        // Ensure in-memory preset reflects the latest value for immediate reads.
+        if (!presetObj.extensions) presetObj.extensions = {};
+        presetObj.extensions.entryStates = normalizedStates;
+        return true;
+      }
 
       if (!presetObj.extensions) presetObj.extensions = {};
       presetObj.extensions.entryStates = normalizedStates;
 
-      await apiInfo.presetManager.savePreset(presetName, presetObj, { skipUpdate: false });
+      // Best-effort: keep the active settings' extensions in sync for the selected preset.
+      try {
+        const selected = presetManager.getSelectedPresetName?.();
+        if (selected && selected === presetName) {
+          const settings = presetManager.getPresetList?.()?.settings;
+          if (settings && typeof settings === 'object') {
+            if (!settings.extensions || typeof settings.extensions !== 'object') settings.extensions = {};
+            settings.extensions.entryStates = normalizedStates;
+          }
+        }
+      } catch (_) {}
+
+      await presetManager.savePreset(presetName, presetObj, { skipUpdate: true });
       return true;
     }
 
@@ -263,10 +287,35 @@ export function getDefaultEntryStates() {
 
 export function getCurrentEntryStates(presetName) {
   try {
+    if (!presetName) return {};
+
     const apiInfo = getCurrentApiInfo();
     if (!apiInfo) return {};
 
-    const presetData = getPresetDataFromManager(apiInfo, presetName);
+    const presetManager = apiInfo?.presetManager;
+    const resolvedPresetName =
+      presetName === 'in_use' && typeof presetManager?.getSelectedPresetName === 'function'
+        ? presetManager.getSelectedPresetName?.() || presetName
+        : presetName;
+
+    let presetData = null;
+
+    // Prefer the active service settings (e.g. `oai_settings`) for the currently selected preset.
+    // This reflects unsaved prompt toggle changes without requiring SillyTavern's "Update current preset" step.
+    if (
+      presetManager &&
+      typeof presetManager.getSelectedPresetName === 'function' &&
+      typeof presetManager.getPresetList === 'function'
+    ) {
+      const selected = presetManager.getSelectedPresetName?.();
+      if (selected && selected === resolvedPresetName) {
+        presetData = presetManager.getPresetList?.()?.settings ?? null;
+      }
+    }
+
+    if (!presetData) {
+      presetData = getPresetDataFromManager(apiInfo, resolvedPresetName);
+    }
     if (!presetData) return {};
 
     const entries = getOrderedPromptEntries(presetData, 'include_disabled');
@@ -287,16 +336,22 @@ export function getCurrentEntryStates(presetName) {
 
 export async function applyEntryStates(presetName, versionId, applyWorldBindingsFn) {
   try {
-    const statesConfig = getPresetEntryStates(presetName);
+    const apiInfo = getCurrentApiInfo();
+    if (!apiInfo) throw new Error('无法获取API信息');
+
+    const presetManager = apiInfo.presetManager;
+    const resolvedPresetName =
+      presetName === 'in_use' && typeof presetManager?.getSelectedPresetName === 'function'
+        ? presetManager.getSelectedPresetName?.() || presetName
+        : presetName;
+
+    const statesConfig = getPresetEntryStates(resolvedPresetName);
     const version = statesConfig.versions.find(v => v.id === versionId);
     if (!version) {
       throw new Error('状态版本不存在');
     }
 
-    const apiInfo = getCurrentApiInfo();
-    if (!apiInfo) throw new Error('无法获取API信息');
-
-    const presetData = getPresetDataFromManager(apiInfo, presetName);
+    const presetData = getPresetDataFromManager(apiInfo, resolvedPresetName);
     if (!presetData) throw new Error('预设不存在');
 
     if (!presetData.prompt_order) presetData.prompt_order = [];
@@ -315,10 +370,43 @@ export async function applyEntryStates(presetName, versionId, applyWorldBindings
       }
     });
 
-    await apiInfo.presetManager.savePreset(presetName, presetData, { skipUpdate: true });
+    await presetManager.savePreset(resolvedPresetName, presetData, { skipUpdate: true });
+
+    // If we're applying to the currently selected preset, also sync the active settings
+    // (e.g. `oai_settings`) so the PromptManager UI reflects the new enabled state,
+    // without re-applying unrelated API configuration.
+    try {
+      const selected = presetManager?.getSelectedPresetName?.();
+      if (selected && selected === resolvedPresetName) {
+        const settings = presetManager.getPresetList?.()?.settings;
+        if (settings) {
+          if (!settings.prompt_order) settings.prompt_order = [];
+          let settingsOrder = settings.prompt_order.find(order => order.character_id === dummyCharacterId);
+          if (!settingsOrder) {
+            settingsOrder = { character_id: dummyCharacterId, order: [] };
+            settings.prompt_order.push(settingsOrder);
+          }
+
+          settingsOrder.order.forEach(orderEntry => {
+            if (orderEntry.identifier && version.states.hasOwnProperty(orderEntry.identifier)) {
+              orderEntry.enabled = version.states[orderEntry.identifier];
+            }
+          });
+
+          apiInfo.context?.saveSettingsDebounced?.();
+
+          try {
+            const openaiModule = await import('/scripts/openai.js');
+            openaiModule?.promptManager?.render?.(false);
+          } catch (_) {}
+        }
+      }
+    } catch (syncError) {
+      console.warn('[EntryStates] Failed to sync active settings after apply:', syncError);
+    }
 
     statesConfig.currentVersion = versionId;
-    await savePresetEntryStates(presetName, statesConfig);
+    await savePresetEntryStates(resolvedPresetName, statesConfig);
 
     if (entryStatesSaveWorldBindings && Object.prototype.hasOwnProperty.call(version, 'worldBindings') && applyWorldBindingsFn) {
       await applyWorldBindingsFn(version.worldBindings);

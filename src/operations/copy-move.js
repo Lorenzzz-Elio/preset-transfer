@@ -1,5 +1,6 @@
 import { getJQuery } from '../core/utils.js';
 import { getPresetDataFromManager } from '../preset/preset-manager.js';
+import { assignNewStitchMeta } from '../preset/stitch-meta.js';
 import { getOrCreateDummyCharacterPromptOrder } from '../ui/edit-modal.js';
 import { getSelectedEntries, loadAndDisplayEntries } from '../display/entry-display.js';
 import { getPresetNameForSide } from '../batch/batch-modifications.js';
@@ -165,11 +166,11 @@ async function simpleCopyEntries(side, apiInfo) {
 
     // 处理有order位置的条目
     for (const { entry, orderIndex } of sortedEntries) {
-      const copyEntry = {
+      const copyEntry = assignNewStitchMeta({
         ...entry,
         identifier: generateIdentifier(),
         name: entry.name + '副本',
-      };
+      });
 
       // 添加到prompts数组
       presetData.prompts.push(copyEntry);
@@ -184,11 +185,11 @@ async function simpleCopyEntries(side, apiInfo) {
     // 处理没有order位置的条目（添加到末尾）
     for (const entry of selectedEntries) {
       if (orderMap.get(entry.identifier) === undefined) {
-        const copyEntry = {
+        const copyEntry = assignNewStitchMeta({
           ...entry,
           identifier: generateIdentifier(),
           name: entry.name + '副本',
-        };
+        });
 
         presetData.prompts.push(copyEntry);
         characterPromptOrder.order.push({

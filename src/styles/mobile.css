@@ -1,5 +1,17 @@
 /* 移动端适配样式 */
 @media (max-width: 768px) {
+  /* 转移工具设置面板标签按钮横向一行 */
+  #preset-transfer-extension-settings .pt-transfer-tools-tabbar {
+    flex-wrap: nowrap;
+  }
+
+  #preset-transfer-extension-settings .pt-transfer-tools-tabbar .pt-transfer-tools-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 8px 4px;
+    font-size: 0.85rem;
+  }
+
   /* 预设管理模态框基础调整 */
   /* padding/width 已由 styles-application.js 统一管理，此处移除重复定义 */
 

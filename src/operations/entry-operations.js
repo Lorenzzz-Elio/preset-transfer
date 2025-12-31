@@ -305,41 +305,6 @@ function executeNewEntryAtPosition(apiInfo, side, targetPosition) {
 
 // HTML转义函数
 
-async function copyEntryBetweenPresets(apiInfo, fromPreset, toPreset, entryData, entryName) {
-  try {
-    const toPresetData = getPresetDataFromManager(apiInfo, toPreset);
-    const targetPromptIndex = toPresetData.prompts.findIndex(
-      p => p && p.name === entryName && !p.system_prompt && !p.marker,
-    );
-
-    if (targetPromptIndex === -1) {
-      throw new Error(`在预设 "${toPreset}" 中未找到目标条目 "${entryName}"`);
-    }
-
-    const originalIdentifier = toPresetData.prompts[targetPromptIndex].identifier;
-    const newPromptData = ensureNewVersionFields(entryData);
-
-    // Replace the old prompt object with the new one, preserving the identifier
-    toPresetData.prompts[targetPromptIndex] = {
-      ...newPromptData,
-      identifier: originalIdentifier,
-    };
-
-    await apiInfo.presetManager.savePreset(toPreset, toPresetData);
-
-    // 成功覆盖，无需弹窗提示
-
-    // 刷新主界面和比较界面
-    loadAndDisplayEntries(apiInfo);
-    $('#compare-modal').remove();
-    // 重新打开比较模态框以显示更新后的状态
-    showCompareModal(apiInfo);
-  } catch (error) {
-    console.error('覆盖条目失败:', error);
-    alert('覆盖条目失败: ' + error.message);
-  }
-}
-
 function editEntryInPreset(apiInfo, presetName, entryData, entryName, fromCompare = false) {
   // 找到条目在预设中的索引
   const presetData = getPresetDataFromManager(apiInfo, presetName);
@@ -409,7 +374,6 @@ export {
   executeTransferToPosition,
   executeNewEntryAtPosition,
   createNewWorldbookEntry,
-  copyEntryBetweenPresets,
   editEntryInPreset,
   editSelectedEntry
 };

@@ -31,6 +31,41 @@ function uniqueStringList(values) {
   return out;
 }
 
+function cloneDeepFallback(value) {
+  try {
+    return structuredClone(value);
+  } catch {
+    return JSON.parse(JSON.stringify(value));
+  }
+}
+
+function stripPresetTransferMetaInPlace(node) {
+  if (!node || typeof node !== 'object') return;
+
+  if (Array.isArray(node)) {
+    node.forEach(stripPresetTransferMetaInPlace);
+    return;
+  }
+
+  const ptMeta = node.pt_meta;
+  if (ptMeta && typeof ptMeta === 'object' && !Array.isArray(ptMeta)) {
+    if (Object.prototype.hasOwnProperty.call(ptMeta, 'presetTransfer')) {
+      delete ptMeta.presetTransfer;
+      if (Object.keys(ptMeta).length === 0) {
+        delete node.pt_meta;
+      }
+    }
+  }
+
+  Object.values(node).forEach(stripPresetTransferMetaInPlace);
+}
+
+function stripPresetTransferMetaForExport(value) {
+  const cloned = cloneDeepFallback(value);
+  stripPresetTransferMetaInPlace(cloned);
+  return cloned;
+}
+
 async function exportGlobalWorldbooks() {
   try {
     const mod = await getWorldInfoModule();
@@ -156,7 +191,7 @@ async function exportPresetBundle(presetName, { includeGlobalWorldbooks = false 
     }
 
     // 使用 getPresetDataFromManager 获取完整预设数据
-    const preset = getPresetDataFromManager(apiInfo, presetName);
+    const preset = stripPresetTransferMetaForExport(getPresetDataFromManager(apiInfo, presetName));
     if (!preset) {
       throw new Error(`预设 "${presetName}" 不存在`);
     }

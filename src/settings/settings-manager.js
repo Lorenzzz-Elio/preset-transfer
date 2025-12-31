@@ -16,6 +16,12 @@ function getDefaultSettings() {
     worldbookGroupingEnabled: true,
     worldbookCommonEnabled: true,
     regexScriptGroupingEnabled: false,
+    // Preset stitches automation
+    presetAutoMigrateOnImportEnabled: true,
+    presetGitAutoUpdateEnabled: false,
+    presetGitSources: {},
+    // Per-base stitch snapshot (single source-of-truth)
+    presetStitchStateByBase: {},
     worldbookCommonAutoGlobalBooks: [],
     worldbookCharacterWorldCache: { version: 1, byAvatar: {} },
   };

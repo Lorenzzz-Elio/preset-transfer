@@ -8,6 +8,8 @@ export async function initPresetTransferIntegration(deps = {}) {
     checkForExtensionUpdate,
     initTransferToolsSettingsPanel,
     applyTransferToolFeatureToggles,
+    initPresetStitchAutomation,
+    initExportSanitizer,
     retryDelayMs = 3000,
   } = deps;
 
@@ -17,6 +19,13 @@ export async function initPresetTransferIntegration(deps = {}) {
     // Check for updates once per page load (no git operations here; only HTTP fetch).
     // If an update is available, the UI will show an update button when the modal is opened.
     checkForExtensionUpdate?.().catch(() => {});
+
+    // Sanitize exports (strip migration metadata) for both native and extension exports.
+    try {
+      initExportSanitizer?.();
+    } catch (e) {
+      console.warn('初始化导出清理钩子失败:', e);
+    }
 
     // Wait for extensions menu and jQuery to be ready
     await waitForExtensionsMenu();
@@ -52,6 +61,13 @@ export async function initPresetTransferIntegration(deps = {}) {
       console.warn('应用功能开关失败:', e);
     }
 
+    // Preset stitch automation (import migration + optional git auto update)
+    try {
+      initPresetStitchAutomation?.();
+    } catch (e) {
+      console.warn('初始化预设缝合自动化失败:', e);
+    }
+
     console.log('预设转移工具初始化完成');
   } catch (error) {
     console.error('初始化失败:', error);
@@ -81,4 +97,3 @@ export function startPresetTransferIntegration(deps = {}) {
 
   void start();
 }
-

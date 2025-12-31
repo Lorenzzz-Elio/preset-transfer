@@ -2,6 +2,7 @@ import { NEW_FIELD_DEFAULTS } from '../../core/constants.js';
 import { ensureUniqueIdentifier, generateUUID } from '../../core/utils.js';
 import { batchTransferWithNewFields, ensureAllEntriesHaveNewFields } from '../../preset/new-version-fields.js';
 import { getOrderedPromptEntries, getPresetDataFromManager } from '../../preset/preset-manager.js';
+import { ensureStitchMeta } from '../../preset/stitch-meta.js';
 import { getTargetPromptsList, getOrCreateDummyCharacterPromptOrder } from '../../preset/prompt-order-utils.js';
 
 function withPtKey(entries) {
@@ -31,8 +32,9 @@ async function insertEntry(apiInfo, targetPreset, newEntry, insertPosition, auto
     };
     delete newPrompt.isNewEntry;
 
-    targetData.prompts.push(newPrompt);
-    const newOrderEntry = { identifier: newPrompt.identifier, enabled: !!autoEnable };
+    const stitchedPrompt = ensureStitchMeta(newPrompt);
+    targetData.prompts.push(stitchedPrompt);
+    const newOrderEntry = { identifier: stitchedPrompt.identifier, enabled: !!autoEnable };
 
     if (insertPosition === 'top') {
         characterPromptOrder.order.unshift(newOrderEntry);
@@ -108,8 +110,9 @@ async function transferEntries(
                     ? [...entry.injection_trigger]
                     : [...NEW_FIELD_DEFAULTS.injection_trigger],
             };
-            targetData.prompts.push(newPrompt);
-            newOrderEntries.push({ identifier: newPrompt.identifier, enabled: !!autoEnable });
+            const stitchedPrompt = ensureStitchMeta(newPrompt);
+            targetData.prompts.push(stitchedPrompt);
+            newOrderEntries.push({ identifier: stitchedPrompt.identifier, enabled: !!autoEnable });
         }
     });
 

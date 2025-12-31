@@ -1,5 +1,4 @@
 import { debounce, getCurrentApiInfo, getDeviceInfo, getJQuery } from '../core/utils.js';
-import { arePresetsSameDifferentVersion } from '../core/preset-name-utils.js';
 import { commitWorldbookPickTarget, loadAndDisplayEntries } from '../display/entry-display.js';
 import { cancelGlobalSearch, closeAllPanels as closeAllGlobalSearchPanels, runGlobalSearch } from '../display/global-search.js';
 import { filterDualEntries, filterSideEntries, toggleNewEntries } from '../display/search-filter.js';
@@ -13,7 +12,6 @@ import { getActiveTransferAdapter } from '../transfer/transfer-context.js';
 import { showCompareModal } from '../ui/compare-modal.js';
 import { deleteSelectedEntries } from '../ui/edit-modal.js';
 import { initExtensionUpdateUI } from '../ui/extension-update-modal.js';
-import { showPresetUpdateModal } from '../ui/preset-update-modal.js';
 import { updatePresetRegexStatus } from '../ui/regex-ui.js';
 import { createWorldbookBatchManageModal } from '../worldbook/batch-delete.js';
 import { loadSearchSettings, updateSearchSettings } from '../settings/search-settings.js';
@@ -23,8 +21,6 @@ function bindTransferEvents(apiInfo, modal) {
   const leftSelect = $('#left-preset');
   const rightSelect = $('#right-preset');
   const loadBtn = $('#load-entries');
-  const updateToRightBtn = $('#preset-update-to-right');
-  const updateToLeftBtn = $('#preset-update-to-left');
   ensureFontSizeStyles();
   initFontSizeUI();
 
@@ -310,21 +306,6 @@ function bindTransferEvents(apiInfo, modal) {
   applyStoredSettings();
   loadFontSize();
 
-  function updatePresetUpdateButtons() {
-    const leftPreset = leftSelect.val();
-    const rightPreset = rightSelect.val();
-    const slotsVisible =
-      Boolean(leftPreset && rightPreset) && arePresetsSameDifferentVersion(leftPreset, rightPreset).match;
-
-    modal.find('.preset-update-slot[data-side="left"]').toggle(slotsVisible);
-    modal.find('.preset-update-slot[data-side="right"]').toggle(slotsVisible);
-
-    updateToRightBtn.prop('hidden', !slotsVisible).prop('disabled', !slotsVisible);
-    updateToLeftBtn.prop('hidden', !slotsVisible).prop('disabled', !slotsVisible);
-  }
-
-  updatePresetUpdateButtons();
-
   // 主题切换
   // $('#theme-toggle-btn').on('click', function (e) {
   //   e.preventDefault();
@@ -365,7 +346,6 @@ function bindTransferEvents(apiInfo, modal) {
 
     // 更新按钮状态
     loadBtn.prop('disabled', !leftSelect.val() && !rightSelect.val());
-    updatePresetUpdateButtons();
     resetInterface();
     saveCurrentSettings();
 
@@ -398,14 +378,6 @@ function bindTransferEvents(apiInfo, modal) {
       console.error(`${actionLabel}打开失败:`, error);
       alert(`${actionLabel}打开失败: ` + (error?.message ?? error));
     }
-  });
-
-  updateToRightBtn.on('click', () => {
-    showPresetUpdateModal(apiInfo, leftSelect.val(), rightSelect.val());
-  });
-
-  updateToLeftBtn.on('click', () => {
-    showPresetUpdateModal(apiInfo, rightSelect.val(), leftSelect.val());
   });
 
   // 智能导入按钮事件

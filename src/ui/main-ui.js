@@ -56,7 +56,6 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
                             <span>左侧预设</span>
                             <span>选择要管理的预设</span>
                         </label>
-                        <div class="preset-update-slot" data-side="left"></div>
                         <div class="preset-input-group">
                             <select id="left-preset">
                                 <option value="">请选择预设</option>
@@ -72,7 +71,6 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
                             <span>右侧预设</span>
                             <span>选择要管理的预设</span>
                         </label>
-                        <div class="preset-update-slot" data-side="right"></div>
                         <div class="preset-input-group">
                             <select id="right-preset">
                                 <option value="">请选择预设</option>
@@ -86,8 +84,6 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
                 </div>
                 <div class="action-section">
                     <button id="load-entries" disabled>加载条目</button>
-                    <button id="preset-update-to-right" disabled title="将左侧预设中右侧缺失的条目，按旧版本顺序智能插入到右侧">补全右侧</button>
-                    <button id="preset-update-to-left" disabled title="将右侧预设中左侧缺失的条目，按旧版本顺序智能插入到左侧">补全左侧</button>
                     <button id="batch-delete-presets">批量删除预设</button>
                     <label class="auto-switch-label">
                         <input type="checkbox" id="auto-close-modal" checked>
@@ -537,11 +533,6 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
   } catch (e) {
     console.warn('PresetTransfer: adapter UI tweaks failed', e);
   }
-  // Keep semantic placement: “补全左侧” on the left, “补全右侧” on the right.
-  modal.find('.preset-update-slot[data-side="left"]').append($('#preset-update-to-left'));
-  modal.find('.preset-update-slot[data-side="right"]').append($('#preset-update-to-right'));
-  modal.find('.preset-update-slot').hide();
-  $('#preset-update-to-right, #preset-update-to-left').prop('hidden', true);
 
   // Normalize texts after DOM insertion (remove decorative emojis)
   $('#close-modal').text('关闭');

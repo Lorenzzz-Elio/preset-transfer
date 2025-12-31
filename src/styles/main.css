@@ -12,6 +12,51 @@
   }
 }
 
+/* Transfer tools settings panel (Extensions settings) */
+#preset-transfer-extension-settings .pt-transfer-tools-tabbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.12));
+  background: var(--SmartThemeBlurTintColor, rgba(0, 0, 0, 0.08));
+}
+
+#preset-transfer-extension-settings .pt-transfer-tools-tabbar .pt-transfer-tools-tab {
+  flex: 1 1 120px;
+  min-width: 90px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  opacity: 0.85;
+  white-space: nowrap;
+  writing-mode: horizontal-tb;
+}
+
+#preset-transfer-extension-settings .pt-transfer-tools-tabbar .pt-transfer-tools-tab.is-active {
+  opacity: 1;
+  border-color: var(--SmartThemeEmColor, currentColor);
+  box-shadow: 0 0 0 1px var(--SmartThemeEmColor, currentColor) inset;
+}
+
+#preset-transfer-extension-settings .pt-transfer-tools-panel.is-hidden {
+  display: none !important;
+}
+
+#preset-transfer-extension-settings .pt-transfer-tools-card {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.12));
+  background: var(--SmartThemeBlurTintColor, rgba(0, 0, 0, 0.06));
+}
+
+#preset-transfer-extension-settings .pt-transfer-tools-card-title {
+  font-weight: 700;
+  opacity: 0.9;
+}
+
 /* Prompt manager entry grouping (outside the modal) */
 .pt-entry-grouping-root .pt-entry-group-header {
   display: flex;

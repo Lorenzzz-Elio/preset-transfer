@@ -141,38 +141,6 @@ function applyStyles(isMobile, isSmallScreen, isPortrait) {
             font-size: calc(var(--pt-font-size) * 0.9375);
             min-width: 150px;
         }
-        #preset-transfer-modal .preset-update-slot {
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            margin-bottom: 14px;
-        }
-        #preset-transfer-modal #preset-update-to-right,
-        #preset-transfer-modal #preset-update-to-left {
-            padding: ${isMobile ? '12px 16px' : '10px 14px'};
-            font-size: ${isMobile ? 'calc(var(--pt-font-size) * 0.875)' : 'calc(var(--pt-font-size) * 0.8125)'};
-            min-width: auto;
-            border-radius: 10px;
-            border: 1px solid ${vars.borderColor};
-            background: ${vars.inputBg};
-            color: ${vars.textColor};
-            font-weight: 600;
-            cursor: pointer;
-            transition: opacity 0.15s ease, transform 0.05s ease;
-        }
-        #preset-transfer-modal #preset-update-to-right:hover,
-        #preset-transfer-modal #preset-update-to-left:hover {
-            opacity: 0.92;
-        }
-        #preset-transfer-modal #preset-update-to-right:active,
-        #preset-transfer-modal #preset-update-to-left:active {
-            transform: translateY(1px);
-        }
-        #preset-transfer-modal #preset-update-to-right:disabled,
-        #preset-transfer-modal #preset-update-to-left:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
         #preset-transfer-modal #batch-delete-presets {
             padding: 14px 26px;
             font-size: calc(var(--pt-font-size) * 0.9375);

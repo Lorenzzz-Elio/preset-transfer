@@ -27,12 +27,12 @@ function getCurrentPresetName() {
 export function getTransferToolFeatureFlags() {
   const settings = loadTransferSettings();
   return {
-    entryStatesPanelEnabled: settings.entryStatesPanelEnabled !== false,
-    entryGroupingEnabled: settings.entryGroupingEnabled !== false,
-    worldbookEntryGroupingEnabled: settings.worldbookEntryGroupingEnabled !== false,
-    worldbookGroupingEnabled: settings.worldbookGroupingEnabled !== false,
-    worldbookCommonEnabled: settings.worldbookCommonEnabled !== false,
-    regexScriptGroupingEnabled: settings.regexScriptGroupingEnabled === true,
+    entryStatesPanelEnabled: !!settings.entryStatesPanelEnabled,
+    entryGroupingEnabled: !!settings.entryGroupingEnabled,
+    worldbookEntryGroupingEnabled: !!settings.worldbookEntryGroupingEnabled,
+    worldbookGroupingEnabled: !!settings.worldbookGroupingEnabled,
+    worldbookCommonEnabled: !!settings.worldbookCommonEnabled,
+    regexScriptGroupingEnabled: !!settings.regexScriptGroupingEnabled,
     regexBindingEnabled: getRegexBindingEnabled() !== false,
   };
 }
