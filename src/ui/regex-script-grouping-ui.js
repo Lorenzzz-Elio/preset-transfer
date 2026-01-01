@@ -391,6 +391,29 @@ function patchRegexSortableForGrouping($list) {
             const $members = $(memberEls);
 
             $item.data('__ptGroupDragMembers', $members);
+            try {
+              const detached = Object.create(null);
+              $list
+                .children('.regex-script-label[data-pt-group-id]')
+                .each(function () {
+                  if (this.style.display !== 'none') return;
+                  const id = String($(this).data('pt-group-id') ?? '');
+                  if (!id || id === groupId) return;
+                  (detached[id] || (detached[id] = [])).push(this);
+                });
+
+              const ids = Object.keys(detached);
+              if (ids.length) {
+                for (const id of ids) {
+                  const $nodes = $(detached[id]);
+                  $nodes.detach();
+                  detached[id] = $nodes;
+                }
+                $item.data('__ptDetachedCollapsedMembers', detached);
+              }
+            } catch {
+              /* ignore */
+            }
 
             let height = 0;
             try {
@@ -469,10 +492,37 @@ function patchRegexSortableForGrouping($list) {
         };
 
         try {
+          const $ = getJQuery();
           const $item = ui?.item;
           const el = $item?.get?.(0);
 
-          if (el?.classList?.contains?.(HEADER_CLASS)) {
+           if (el?.classList?.contains?.(HEADER_CLASS)) {
+            try {
+              const detached = $item.data('__ptDetachedCollapsedMembers');
+              if (detached && typeof detached === 'object') {
+                $list
+                  .children(`.${HEADER_CLASS}`)
+                  .each(function () {
+                    const id = String($(this).data('pt-group-id') ?? '');
+                    const $nodes = detached[id];
+                    if ($nodes?.length) {
+                      $(this).after($nodes);
+                      delete detached[id];
+                    }
+                  });
+
+                for (const id in detached) {
+                  const $nodes = detached[id];
+                  if ($nodes?.length) {
+                    $list.append($nodes);
+                  }
+                }
+              }
+              $item?.removeData?.('__ptDetachedCollapsedMembers');
+            } catch {
+              /* ignore */
+            }
+
             const $members = $item.data('__ptGroupDragMembers');
             if ($members?.length) {
               $item.after($members);

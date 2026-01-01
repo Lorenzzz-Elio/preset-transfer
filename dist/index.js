@@ -10079,6 +10079,25 @@ function Bb(e) {
           if ((d = (c = m == null ? void 0 : m.classList) == null ? void 0 : c.contains) != null && d.call(c, q)) {
             const h = String(g.data("pt-group-id") ?? ""), b = Fe(e), v = ys(h, b).map((S) => e.children(`#${jo(S)}`).first()[0]).filter(Boolean), w = f(v);
             g.data("__ptGroupDragMembers", w);
+            try {
+              const S = Object.create(null);
+              e.children(".regex-script-label[data-pt-group-id]").each(function() {
+                if (this.style.display !== "none") return;
+                const _ = String(f(this).data("pt-group-id") ?? "");
+                if (!_ || _ === h) return;
+                (S[_] || (S[_] = [])).push(this);
+              });
+              const _ = Object.keys(S);
+              if (_.length) {
+                for (const C of _) {
+                  const x = f(S[C]);
+                  x.detach();
+                  S[C] = x;
+                }
+                g.data("__ptDetachedCollapsedMembers", S);
+              }
+            } catch {
+            }
             let y = 0;
             try {
               const S = V(), _ = S && S !== window ? S : window, C = m.getBoundingClientRect(), x = _.getComputedStyle(m), I = parseFloat(x.marginTop) || 0, A = parseFloat(x.marginBottom) || 0;
@@ -10130,6 +10149,23 @@ function Bb(e) {
         try {
           const m = a == null ? void 0 : a.item, h = (c = m == null ? void 0 : m.get) == null ? void 0 : c.call(m, 0);
           if ((p = (d = h == null ? void 0 : h.classList) == null ? void 0 : d.contains) != null && p.call(d, q)) {
+            try {
+              const b = m.data("__ptDetachedCollapsedMembers");
+              if (b && typeof b == "object") {
+                const v = k();
+                e.children(`.${q}`).each(function() {
+                  const w = String(v(this).data("pt-group-id") ?? "");
+                  const y = b[w];
+                  y != null && y.length && v(this).after(y), w && delete b[w];
+                });
+                for (const w in b) {
+                  const y = b[w];
+                  y != null && y.length && e.append(y);
+                }
+              }
+              m.removeData("__ptDetachedCollapsedMembers");
+            } catch {
+            }
             const b = m.data("__ptGroupDragMembers");
             b != null && b.length && m.after(b), (u = m == null ? void 0 : m.removeData) == null || u.call(m, "__ptGroupDragMembers");
           } else if ((g = (f = h == null ? void 0 : h.classList) == null ? void 0 : f.contains) != null && g.call(f, "regex-script-label")) {
