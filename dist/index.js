@@ -10063,6 +10063,7 @@ function Bb(e) {
   try {
     if (!(e != null && e.length) || typeof e.sortable != "function") return;
     e.sortable("option", "handle", ".regex-script-label, .drag-handle");
+    e.sortable("option", "items", "> :visible");
     const n = String(e.sortable("option", "cancel") ?? "").trim();
     if (n) {
       const i = n.split(",").map((s) => s.trim()).filter(Boolean).filter((s) => s !== `.${q}` && s !== `.${q} *`);

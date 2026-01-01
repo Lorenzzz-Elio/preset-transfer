@@ -357,6 +357,7 @@ function patchRegexSortableForGrouping($list) {
 
     const handle = '.regex-script-label, .drag-handle';
     $list.sortable('option', 'handle', handle);
+    $list.sortable('option', 'items', '> :visible');
 
     // Undo legacy "cancel header drag" rules, since we now use `handle` to match native regex drag feel.
     const currentCancel = String($list.sortable('option', 'cancel') ?? '').trim();
