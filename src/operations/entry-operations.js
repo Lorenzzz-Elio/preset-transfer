@@ -3,6 +3,7 @@ import { NEW_FIELD_DEFAULTS } from '../core/constants.js';
 import { getSelectedEntries, loadAndDisplayEntries } from '../display/entry-display.js';
 import { getActiveTransferAdapter } from '../transfer/transfer-context.js';
 import { createWorldbookEditEntryModal } from '../worldbook/edit-modal.js';
+import { openWorldbookBatchEditModal } from '../worldbook/batch-edit-modal.js';
 import { performTransfer } from './core-operations.js';
 
 let worldInfoModulePromise = null;
@@ -337,16 +338,21 @@ function editSelectedEntry(apiInfo, side) {
   }
 
   if (!presetName) {
-    alert('请先选择预设');
+    alert(`请先选择${adapter?.ui?.containerLabel ?? '预设'}`);
     return;
   }
 
   if (adapter.id === 'worldbook') {
-    if (selectedEntries.length !== 1) {
-      alert('世界书条目编辑目前仅支持单条编辑，请只选择一个条目');
+    if (selectedEntries.length === 0) {
+      alert('请选择要编辑的条目');
       return;
     }
-    createWorldbookEditEntryModal(apiInfo, presetName, selectedEntries[0]);
+    if (selectedEntries.length === 1) {
+      createWorldbookEditEntryModal(apiInfo, presetName, selectedEntries[0]);
+      return;
+    }
+
+    openWorldbookBatchEditModal(apiInfo, presetName, selectedEntries);
     return;
   }
 

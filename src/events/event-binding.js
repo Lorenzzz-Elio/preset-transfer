@@ -458,7 +458,12 @@ function bindTransferEvents(apiInfo, modal) {
   if (isMobile) {
     const updateDualViewByOrientation = () => {
       // 使用高度和宽高比判断移动端横屏，与 CSS 媒体查询保持一致
-      const isLandscape = window.innerHeight <= 680 && window.innerWidth > window.innerHeight && window.innerWidth / window.innerHeight >= 13 / 9;
+      const isTouch = window.matchMedia?.('(pointer: coarse)')?.matches === true;
+      const isLandscape =
+        isTouch &&
+        window.innerHeight <= 680 &&
+        window.innerWidth > window.innerHeight &&
+        window.innerWidth / window.innerHeight >= 13 / 9;
       if (isLandscape) {
         $('#dual-container').addClass('mobile-dual-view');
       } else {
@@ -471,6 +476,9 @@ function bindTransferEvents(apiInfo, modal) {
 
     // 监听屏幕尺寸变化
     window.addEventListener('resize', updateDualViewByOrientation);
+    modal.on('remove.ptMobileDualView', () => {
+      window.removeEventListener('resize', updateDualViewByOrientation);
+    });
   }
 
   // 左侧控制

@@ -298,6 +298,7 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
   const isLoadingContainers = adapter.id !== 'preset';
   if (isLoadingContainers) containerNames = [];
 
+  let containerOptionsToken = 0;
   const populateContainerOptions = (names, { loading = false } = {}) => {
     const label = adapter?.ui?.containerLabel ?? '预设';
     const placeholder = loading ? `正在加载${label}...` : `请选择${label}`;
@@ -318,6 +319,10 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
       const el = $select?.[0];
       if (!el) return;
 
+      containerOptionsToken += 1;
+      const token = String(containerOptionsToken);
+      el.dataset.ptContainerOptionsToken = token;
+
       el.innerHTML = '';
 
       const makeOption = (value, text) => {
@@ -331,18 +336,20 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
 
       if (normalized.length === 0) return;
 
-      const CHUNK_THRESHOLD = 900;
-      const CHUNK_SIZE = 300;
+      const CHUNK_THRESHOLD = adapter.id === 'worldbook' ? 60 : 900;
+      const CHUNK_SIZE = adapter.id === 'worldbook' ? 40 : 300;
 
       if (normalized.length <= CHUNK_THRESHOLD) {
         const frag = doc.createDocumentFragment();
         for (const name of normalized) frag.appendChild(makeOption(name, name));
+        if (el.dataset.ptContainerOptionsToken !== token) return;
         el.appendChild(frag);
         return;
       }
 
       let idx = 0;
       const appendChunk = () => {
+        if (el.dataset.ptContainerOptionsToken !== token) return;
         const frag = doc.createDocumentFragment();
         const end = Math.min(normalized.length, idx + CHUNK_SIZE);
         for (; idx < end; idx += 1) {
@@ -403,6 +410,37 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
           .show()
           .attr('title', '在当前世界书中新建条目')
           .html('<span class="btn-icon"></span> 新建');
+      } catch {
+        // ignore
+      }
+
+      // Worldbook display modes: show all / constant / keyword (no "enabled-only" mode).
+      try {
+        const displayModeOptions = [
+          { value: 'default', label: '显示全部' },
+          { value: 'wb_constant', label: '显示常驻（蓝灯）' },
+          { value: 'wb_keyword', label: '显示关键词（绿灯）' },
+        ];
+
+        const allowed = new Set(displayModeOptions.map((o) => o.value));
+        const normalizeStored = (value) => {
+          const raw = String(value ?? '').trim();
+          if (!raw) return 'default';
+          if (raw === 'include_disabled') return 'default';
+          return allowed.has(raw) ? raw : 'default';
+        };
+
+        $('#left-display-mode, #right-display-mode, #single-display-mode').each(function () {
+          const $select = $(this);
+          const prev = normalizeStored($select.val());
+
+          $select.empty();
+          for (const opt of displayModeOptions) {
+            $('<option>').val(opt.value).text(opt.label).appendTo($select);
+          }
+
+          $select.val(prev);
+        });
       } catch {
         // ignore
       }

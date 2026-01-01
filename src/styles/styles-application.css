@@ -843,6 +843,25 @@ select option {
     50% { transform: scale(1.02); }
 }
 
+/* Worldbook trigger type indicator */
+#preset-transfer-modal .pt-wb-trigger-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    margin-right: 6px;
+    vertical-align: middle;
+    box-shadow: 0 0 0 1px var(--pt-border-color, rgba(0,0,0,0.25)) inset;
+}
+
+#preset-transfer-modal .pt-wb-trigger-dot.is-constant {
+    background: #3b82f6;
+}
+
+#preset-transfer-modal .pt-wb-trigger-dot.is-keyword {
+    background: #22c55e;
+}
+
 #preset-transfer-modal #insert-position-section {
     background: var(--SmartThemeBlurTintColor, #111827);
     border-radius: 12px;

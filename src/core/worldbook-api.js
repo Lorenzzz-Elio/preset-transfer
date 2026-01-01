@@ -48,6 +48,15 @@ async function waitForWorldInfoSettings(mod, { timeoutMs = 1200, intervalMs = 50
   return false;
 }
 
+async function waitForWorldInfoNames(mod, { timeoutMs = 800, intervalMs = 50 } = {}) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (Array.isArray(mod?.world_names)) return true;
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+  return false;
+}
+
 /**
  * Compute worldbooks linked to any character.
  *
@@ -172,9 +181,23 @@ async function computeCharacterLinkedWorldbooks(options = {}) {
 
 async function listWorldbooks() {
   const mod = await getWorldInfoModule();
+
+  // Fast path: SillyTavern already loaded world_names during startup.
+  if (Array.isArray(mod.world_names)) {
+    return mod.world_names.slice();
+  }
+
+  // Best-effort wait: world-info may still be initializing when this extension runs.
+  const ready = await waitForWorldInfoNames(mod);
+  if (ready && Array.isArray(mod.world_names)) {
+    return mod.world_names.slice();
+  }
+
+  // Slow fallback (also updates SillyTavern DOM): only do this when absolutely necessary.
   if (typeof mod.updateWorldInfoList === 'function') {
     await mod.updateWorldInfoList();
   }
+
   return Array.isArray(mod.world_names) ? mod.world_names.slice() : [];
 }
 

@@ -87,8 +87,8 @@
 }
 
 /* 横屏模式优化 (Landscape Mode) */
-/* 仅在移动端横屏时启用 - 使用 max-height 和 aspect-ratio 判断 */
-@media (max-height: 680px) and (min-aspect-ratio: 13/9) {
+/* 仅在触屏移动端横屏时启用 - 避免桌面端窗口高度较小时误触发 */
+@media (hover: none) and (pointer: coarse) and (max-height: 680px) and (min-aspect-ratio: 13/9) {
   #preset-transfer-modal .transfer-modal-content {
     width: 98vw !important;
     height: 98vh !important;

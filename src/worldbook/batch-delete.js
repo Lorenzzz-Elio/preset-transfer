@@ -18,7 +18,7 @@ import {
   renameWorldbookGroupInBucket,
   saveWorldbookGroupState,
 } from '../core/worldbook-group-state.js';
-import { renderWorldbookGroupedList } from './batch-list-render.js';
+import { renderWorldbookGroupedListParts } from './batch-list-render.js';
 import { getWorldbookBatchManageModalHtml } from './batch-modal-template.js';
 import { getWorldbookBatchManageModalStyles } from './batch-modal-styles.js';
 
@@ -217,29 +217,22 @@ async function createWorldbookBatchManageModal() {
   };
 
   closeModal();
+  isClosed = false;
+  ensureViewportCssVars();
 
   const vars = CommonStyles.getVars();
-  let worldbookNames = await listWorldbooks();
-  let boundSet = await computeCharacterLinkedWorldbooks();
-
-  const existingNamesSet = new Set(worldbookNames.map((x) => String(x ?? '').trim()).filter(Boolean));
-  let groupState = normalizeWorldbookGroupState(loadWorldbookGroupState());
-
-  groupState = pruneWorldbookGroupState(groupState, existingNamesSet);
-  saveWorldbookGroupState(groupState);
-
-  const listHtml = renderWorldbookGroupedList({ worldbookNames, boundSet, groupState });
-  $('body').append(getWorldbookBatchManageModalHtml({ listHtml }));
+  $('body').append(
+    getWorldbookBatchManageModalHtml({
+      listHtml: '<div class="pt-wb-batch-loading">正在加载世界书列表...</div>',
+    }),
+  );
 
   const styles = getWorldbookBatchManageModalStyles(vars);
   $('head').append(`<style id="batch-delete-modal-styles">${styles}</style>`);
 
-  const escapeAttr = (value) =>
-    String(value ?? '')
-      .replace(/&/g, '&amp;')
-      .replace(/"/g, '&quot;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+  let worldbookNames = [];
+  let boundSet = new Set();
+  let groupState = normalizeWorldbookGroupState(loadWorldbookGroupState());
 
   const expandedGroups = new Set();
 
@@ -284,6 +277,7 @@ async function createWorldbookBatchManageModal() {
     $('#execute-batch-delete').prop('disabled', selected === 0);
   };
 
+  let listRenderToken = 0;
   const rerenderWorldbookList = ({ preserveChecked = true } = {}) => {
     const checked = new Set();
     if (preserveChecked) {
@@ -292,19 +286,129 @@ async function createWorldbookBatchManageModal() {
       });
     }
 
-    $('#preset-list').html(renderWorldbookGroupedList({ worldbookNames, boundSet, groupState }));
+    const listEl = $('#preset-list')[0];
+    if (!listEl) return;
 
-    if (preserveChecked && checked.size) {
-      $('#preset-list input[type="checkbox"]').each(function () {
-        if (checked.has(String($(this).val() ?? ''))) {
-          $(this).prop('checked', true);
-        }
-      });
+    listRenderToken += 1;
+    const token = String(listRenderToken);
+    listEl.dataset.ptWbListRenderToken = token;
+    listEl.innerHTML = '';
+
+    const parts = renderWorldbookGroupedListParts({ worldbookNames, boundSet, groupState });
+    if (!parts.length) {
+      listEl.innerHTML = '<div class="pt-wb-batch-empty">暂无世界书</div>';
+      applyCollapseState();
+      applyWorldbookSearchFilter();
+      updateSelectedCount();
+      return;
     }
 
-    applyCollapseState();
-    applyWorldbookSearchFilter();
-    updateSelectedCount();
+    const CHUNK_SIZE = 12;
+    let idx = 0;
+
+    const appendChunk = () => {
+      if (isClosed) return;
+      if (listEl.dataset.ptWbListRenderToken !== token) return;
+
+      const end = Math.min(parts.length, idx + CHUNK_SIZE);
+      const chunkHtml = parts.slice(idx, end).join('');
+      idx = end;
+      if (chunkHtml) listEl.insertAdjacentHTML('beforeend', chunkHtml);
+
+      if (idx < parts.length) {
+        requestAnimationFrame(appendChunk);
+        return;
+      }
+
+      if (preserveChecked && checked.size) {
+        $('#preset-list input[type="checkbox"]').each(function () {
+          if (checked.has(String($(this).val() ?? ''))) {
+            $(this).prop('checked', true);
+          }
+        });
+      }
+
+      applyCollapseState();
+      applyWorldbookSearchFilter();
+      updateSelectedCount();
+    };
+
+    requestAnimationFrame(appendChunk);
+  };
+
+  let selectRenderToken = 0;
+  const populateWorldbookSelectOptions = async ($select, names, { placeholder, selectedValue } = {}) => {
+    const el = $select?.[0];
+    if (!el) return;
+
+    const doc = el.ownerDocument || document;
+    const normalized = (Array.isArray(names) ? names : [])
+      .map((n) => String(n ?? '').trim())
+      .filter(Boolean);
+
+    el.innerHTML = '';
+    const placeholderOpt = doc.createElement('option');
+    placeholderOpt.value = '';
+    placeholderOpt.textContent = String(placeholder ?? '请选择世界书');
+    el.appendChild(placeholderOpt);
+
+    if (!normalized.length) {
+      el.value = '';
+      return;
+    }
+
+    const CHUNK_THRESHOLD = 60;
+    const CHUNK_SIZE = 40;
+
+    const makeOption = (value, text) => {
+      const opt = doc.createElement('option');
+      opt.value = value;
+      opt.textContent = text;
+      return opt;
+    };
+
+    const applySelectedValue = () => {
+      const selected = String(selectedValue ?? '').trim();
+      if (selected && normalized.includes(selected)) el.value = selected;
+      else el.value = '';
+    };
+
+    if (normalized.length <= CHUNK_THRESHOLD) {
+      const frag = doc.createDocumentFragment();
+      for (const name of normalized) frag.appendChild(makeOption(name, name));
+      el.appendChild(frag);
+      applySelectedValue();
+      return;
+    }
+
+    selectRenderToken += 1;
+    const token = String(selectRenderToken);
+    el.dataset.ptWbSelectRenderToken = token;
+
+    let idx = 0;
+    await new Promise((resolve) => {
+      const appendChunk = () => {
+        if (el.dataset.ptWbSelectRenderToken !== token) return resolve();
+
+        const frag = doc.createDocumentFragment();
+        const end = Math.min(normalized.length, idx + CHUNK_SIZE);
+        for (; idx < end; idx += 1) {
+          const name = normalized[idx];
+          frag.appendChild(makeOption(name, name));
+        }
+        el.appendChild(frag);
+
+        if (idx < normalized.length) {
+          requestAnimationFrame(appendChunk);
+          return;
+        }
+
+        applySelectedValue();
+        resolve();
+      };
+
+      requestAnimationFrame(appendChunk);
+    });
   };
 
   const refreshBoundSetInBackground = async () => {
@@ -534,24 +638,17 @@ async function createWorldbookBatchManageModal() {
       groupState = pruneWorldbookGroupState(groupState, refreshedNamesSet);
       saveWorldbookGroupState(groupState);
 
-      const preservedSearch = $('#preset-search').val();
       rerenderWorldbookList({ preserveChecked: false });
-      $('#preset-search').val(preservedSearch);
-      applyWorldbookSearchFilter();
 
       const leftSelect = $('#left-preset');
       const rightSelect = $('#right-preset');
       const currentLeft = leftSelect.val();
       const currentRight = rightSelect.val();
 
-      const newOptions = worldbookNames
-        .map((name) => `<option value="${escapeAttr(name)}">${escapeHtml(name)}</option>`)
-        .join('');
-      leftSelect.html('<option value="">请选择世界书</option>' + newOptions);
-      rightSelect.html('<option value="">请选择世界书</option>' + newOptions);
-
-      if (worldbookNames.includes(currentLeft)) leftSelect.val(currentLeft);
-      if (worldbookNames.includes(currentRight)) rightSelect.val(currentRight);
+      await Promise.all([
+        populateWorldbookSelectOptions(leftSelect, worldbookNames, { placeholder: '请选择世界书', selectedValue: currentLeft }),
+        populateWorldbookSelectOptions(rightSelect, worldbookNames, { placeholder: '请选择世界书', selectedValue: currentRight }),
+      ]);
 
       leftSelect.trigger('change');
       rightSelect.trigger('change');
@@ -595,9 +692,30 @@ async function createWorldbookBatchManageModal() {
     },
   });
 
-  rerenderWorldbookList({ preserveChecked: false });
-  // If characters are loaded in shallow mode (lazyLoadCharacters), refresh bindings progressively.
-  setTimeout(() => void refreshBoundSetInBackground(), 0);
+  try {
+    // Allow the modal to paint before doing heavier work.
+    await new Promise((r) => requestAnimationFrame(r));
+    if (isClosed) return;
+
+    worldbookNames = await listWorldbooks();
+    if (isClosed) return;
+
+    boundSet = await computeCharacterLinkedWorldbooks();
+    if (isClosed) return;
+
+    const existingNamesSet = new Set(worldbookNames.map((x) => String(x ?? '').trim()).filter(Boolean));
+    groupState = pruneWorldbookGroupState(groupState, existingNamesSet);
+    saveWorldbookGroupState(groupState);
+
+    rerenderWorldbookList({ preserveChecked: false });
+
+    // If characters are loaded in shallow mode (lazyLoadCharacters), refresh bindings progressively.
+    setTimeout(() => void refreshBoundSetInBackground(), 0);
+  } catch (error) {
+    console.error('批量管理世界书加载失败:', error);
+    closeModal();
+    throw error;
+  }
 }
 
 export {

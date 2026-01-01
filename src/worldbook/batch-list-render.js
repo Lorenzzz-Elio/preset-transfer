@@ -58,7 +58,7 @@ function buildGroupHtml({ bucketId, groupName, members }) {
   `;
 }
 
-function renderWorldbookGroupedList({ worldbookNames, boundSet, groupState }) {
+function renderWorldbookGroupedListParts({ worldbookNames, boundSet, groupState }) {
   const state = normalizeWorldbookGroupState(groupState);
   const bucketId = 'flat';
   const bucket = state.flat || { order: [], groups: {} };
@@ -206,7 +206,11 @@ function renderWorldbookGroupedList({ worldbookNames, boundSet, groupState }) {
     htmlParts.push(buildWorldbookItemHtml(name, bucketId));
   }
 
-  return htmlParts.join('');
+  return htmlParts;
 }
 
-export { renderWorldbookGroupedList };
+function renderWorldbookGroupedList(params) {
+  return renderWorldbookGroupedListParts(params).join('');
+}
+
+export { renderWorldbookGroupedList, renderWorldbookGroupedListParts };

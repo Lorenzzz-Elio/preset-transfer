@@ -9,6 +9,15 @@ async function getWorldInfoModule() {
     return await worldInfoModulePromise;
 }
 
+async function waitForWorldInfoNames(mod, { timeoutMs = 800, intervalMs = 50 } = {}) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+        if (Array.isArray(mod?.world_names)) return true;
+        await new Promise((r) => setTimeout(r, intervalMs));
+    }
+    return false;
+}
+
 function normalizeKeyArray(value) {
     if (!Array.isArray(value)) return '';
     return value
@@ -57,9 +66,23 @@ function sortWorldEntries(a, b) {
 
 async function listWorldbooks() {
     const mod = await getWorldInfoModule();
+
+    // Fast path: SillyTavern already loaded world_names during startup.
+    if (Array.isArray(mod.world_names)) {
+        return mod.world_names.slice();
+    }
+
+    // Best-effort wait: world-info may still be initializing when this extension runs.
+    const ready = await waitForWorldInfoNames(mod);
+    if (ready && Array.isArray(mod.world_names)) {
+        return mod.world_names.slice();
+    }
+
+    // Slow fallback (also updates SillyTavern DOM): only do this when absolutely necessary.
     if (typeof mod.updateWorldInfoList === 'function') {
         await mod.updateWorldInfoList();
     }
+
     return Array.isArray(mod.world_names) ? mod.world_names.slice() : [];
 }
 
@@ -86,8 +109,20 @@ async function saveWorldbook(name, data) {
 function getEntriesFromWorldbookData(data, displayMode) {
     const entriesObj = data?.entries && typeof data.entries === 'object' ? data.entries : {};
     const values = Object.values(entriesObj).filter(Boolean);
-    const filtered =
-        displayMode === 'include_disabled' ? values : values.filter(e => !e.disable);
+    const mode = String(displayMode ?? '').trim();
+    const hasPrimaryKeys = (entry) =>
+        Array.isArray(entry?.key) && entry.key.some((v) => String(v ?? '').trim());
+
+    // Worldbook list view is trigger-type oriented (no "enabled-only" mode).
+    let filtered = values;
+    if (mode === 'wb_constant') {
+        filtered = values.filter((e) => !!e?.constant);
+    } else if (mode === 'wb_keyword') {
+        filtered = values.filter((e) => !e?.constant && hasPrimaryKeys(e));
+    } else {
+        // default / include_disabled / unknown -> show all
+        filtered = values;
+    }
     filtered.sort(sortWorldEntries);
     return filtered.map(entry => {
         const signature = buildSignature(entry);

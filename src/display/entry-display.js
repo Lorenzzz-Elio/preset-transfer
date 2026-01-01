@@ -208,11 +208,23 @@ function displayEntries(entries, side) {
 
   const vars = CommonStyles.getVars();
   const { isMobile, isSmallScreen } = vars;
+  const adapter = getActiveTransferAdapter();
+
+  const renderWorldbookTriggerDot = (entry) => {
+    if (adapter?.id !== 'worldbook') return '';
+    const raw = entry?.raw ?? {};
+    const isConstant = !!raw.constant;
+    const hasKey = Array.isArray(raw.key) && raw.key.some((v) => String(v ?? '').trim());
+
+    if (isConstant) return '<span class="pt-wb-trigger-dot is-constant" title="常驻"></span>';
+    if (hasKey) return '<span class="pt-wb-trigger-dot is-keyword" title="关键词"></span>';
+    return '';
+  };
 
   const renderPositionItem = (position, text) => `
    <div class="entry-item position-item" data-position="${position}" data-side="${side}" style="border-color: ${
-    vars.borderColor
-  }; background: ${
+     vars.borderColor
+   }; background: ${
     vars.sectionBg
   }; transition: all 0.3s ease; cursor: pointer; position: relative; display: flex; align-items: center; padding: ${
     isSmallScreen ? '12px 10px' : isMobile ? '14px 12px' : '12px 14px'
@@ -258,19 +270,19 @@ function displayEntries(entries, side) {
              <input type="checkbox" class="entry-checkbox" style="margin-right: ${isMobile ? '8px' : '10px'}; width: ${
       isMobile ? '14px' : '14px'
     }; height: ${isMobile ? '14px' : '14px'}; accent-color: ${vars.accentColor}; cursor: pointer; position: relative; z-index: 10;">
-             <div style="flex: 1; ${isMobile ? 'min-width: 0;' : ''}">
-                 <div class="entry-name" style="font-weight: 600; color: ${vars.textColor}; font-size: ${
-      isSmallScreen
-        ? 'calc(var(--pt-font-size) * 0.6875)'
-        : isMobile
-        ? 'calc(var(--pt-font-size) * 0.75)'
-        : 'calc(var(--pt-font-size) * 0.8125)'
-    }; word-break: break-word; line-height: 1.2;">${escapeHtml(entry.name)}</div>
-                 ${
-                   isMobile
-                     ? ''
-                     : `<div class="entry-details" style="font-size: calc(var(--pt-font-size) * 0.75); color: ${vars.tipColor}; line-height: 1.4; margin-top: 2px;">${escapeHtml(buildDetailsText(entry))}</div>`
-                 }
+              <div style="flex: 1; ${isMobile ? 'min-width: 0;' : ''}">
+                  <div class="entry-name" style="font-weight: 600; color: ${vars.textColor}; font-size: ${
+       isSmallScreen
+         ? 'calc(var(--pt-font-size) * 0.6875)'
+         : isMobile
+         ? 'calc(var(--pt-font-size) * 0.75)'
+         : 'calc(var(--pt-font-size) * 0.8125)'
+    }; word-break: break-word; line-height: 1.2;">${renderWorldbookTriggerDot(entry)}${escapeHtml(entry.name)}</div>
+                  ${
+                    isMobile
+                      ? ''
+                      : `<div class="entry-details" style="font-size: calc(var(--pt-font-size) * 0.75); color: ${vars.tipColor}; line-height: 1.4; margin-top: 2px;">${escapeHtml(buildDetailsText(entry))}</div>`
+                  }
              </div>
              <button class="create-here-btn" data-entry-index="${index}" data-entry-side="${side}" title="在此处新建">
                  ${createNewIcon()}
@@ -320,17 +332,17 @@ function displayEntries(entries, side) {
             vars.accentColor
           }; cursor: pointer; position: relative; z-index: 10;">
              <div style="flex: 1; ${isMobile ? 'min-width: 0;' : ''}">
-                 <div class="entry-name" style="font-weight: 600; color: ${vars.textColor}; font-size: ${
-            isSmallScreen
-              ? 'calc(var(--pt-font-size) * 0.6875)'
-              : isMobile
-              ? 'calc(var(--pt-font-size) * 0.75)'
-              : 'calc(var(--pt-font-size) * 0.8125)'
-          }; word-break: break-word; line-height: 1.2;">${escapeHtml(entry.name)}${
-            entry.isUninserted
-              ? ' <span style="color: ${vars.accentColor}; font-size: calc(var(--pt-font-size) * 0.625);">🔸未插入</span>'
-              : ''
-          }</div>
+                  <div class="entry-name" style="font-weight: 600; color: ${vars.textColor}; font-size: ${
+             isSmallScreen
+               ? 'calc(var(--pt-font-size) * 0.6875)'
+               : isMobile
+               ? 'calc(var(--pt-font-size) * 0.75)'
+               : 'calc(var(--pt-font-size) * 0.8125)'
+          }; word-break: break-word; line-height: 1.2;">${renderWorldbookTriggerDot(entry)}${escapeHtml(entry.name)}${
+             entry.isUninserted
+               ? ' <span style="color: ${vars.accentColor}; font-size: calc(var(--pt-font-size) * 0.625);">🔸未插入</span>'
+               : ''
+           }</div>
                  ${
                    isMobile
                      ? ''
