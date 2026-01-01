@@ -1934,8 +1934,8 @@ function tn() {
     entryGroupingEnabled: !0,
     worldbookEntryGroupingEnabled: !0,
     worldbookGroupingEnabled: !0,
-    worldbookCommonEnabled: !0,
-    regexScriptGroupingEnabled: !1,
+    worldbookCommonEnabled: !1,
+    regexScriptGroupingEnabled: !0,
     // Preset stitches automation
     presetAutoMigrateOnImportEnabled: !0,
     presetGitAutoUpdateEnabled: !1,
@@ -1948,6 +1948,7 @@ function tn() {
 }
 function Se(e) {
   const t = { ...tn(), ...e && typeof e == "object" ? e : {} };
+  t.__ptSavedAt = Date.now();
   try {
     const { context: n, node: r } = Ot({ create: !0 });
     r && (r[Bn] = t, Jo(n));
@@ -1960,25 +1961,94 @@ function Se(e) {
   }
 }
 function te() {
+  const e = tn();
+  let t = null;
   try {
-    const { node: e } = Ot(), t = e == null ? void 0 : e[Bn];
-    if (t && typeof t == "object")
-      return { ...tn(), ...t };
+    const { node: o } = Ot(), s = o == null ? void 0 : o[Bn];
+    s && typeof s == "object" && (t = s);
   } catch {
   }
+  let n = null;
   try {
-    const e = localStorage.getItem(Rs);
-    if (!e) return tn();
-    const t = JSON.parse(e), n = { ...tn(), ...t && typeof t == "object" ? t : {} };
+    const o = localStorage.getItem(Rs);
+    if (o) {
+      const s = JSON.parse(o);
+      s && typeof s == "object" && (n = s);
+    }
+  } catch (o) {
+    console.warn("加载设置失败，使用默认设置:", o);
+  }
+  const r = t ? { ...e, ...t } : null;
+  const i = n ? { ...e, ...n } : null;
+  if (r && i) {
+    const o = t == null ? void 0 : t.__ptSavedAt, s = n == null ? void 0 : n.__ptSavedAt;
+    const a = typeof o == "number" ? o : Number(o), l = typeof s == "number" ? s : Number(s);
+    const c = Number.isFinite(a) ? a : 0, u = Number.isFinite(l) ? l : 0;
+    if (u > c) {
+      try {
+        const { context: f, node: d } = Ot({ create: !0 });
+        d && (d[Bn] = i, Jo(f));
+      } catch {
+      }
+      return i;
+    }
+    if (c > u) {
+      try {
+        localStorage.setItem(Rs, JSON.stringify(r));
+      } catch {
+      }
+      return r;
+    }
+    const f = [
+      "autoCloseModal",
+      "autoEnableEntry",
+      "leftDisplayMode",
+      "rightDisplayMode",
+      "singleDisplayMode",
+      "entryStatesPanelEnabled",
+      "entryGroupingEnabled",
+      "worldbookEntryGroupingEnabled",
+      "worldbookGroupingEnabled",
+      "worldbookCommonEnabled",
+      "regexScriptGroupingEnabled",
+      "presetAutoMigrateOnImportEnabled",
+      "presetGitAutoUpdateEnabled"
+    ];
+    const d = f.some((p) => Object.prototype.hasOwnProperty.call(t, p) && t[p] !== e[p]);
+    const g = f.some((p) => Object.prototype.hasOwnProperty.call(n, p) && n[p] !== e[p]);
+    if (g && !d) {
+      try {
+        const { context: p, node: m } = Ot({ create: !0 });
+        m && (m[Bn] = i, Jo(p));
+      } catch {
+      }
+      return i;
+    }
+    if (d && !g) {
+      try {
+        localStorage.setItem(Rs, JSON.stringify(r));
+      } catch {
+      }
+      return r;
+    }
+    return r;
+  }
+  if (r) {
     try {
-      const { context: r, node: o } = Ot({ create: !0 });
-      o && (!o[Bn] || typeof o[Bn] != "object") && (o[Bn] = n, Jo(r));
+      localStorage.setItem(Rs, JSON.stringify(r));
     } catch {
     }
-    return n;
-  } catch (e) {
-    return console.warn("加载设置失败，使用默认设置:", e), tn();
+    return r;
   }
+  if (i) {
+    try {
+      const { context: o, node: s } = Ot({ create: !0 });
+      s && (!s[Bn] || typeof s[Bn] != "object") && (s[Bn] = i, Jo(o));
+    } catch {
+    }
+    return i;
+  }
+  return e;
 }
 const Nc = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
