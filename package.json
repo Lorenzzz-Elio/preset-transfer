@@ -1,6 +1,6 @@
 {
   "name": "preset-transfer",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "type": "module",
   "scripts": {
     "dev": "vite build --watch",

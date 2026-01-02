@@ -583,6 +583,7 @@ function applyGroupingToList() {
     const currentHeaderCount = $list.children(`.${HEADER_CLASS}`).length;
 
     if (signature === lastAppliedSignature && (expectedGroupCount === 0 || currentHeaderCount >= expectedGroupCount)) {
+      updateExistingGroupHeaderCounts($list, groupings);
       return;
     }
 
@@ -604,6 +605,7 @@ function applyGroupingToList() {
       const $header = createGroupHeader(g, String(memberIds.length), collapsed);
       $first.before($header);
 
+      let enabledCount = 0;
       let headerMarkedDisabled = false;
       for (const id of memberIds) {
         const $row = $list.children(`#${escapeCssId(id)}`).first();
@@ -611,21 +613,29 @@ function applyGroupingToList() {
         $row.attr('data-pt-group-id', g.id);
         $row.addClass('pt-regex-in-group');
 
-        if (!headerMarkedDisabled) {
-          try {
-            const rowDisabled = !!$row.find('input.disable_regex').first().prop('checked');
-            if (rowDisabled) {
-              headerMarkedDisabled = true;
-              $header.find('.pt-regex-group-disable').prop('checked', true);
-            }
-          } catch {
-            /* ignore */
-          }
+        let rowDisabled = false;
+        try {
+          rowDisabled = !!$row.find('input.disable_regex').first().prop('checked');
+        } catch {
+          /* ignore */
+        }
+
+        if (!rowDisabled) enabledCount += 1;
+
+        if (!headerMarkedDisabled && rowDisabled) {
+          headerMarkedDisabled = true;
+          $header.find('.pt-regex-group-disable').prop('checked', true);
         }
 
         if (collapsed) {
           $row[0].style.display = 'none';
         }
+      }
+
+      try {
+        $header.find('.pt-regex-group-count').text(`(${enabledCount}/${memberIds.length})`);
+      } catch {
+        /* ignore */
       }
     }
 
@@ -633,6 +643,62 @@ function applyGroupingToList() {
   } finally {
     resumeListObserver();
     isApplying = false;
+  }
+}
+
+function updateExistingGroupHeaderCounts($list, groupings) {
+  const $ = getJQuery();
+  const $root = $list?.length ? $list : findRegexListContainer();
+  if (!$root.length) return;
+
+  const headersById = new Map();
+  $root.children(`.${HEADER_CLASS}`).each(function () {
+    const groupId = String($(this).data('pt-group-id') ?? '');
+    if (groupId) headersById.set(groupId, $(this));
+  });
+  if (headersById.size === 0) return;
+
+  const resolved = Array.isArray(groupings)
+    ? groupings.filter((g) => !g?.unresolved && Array.isArray(g?.memberIds) && g.memberIds.length > 0)
+    : [];
+
+  for (const g of resolved) {
+    const groupId = String(g?.id ?? '');
+    if (!groupId) continue;
+    const $header = headersById.get(groupId);
+    if (!$header?.length) continue;
+
+    const memberIds = g.memberIds.map(String).filter(Boolean);
+    if (memberIds.length === 0) continue;
+
+    let enabledCount = 0;
+    let anyDisabled = false;
+
+    for (const id of memberIds) {
+      const $row = $root.children(`#${escapeCssId(id)}`).first();
+      if (!$row.length) continue;
+
+      let rowDisabled = false;
+      try {
+        rowDisabled = !!$row.find('input.disable_regex').first().prop('checked');
+      } catch {
+        /* ignore */
+      }
+
+      if (!rowDisabled) enabledCount += 1;
+      else anyDisabled = true;
+    }
+
+    try {
+      $header.find('.pt-regex-group-count').text(`(${enabledCount}/${memberIds.length})`);
+    } catch {
+      /* ignore */
+    }
+    try {
+      $header.find('.pt-regex-group-disable').prop('checked', anyDisabled);
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -1122,6 +1188,8 @@ function installHeaderEvents() {
       } catch {
         /* ignore */
       }
+      queueApplyGrouping();
+      setTimeout(queueApplyGrouping, 120);
     },
   );
 
@@ -1141,6 +1209,8 @@ function installHeaderEvents() {
       } catch {
         /* ignore */
       }
+      queueApplyGrouping();
+      setTimeout(queueApplyGrouping, 120);
     },
   );
 
