@@ -15,6 +15,7 @@ import * as WorldbookEntryGroupingUI from '../ui/worldbook-entry-grouping-ui.js'
 import { unhookPresetSaveToProtectExtensions } from './entry-states.js';
 import * as WorldbookGrouping from './worldbook-grouping.js';
 import { setWorldbookCommonFeatureActive } from './worldbook-common-integration.js';
+import * as ThemeGrouping from './theme-grouping.js';
 
 function getCurrentPresetName() {
   try {
@@ -34,6 +35,7 @@ export function getTransferToolFeatureFlags() {
     worldbookCommonEnabled: !!settings.worldbookCommonEnabled,
     regexScriptGroupingEnabled: !!settings.regexScriptGroupingEnabled,
     regexBindingEnabled: getRegexBindingEnabled() !== false,
+    themeGroupingEnabled: !!settings.themeGroupingEnabled,
   };
 }
 
@@ -70,6 +72,12 @@ export function setWorldbookCommonEnabled(enabled) {
 export function setRegexScriptGroupingEnabled(enabled) {
   const settings = loadTransferSettings();
   settings.regexScriptGroupingEnabled = !!enabled;
+  saveTransferSettings(settings);
+}
+
+export function setThemeGroupingEnabled(enabled) {
+  const settings = loadTransferSettings();
+  settings.themeGroupingEnabled = !!enabled;
   saveTransferSettings(settings);
 }
 
@@ -144,4 +152,11 @@ export function applyTransferToolFeatureToggles() {
 
   // Worldbook common favorites (World Info entry header + panel)
   void setWorldbookCommonFeatureActive(!!flags.worldbookCommonEnabled);
+
+  // Theme grouping (UI themes dropdown)
+  if (flags.themeGroupingEnabled) {
+    ThemeGrouping.initThemeGrouping?.();
+  } else {
+    ThemeGrouping.destroyThemeGrouping?.();
+  }
 }

@@ -40,7 +40,7 @@ export async function initPresetTransferIntegration(deps = {}) {
       console.log('主题初始化跳过：', error?.message);
     }
 
-    // Inject “Transfer Tools” panel into the extensions settings page (best-effort)
+    // Inject "Transfer Tools" panel into the extensions settings page (best-effort)
     try {
       let settingsPanelAttempts = 0;
       const tryInitSettingsPanel = () => {

@@ -7,6 +7,10 @@ import { getNameMatchKey } from '../preset/entry-match-utils.js';
 import { showPresetGitUpdateModal } from './preset-git-update-modal.js';
 import { exportPresetBundle, importPresetBundle } from '../features/import-export.js';
 import {
+  createSnapshotManagementPanel,
+  initSnapshotManagementPanel,
+} from './snapshot-management-panel.js';
+import {
   fetchGitHubTags,
   fetchGitHubReleaseByTag,
   fetchPresetJsonFromGitHubAtRef,
@@ -39,6 +43,7 @@ import {
   setWorldbookEntryGroupingEnabled,
   setWorldbookCommonEnabled,
   setWorldbookGroupingEnabled,
+  setThemeGroupingEnabled,
 } from '../features/feature-toggles.js';
 
 const CONTAINER_ID = 'preset-transfer-extension-settings';
@@ -50,7 +55,7 @@ const PT_META_FIELD = 'pt_meta';
 const PT_META_NAMESPACE = 'presetTransfer';
 
 const TRANSFER_TOOLS_TAB_STORAGE_KEY = 'preset-transfer-transfer-tools-active-tab';
-const TRANSFER_TOOLS_TAB_KEYS = ['features', 'settings', 'io'];
+const TRANSFER_TOOLS_TAB_KEYS = ['features', 'settings', 'snapshots', 'io'];
 
 function stripPresetTransferMetaInPlace(node) {
   if (!node || typeof node !== 'object') return;
@@ -982,6 +987,14 @@ function renderPanel() {
                 data-pt-tab="settings"
               >预设更新</button>
               <button
+                id="pt-transfer-tools-tab-snapshots"
+                type="button"
+                class="pt-transfer-tools-tab menu_button"
+                role="tab"
+                aria-controls="pt-transfer-tools-panel-snapshots"
+                data-pt-tab="snapshots"
+              >快照管理</button>
+              <button
                 id="pt-transfer-tools-tab-io"
                 type="button"
                 class="pt-transfer-tools-tab menu_button"
@@ -1027,6 +1040,10 @@ function renderPanel() {
                 <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-worldbook-common">
                   <input id="pt-enable-worldbook-common" type="checkbox" style="accent-color: ${themeAccentColor};" />
                   <small>世界书常用</small>
+                </label>
+                <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-theme-grouping">
+                  <input id="pt-enable-theme-grouping" type="checkbox" style="accent-color: ${themeAccentColor};" />
+                  <small>UI主题分组</small>
                 </label>
               </div>
             </div>
@@ -1101,6 +1118,16 @@ function renderPanel() {
             </div>
 
             <div
+              id="pt-transfer-tools-panel-snapshots"
+              class="pt-transfer-tools-panel is-hidden"
+              role="tabpanel"
+              aria-labelledby="pt-transfer-tools-tab-snapshots"
+              data-pt-tab-panel="snapshots"
+            >
+              <!-- 快照管理面板内容将在这里动态插入 -->
+            </div>
+
+            <div
               id="pt-transfer-tools-panel-io"
               class="pt-transfer-tools-panel is-hidden"
               role="tabpanel"
@@ -1136,6 +1163,7 @@ function syncUiFromFlags(flags) {
   $('#pt-enable-worldbook-grouping').prop('checked', !!flags.worldbookGroupingEnabled);
   $('#pt-enable-worldbook-entry-grouping').prop('checked', !!flags.worldbookEntryGroupingEnabled);
   $('#pt-enable-worldbook-common').prop('checked', !!flags.worldbookCommonEnabled);
+  $('#pt-enable-theme-grouping').prop('checked', !!flags.themeGroupingEnabled);
 }
 
 function getSuggestedGitTemplates(info) {
@@ -1283,6 +1311,13 @@ function bindEvents() {
     .off('input.pt')
     .on('input.pt', function () {
       setWorldbookCommonEnabled($(this).prop('checked'));
+      applyTransferToolFeatureToggles();
+    });
+
+  $('#pt-enable-theme-grouping')
+    .off('input.pt')
+    .on('input.pt', function () {
+      setThemeGroupingEnabled($(this).prop('checked'));
       applyTransferToolFeatureToggles();
     });
 
@@ -1660,11 +1695,19 @@ export function initTransferToolsSettingsPanel() {
 
   host.append(renderPanel());
 
+  // 插入快照管理面板内容
+  $('#pt-transfer-tools-panel-snapshots').html(createSnapshotManagementPanel());
+
   const flags = getTransferToolFeatureFlags();
   syncUiFromFlags(flags);
   syncPresetAutomationUi();
   bindEvents();
   initPresetChangeAutoRefresh();
+
+  // 初始化快照管理面板
+  initSnapshotManagementPanel().catch(err => {
+    console.error('[PresetTransfer] 初始化快照管理面板失败:', err);
+  });
 
   return true;
 }

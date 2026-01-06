@@ -1,5 +1,6 @@
 import { getJQuery } from '../core/utils.js';
 import { getActiveTransferAdapter } from '../transfer/transfer-context.js';
+import { loadTransferSettings, saveTransferSettings } from './settings-manager.js';
 
 function normalizeWorldbookDisplayMode(value) {
   const raw = String(value ?? '').trim();
@@ -40,13 +41,12 @@ function applyStoredSettings() {
 
 function saveCurrentSettings() {
   const $ = getJQuery();
-  const settings = {
-    autoCloseModal: $('#auto-close-modal').prop('checked'),
-    autoEnableEntry: $('#auto-enable-entry').prop('checked'),
-    leftDisplayMode: $('#left-display-mode').val(),
-    rightDisplayMode: $('#right-display-mode').val(),
-    singleDisplayMode: $('#single-display-mode').val(),
-  };
+  const settings = loadTransferSettings();
+  settings.autoCloseModal = $('#auto-close-modal').prop('checked');
+  settings.autoEnableEntry = $('#auto-enable-entry').prop('checked');
+  settings.leftDisplayMode = $('#left-display-mode').val();
+  settings.rightDisplayMode = $('#right-display-mode').val();
+  settings.singleDisplayMode = $('#single-display-mode').val();
   saveTransferSettings(settings);
 }
 

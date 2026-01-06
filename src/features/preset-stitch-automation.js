@@ -535,20 +535,9 @@ async function handlePresetChanged(presetName) {
   const settings = loadTransferSettings();
   const wantGit = settings.presetGitAutoUpdateEnabled === true;
 
-  // Always refresh the per-base stitch snapshot/timestamp when user changes presets.
-  try {
-    const apiInfo = getCurrentApiInfo();
-    if (apiInfo) {
-      ensurePresetManagerSavePresetWrapped(apiInfo.presetManager);
-      const info = extractPresetVersionInfo(presetName);
-      if (info?.version) {
-        const data = getPresetDataFromManager(apiInfo, presetName);
-        recordStitchPatchSnapshot(presetName, data);
-      }
-    }
-  } catch {
-    /* ignore */
-  }
+  // Note: Snapshot recording removed from here - snapshots should only be created
+  // when actual stitch operations (transfer/copy) occur, not when switching versions.
+  // The snapshot will be recorded via the savePreset wrapper when modifications are saved.
 
   if (!wantGit) return;
 

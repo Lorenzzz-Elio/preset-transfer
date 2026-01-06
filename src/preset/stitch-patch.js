@@ -38,6 +38,30 @@ function sanitizePromptForSave(prompt) {
   return next;
 }
 
+function compressPromptForSnapshot(prompt) {
+  const essential = {
+    identifier: prompt.identifier,
+    name: prompt.name,
+    role: prompt.role,
+    content: prompt.content,
+    injection_position: prompt.injection_position,
+    injection_depth: prompt.injection_depth,
+    system_prompt: prompt.system_prompt,
+    marker: prompt.marker,
+    forbid_overrides: prompt.forbid_overrides,
+  };
+
+  if (Array.isArray(prompt.injection_trigger) && prompt.injection_trigger.length > 0) {
+    essential.injection_trigger = prompt.injection_trigger;
+  }
+
+  if (prompt.pt_meta) {
+    essential.pt_meta = prompt.pt_meta;
+  }
+
+  return essential;
+}
+
 function getDummyCharacterPromptOrder(presetData) {
   if (!presetData || !Array.isArray(presetData.prompt_order)) return null;
   return presetData.prompt_order.find(order => order && order.character_id === DUMMY_CHARACTER_ID) ?? null;
@@ -151,7 +175,7 @@ function chooseInsertIndex(targetOrderArray, run) {
 }
 
 function extractStitchPatch(presetData, options = {}) {
-  const { includeUninserted = true, anchorWindowSize = 5 } = options;
+  const { includeUninserted = true, anchorWindowSize = 5, compressForSnapshot = false } = options;
 
   const promptMap = buildPromptMapByIdentifier(presetData);
   const order = getDummyCharacterPromptOrder(presetData);
@@ -203,7 +227,7 @@ function extractStitchPatch(presetData, options = {}) {
 
       currentRun.stitches.push({
         stitchId,
-        prompt: cloneDeep(prompt),
+        prompt: compressForSnapshot ? compressPromptForSnapshot(prompt) : cloneDeep(prompt),
         enabled: Boolean(item?.enabled),
       });
       currentRun.endSourceIndex = i;
@@ -261,7 +285,7 @@ function extractStitchPatch(presetData, options = {}) {
       if (insertedStitchIds.has(stitchId)) continue;
       uninserted.push({
         stitchId,
-        prompt: cloneDeep(prompt),
+        prompt: compressForSnapshot ? compressPromptForSnapshot(prompt) : cloneDeep(prompt),
       });
     }
   }

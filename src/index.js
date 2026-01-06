@@ -5,6 +5,7 @@
 // 样式
 import './styles/main.css';
 import './styles/mobile.css';
+import './styles/snapshot-management.css';
 
 // 核心模块
 import * as APICompat from './core/api-compat.js';
@@ -29,6 +30,7 @@ import * as GlobalListener from './features/global-listener.js';
 import * as ImportExport from './features/import-export.js';
 import * as PresetStitchAutomation from './features/preset-stitch-automation.js';
 import * as RegexBinding from './features/regex-binding.js';
+import * as SnapshotUtils from './features/snapshot-utils.js';
 import * as WorldbookCommon from './features/worldbook-common.js';
 import * as WorldbookCommonIntegration from './features/worldbook-common-integration.js';
 import { checkForExtensionUpdate } from './features/extension-update.js';
@@ -94,6 +96,7 @@ registerPresetTransferNamespace({
   RegexBinding,
   ImportExport,
   PresetStitchAutomation,
+  SnapshotUtils,
   GlobalListener,
   WorldbookCommon,
   WorldbookCommonIntegration,
@@ -141,6 +144,7 @@ exposeModuleMembersToWindow([
   RegexBinding,
   ImportExport,
   PresetStitchAutomation,
+  SnapshotUtils,
   GlobalListener,
   WorldbookCommon,
   WorldbookCommonIntegration,

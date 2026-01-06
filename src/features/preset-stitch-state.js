@@ -1,7 +1,8 @@
 import { extractPresetVersionInfo } from '../core/preset-name-utils.js';
-import { loadTransferSettings, saveTransferSettings } from '../settings/settings-manager.js';
+import { loadTransferSettings } from '../settings/settings-manager.js';
 import { extractStitchPatch } from '../preset/stitch-patch.js';
 import { getStitchId } from '../preset/stitch-meta.js';
+import * as SnapshotStorage from './snapshot-storage.js';
 
 const STITCH_STATE_SCHEMA_VERSION = 1;
 
@@ -18,48 +19,34 @@ function hasAnyStitchMeta(presetData) {
   return prompts.some(p => !!getStitchId(p));
 }
 
-function getStitchStateByBase(normalizedBase) {
-  const settings = loadTransferSettings();
-  const map =
-    settings.presetStitchStateByBase && typeof settings.presetStitchStateByBase === 'object'
-      ? settings.presetStitchStateByBase
-      : {};
-
+async function getStitchStateByBase(normalizedBase) {
   const key = String(normalizedBase ?? '').trim();
   if (!key) return null;
 
-  const state = map[key];
+  const state = await SnapshotStorage.loadSnapshot(key);
   return state && typeof state === 'object' ? state : null;
 }
 
-function setStitchStateByBase(normalizedBase, state) {
+async function setStitchStateByBase(normalizedBase, state) {
   const key = String(normalizedBase ?? '').trim();
   if (!key) return false;
 
-  const settings = loadTransferSettings();
-  const map =
-    settings.presetStitchStateByBase && typeof settings.presetStitchStateByBase === 'object'
-      ? settings.presetStitchStateByBase
-      : {};
-
-  settings.presetStitchStateByBase = {
-    ...map,
-    [key]: state,
-  };
-
-  saveTransferSettings(settings);
-  return true;
+  return await SnapshotStorage.saveSnapshot(key, state);
 }
 
 function getStitchPatchSnapshotForBase(normalizedBase) {
-  const state = getStitchStateByBase(normalizedBase);
-  const patch = state?.patch;
-  if (!patch || typeof patch !== 'object') return null;
-  return patch;
+  return getStitchStateByBase(normalizedBase).then(state => {
+    const patch = state?.patch;
+    if (!patch || typeof patch !== 'object') return null;
+    return patch;
+  }).catch(() => null);
 }
 
-function recordStitchPatchSnapshot(presetName, presetData, options = {}) {
+async function recordStitchPatchSnapshot(presetName, presetData, options = {}) {
   const { now = Date.now(), force = false } = options;
+
+  const settings = loadTransferSettings();
+  if (settings.presetStitchSnapshotEnabled === false) return null;
 
   const name = String(presetName ?? '').trim();
   if (!name) return null;
@@ -70,7 +57,7 @@ function recordStitchPatchSnapshot(presetName, presetData, options = {}) {
 
   if (!force && !hasAnyStitchMeta(presetData)) return null;
 
-  const patch = extractStitchPatch(presetData);
+  const patch = extractStitchPatch(presetData, { compressForSnapshot: true });
   const stitchCount = countPatchStitches(patch);
   if (stitchCount === 0) return null;
 
@@ -83,7 +70,7 @@ function recordStitchPatchSnapshot(presetName, presetData, options = {}) {
     stitchCount,
   };
 
-  setStitchStateByBase(info.normalizedBase, state);
+  await setStitchStateByBase(info.normalizedBase, state);
   return state;
 }
 

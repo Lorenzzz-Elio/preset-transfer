@@ -1,0 +1,160 @@
+/* 快照管理面板样式 */
+.pt-snapshot-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+}
+
+.pt-snapshot-toolbar {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+}
+
+.pt-snapshot-toolbar button {
+  flex: 1;
+}
+
+.pt-snapshot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.pt-snapshot-loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--SmartThemeBodyColor);
+  opacity: 0.6;
+}
+
+.pt-snapshot-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--SmartThemeBodyColor);
+  opacity: 0.6;
+}
+
+.pt-snapshot-empty p {
+  margin: 8px 0;
+}
+
+.pt-snapshot-empty-hint {
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+.pt-snapshot-summary {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0 14px 0;
+  margin-bottom: 12px;
+  border-bottom: 2px solid var(--SmartThemeBodyColor);
+  font-size: 0.9em;
+  color: var(--SmartThemeBodyColor);
+  opacity: 0.85;
+}
+
+.pt-snapshot-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.pt-snapshot-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--SmartThemeBodyColor);
+  transition: opacity 0.2s;
+}
+
+.pt-snapshot-item:hover {
+  opacity: 0.85;
+}
+
+.pt-snapshot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.pt-snapshot-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.pt-snapshot-title strong {
+  color: var(--SmartThemeBodyColor);
+  font-size: 1em;
+}
+
+.pt-snapshot-version {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(0, 0, 0, 0.15);
+  color: var(--SmartThemeBodyColor);
+  border-radius: 4px;
+  font-size: 0.85em;
+  opacity: 0.8;
+}
+
+.pt-snapshot-delete {
+  padding: 4px 8px !important;
+  min-width: auto !important;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.pt-snapshot-delete:hover {
+  opacity: 1;
+  color: var(--crimson70) !important;
+}
+
+.pt-snapshot-info {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 0.9em;
+  color: var(--SmartThemeBodyColor);
+  opacity: 0.75;
+}
+
+.pt-snapshot-info-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pt-snapshot-info-item i {
+  opacity: 0.6;
+  width: 14px;
+  text-align: center;
+}
+
+/* 工具栏按钮样式 */
+#pt-snapshot-refresh {
+  min-width: auto;
+}
+
+#pt-snapshot-migrate {
+  min-width: auto;
+}
+
+/* 标签页样式优化 */
+.pt-transfer-tools-tabbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pt-transfer-tools-tab {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+}

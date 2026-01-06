@@ -1,6 +1,6 @@
 import { ensureViewportCssVars, escapeAttr, escapeHtml, getDeviceInfo, getJQuery, highlightDiff } from '../core/utils.js';
-import { isEntryDifferent, shouldHighlightPositionDifference } from '../events/compare-events.js';
-import { editEntryInPreset } from '../operations/entry-operations.js';
+import { isEntryDifferent, shouldHighlightPositionDifference, showConfirmDialog } from '../events/compare-events.js';
+import { editEntryInPreset, copyEntryBetweenPresets } from '../operations/entry-operations.js';
 import { ensureNewVersionFields } from '../preset/new-version-fields.js';
 import { getPresetDataFromManager, getPromptEntries } from '../preset/preset-manager.js';
 import { CommonStyles } from '../styles/common-styles.js';
@@ -179,8 +179,10 @@ function createCompareEntryHtml(entry, leftPreset, rightPreset) {
                entry.isDifferent
                  ? `
                  <div class="compare-actions">
-                    <button class="compare-action-btn edit-btn" data-action="edit-left" data-entry-name="${escapeAttr(entry.name)}">✏️ 编辑左侧</button>
-                    <button class="compare-action-btn edit-btn" data-action="edit-right" data-entry-name="${escapeAttr(entry.name)}">✏️ 编辑右侧</button>
+                    <button class="compare-action-btn" data-action="copy-right-to-left" data-entry-name="${escapeAttr(entry.name)}">覆盖左侧</button>
+                    <button class="compare-action-btn" data-action="copy-left-to-right" data-entry-name="${escapeAttr(entry.name)}">覆盖右侧</button>
+                    <button class="compare-action-btn edit-btn" data-action="edit-left" data-entry-name="${escapeAttr(entry.name)}">编辑左侧</button>
+                    <button class="compare-action-btn edit-btn" data-action="edit-right" data-entry-name="${escapeAttr(entry.name)}">编辑右侧</button>
                  </div>
              `
                  : ''
@@ -399,7 +401,23 @@ function bindCompareModalEvents(apiInfo, leftPreset, rightPreset, commonEntries)
 
     if (!entry) return;
 
+    const safeLeftPreset = escapeHtml(leftPreset);
+    const safeRightPreset = escapeHtml(rightPreset);
+    const safeEntryName = escapeHtml(entryName);
+
     switch (action) {
+      case 'copy-left-to-right':
+        showConfirmDialog(
+          `确定要用 <b>${safeLeftPreset}</b> 的条目 "<b>${safeEntryName}</b>" 覆盖 <b>${safeRightPreset}</b> 中的同名条目吗？此操作不可撤销。`,
+          () => copyEntryBetweenPresets(apiInfo, leftPreset, rightPreset, entry.left, entryName),
+        );
+        break;
+      case 'copy-right-to-left':
+        showConfirmDialog(
+          `确定要用 <b>${safeRightPreset}</b> 的条目 "<b>${safeEntryName}</b>" 覆盖 <b>${safeLeftPreset}</b> 中的同名条目吗？此操作不可撤销。`,
+          () => copyEntryBetweenPresets(apiInfo, rightPreset, leftPreset, entry.right, entryName),
+        );
+        break;
       case 'edit-left':
         modal.hide(); // 隐藏而不是移除比较模态框
         editEntryInPreset(apiInfo, leftPreset, entry.left, entryName, true); // 传递来自比较界面的标记

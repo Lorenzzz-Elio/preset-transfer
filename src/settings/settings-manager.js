@@ -49,6 +49,7 @@ function getDefaultSettings() {
     presetGitAutoUpdateEnabled: false,
     presetGitSources: {},
     // Per-base stitch snapshot (single source-of-truth)
+    presetStitchSnapshotEnabled: true,
     presetStitchStateByBase: {},
     worldbookCommonAutoGlobalBooks: [],
     worldbookCharacterWorldCache: { version: 1, byAvatar: {} },
