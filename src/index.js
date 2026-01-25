@@ -1,6 +1,6 @@
 // 预设转移工具 - 入口脚本
 // Author: discord千秋梦
-// Version: v2.1
+// Version: v1.5.6
 
 // 样式
 import './styles/main.css';
