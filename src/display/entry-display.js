@@ -9,8 +9,15 @@ import { CommonStyles } from '../styles/common-styles.js';
 import { getActiveTransferAdapter, getTransferEngine } from '../transfer/transfer-context.js';
 import { updateCompareButton } from '../ui/compare-modal.js';
 import { getTargetPromptsList } from '../ui/edit-modal.js';
-import { createNewIcon } from '../ui/icons.js';
+import { createNewIcon, favoriteStarIcon } from '../ui/icons.js';
 import { updateSelectionCount } from './ui-updates.js';
+import {
+  getFavoriteIdsForContainer,
+  getFavoriteIdsForContainerSync,
+  isFavoritesSupported,
+  toggleFavoriteEntry,
+} from '../features/favorite-entries.js';
+import { applyGroupDisplayToRenderedEntries } from './entry-group-display.js';
 
 async function commitWorldbookPickTarget(side) {
   const $ = getJQuery();
@@ -61,6 +68,18 @@ async function commitWorldbookPickTarget(side) {
     window.ptWorldbookPickTarget = null;
     $('#left-side, #right-side').removeClass('transfer-target');
   }
+}
+
+function resolveContainerName(side, options = {}) {
+  const override = String(options?.containerName ?? '').trim();
+  if (override) return override;
+
+  const $ = getJQuery();
+  if (side === 'left') return String($('#left-preset').val() ?? '').trim();
+  if (side === 'right') return String($('#right-preset').val() ?? '').trim();
+  if (side === 'single') return String(window.singlePresetName ?? '').trim();
+  if (side === 'favorites') return String(window.ptFavoriteContainerName ?? '').trim();
+  return '';
 }
 async function loadAndDisplayEntries(apiInfo) {
   const $ = getJQuery();
@@ -196,9 +215,9 @@ async function loadDualPresetMode(apiInfo, leftPreset, rightPreset) {
   }
 }
 
-function displayEntries(entries, side) {
+function displayEntries(entries, side, options = {}) {
   const $ = getJQuery();
-  const containerSelector = `#${side}-entries-list`;
+  const containerSelector = options.listSelector || `#${side}-entries-list`;
   const entriesList = $(containerSelector);
 
   if (!entriesList.length) {
@@ -209,6 +228,49 @@ function displayEntries(entries, side) {
   const vars = CommonStyles.getVars();
   const { isMobile, isSmallScreen } = vars;
   const adapter = getActiveTransferAdapter();
+  const renderPositions = options.showPositions !== false;
+  const renderCreateButtons = options.showCreateButtons !== false;
+  const renderEmptyMessage = options.showEmptyMessage !== false;
+  const containerName = resolveContainerName(side, options);
+  const supportsFavorites = isFavoritesSupported(adapter?.id);
+  const favoriteIds = supportsFavorites && containerName ? getFavoriteIdsForContainerSync(adapter.id, containerName) : null;
+  const isFavoritesSide = side === 'favorites';
+  const favoriteIdsByContainer = options.favoriteIdsByContainer instanceof Map ? options.favoriteIdsByContainer : null;
+
+  const resolveEntryContainer = (entry) => {
+    if (isFavoritesSide) return String(entry?.ptFavoriteContainer ?? '').trim();
+    return containerName;
+  };
+
+  const resolveEntryKey = (entry) => {
+    if (isFavoritesSide) {
+      const key = String(entry?.ptFavoriteKey ?? '').trim();
+      if (key) return key;
+      const entryContainer = resolveEntryContainer(entry);
+      const identifier = String(entry?.identifier ?? '').trim();
+      if (entryContainer && identifier) return `${entryContainer}::${identifier}`;
+      return identifier;
+    }
+    return String(entry?.identifier ?? '').trim();
+  };
+
+  const renderEntryTitle = (entry) => {
+    const safeName = escapeHtml(String(entry?.name ?? ''));
+    if (isFavoritesSide) {
+      const entryContainer = resolveEntryContainer(entry);
+      if (entryContainer) return `[${escapeHtml(entryContainer)}] ${safeName}`;
+    }
+    return safeName;
+  };
+
+  const getFavoriteIdsForEntry = (entry) => {
+    if (!supportsFavorites) return null;
+    if (isFavoritesSide && favoriteIdsByContainer) {
+      const entryContainer = resolveEntryContainer(entry);
+      return entryContainer ? favoriteIdsByContainer.get(entryContainer) || null : null;
+    }
+    return favoriteIds;
+  };
 
   const renderWorldbookTriggerDot = (entry) => {
     if (adapter?.id !== 'worldbook') return '';
@@ -219,6 +281,48 @@ function displayEntries(entries, side) {
     if (isConstant) return '<span class="pt-wb-trigger-dot is-constant" title="常驻"></span>';
     if (hasKey) return '<span class="pt-wb-trigger-dot is-keyword" title="关键词"></span>';
     return '';
+  };
+
+  const updateFavoriteButtonState = ($btn, isFavorite) => {
+    if (!$btn?.length) return;
+    $btn.toggleClass('is-favorite', !!isFavorite);
+    $btn.attr('aria-pressed', isFavorite ? 'true' : 'false');
+    $btn.attr('title', isFavorite ? '取消收藏' : '收藏');
+  };
+
+  const renderFavoriteButton = (entry, index) => {
+    if (!supportsFavorites) return '';
+    const identifier = String(entry?.identifier ?? '').trim();
+    if (!identifier) return '';
+    const entryContainer = resolveEntryContainer(entry);
+    const favoriteSet = getFavoriteIdsForEntry(entry);
+    const isFavorite = favoriteSet ? favoriteSet.has(identifier) : false;
+    const activeClass = isFavorite ? ' is-favorite' : '';
+    const title = isFavorite ? '\u53d6\u6d88\u6536\u85cf' : '\u6536\u85cf';
+    const pressed = isFavorite ? 'true' : 'false';
+    const containerAttr = isFavoritesSide && entryContainer ? ` data-entry-container="${escapeAttr(entryContainer)}"` : '';
+    return `
+             <button class="pt-favorite-toggle${activeClass}" data-entry-index="${index}" data-entry-side="${side}" data-entry-identifier="${escapeAttr(identifier)}"${containerAttr} aria-pressed="${pressed}" title="${title}">
+                 ${favoriteStarIcon()}
+             </button>
+         `;
+  };
+
+  const syncFavoriteButtons = (ids) => {
+    if (!ids || !entriesList?.length) return;
+    const isMap = ids instanceof Map;
+    entriesList.find('.pt-favorite-toggle').each(function () {
+      const $btn = $(this);
+      const identifier = String($btn.data('entry-identifier') ?? '').trim();
+      if (!identifier) return;
+      if (isMap) {
+        const container = String($btn.data('entry-container') ?? '').trim();
+        const containerIds = container ? ids.get(container) : null;
+        updateFavoriteButtonState($btn, containerIds ? containerIds.has(identifier) : false);
+        return;
+      }
+      updateFavoriteButtonState($btn, ids.has(identifier));
+    });
   };
 
   const renderPositionItem = (position, text) => `
@@ -247,7 +351,11 @@ function displayEntries(entries, side) {
     const bottomHtml = renderPositionItem('bottom', '📍 插入到底部');
     const hostId = `pt-${side}-entries-chunk-host`;
 
-    entriesList.html([topHtml, `<div id="${hostId}"></div>`, bottomHtml].join(''));
+    const containerParts = [];
+    if (renderPositions) containerParts.push(topHtml);
+    containerParts.push(`<div id="${hostId}"></div>`);
+    if (renderPositions) containerParts.push(bottomHtml);
+    entriesList.html(containerParts.join(''));
     const host = entriesList.find(`#${hostId}`);
 
     const buildDetailsText = (entry) => {
@@ -260,7 +368,7 @@ function displayEntries(entries, side) {
     };
 
     const renderEntryItem = (entry, index) => `
-         <div class="entry-item" data-index="${index}" data-side="${side}" data-identifier="${escapeAttr(entry.identifier)}" style="border-color: ${
+         <div class="entry-item" data-index="${index}" data-side="${side}" data-identifier="${escapeAttr(resolveEntryKey(entry))}" style="border-color: ${
       vars.inputBorder
     }; background: ${vars.inputBg}; transition: all 0.3s ease; cursor: pointer; position: relative; display: flex; align-items: center; padding: ${
       isSmallScreen ? '8px 6px' : isMobile ? '8px 8px' : '12px 14px'
@@ -277,20 +385,22 @@ function displayEntries(entries, side) {
          : isMobile
          ? 'calc(var(--pt-font-size) * 0.75)'
          : 'calc(var(--pt-font-size) * 0.8125)'
-    }; word-break: break-word; line-height: 1.2;">${renderWorldbookTriggerDot(entry)}${escapeHtml(entry.name)}</div>
+    }; word-break: break-word; line-height: 1.2;">${renderWorldbookTriggerDot(entry)}${renderEntryTitle(entry)}</div>
                   ${
                     isMobile
                       ? ''
                       : `<div class="entry-details" style="font-size: calc(var(--pt-font-size) * 0.75); color: ${vars.tipColor}; line-height: 1.4; margin-top: 2px;">${escapeHtml(buildDetailsText(entry))}</div>`
                   }
              </div>
-             <button class="create-here-btn" data-entry-index="${index}" data-entry-side="${side}" title="在此处新建">
+             ${renderFavoriteButton(entry, index)}
+             ${renderCreateButtons ? `<button class="create-here-btn" data-entry-index="${index}" data-entry-side="${side}" title="在此处新建">
                  ${createNewIcon()}
-             </button>
+             </button>` : ''}
          </div>`;
 
     const chunkSize = isMobile ? 60 : 160;
     let startIndex = 0;
+    let worldbookFavoriteIds = null;
     const renderChunk = () => {
       const endIndex = Math.min(entries.length, startIndex + chunkSize);
       let html = '';
@@ -298,28 +408,51 @@ function displayEntries(entries, side) {
         html += renderEntryItem(entries[i], i);
       }
       host.append(html);
+      if (worldbookFavoriteIds) {
+        syncFavoriteButtons(worldbookFavoriteIds);
+      }
       startIndex = endIndex;
       if (startIndex < entries.length) requestAnimationFrame(renderChunk);
     };
 
     renderChunk();
     bindEntryListEvents();
+
+    if (supportsFavorites && adapter?.id === 'worldbook' && containerName) {
+      getFavoriteIdsForContainer(adapter.id, containerName)
+        .then(ids => {
+          worldbookFavoriteIds = ids;
+          syncFavoriteButtons(ids);
+        })
+        .catch(() => null);
+    } else if (favoriteIds) {
+      syncFavoriteButtons(favoriteIds);
+    } else if (favoriteIdsByContainer) {
+      syncFavoriteButtons(favoriteIdsByContainer);
+    }
     return;
   }
 
-  const entriesHtml = [
-    renderPositionItem('top', '📍 插入到顶部'),
-    ...(entries.length === 0
-      ? [
-          `<div style="color: ${vars.tipColor}; text-align: center; padding: ${
-            isMobile ? '30px 15px' : '40px 20px'
-          }; font-size: ${
-            isMobile ? 'calc(var(--pt-font-size) * 0.875)' : 'calc(var(--pt-font-size) * 0.8125)'
-          }; font-weight: 500;"><div style="font-size: calc(var(--pt-font-size) * 3); margin-bottom: 15px; opacity: 0.3;">📭</div><div>没有条目</div></div>`,
-        ]
-      : entries.map(
-          (entry, index) => `
-         <div class="entry-item" data-index="${index}" data-side="${side}" data-identifier="${escapeAttr(entry.identifier)}" style="border-color: ${vars.inputBorder}; background: ${
+  const entriesHtmlParts = [];
+  if (renderPositions) {
+    entriesHtmlParts.push(renderPositionItem('top', '📍 插入到顶部'));
+  }
+
+  if (entries.length === 0) {
+    if (renderEmptyMessage) {
+      entriesHtmlParts.push(
+        `<div style="color: ${vars.tipColor}; text-align: center; padding: ${
+          isMobile ? '30px 15px' : '40px 20px'
+        }; font-size: ${
+          isMobile ? 'calc(var(--pt-font-size) * 0.875)' : 'calc(var(--pt-font-size) * 0.8125)'
+        }; font-weight: 500;"><div style="font-size: calc(var(--pt-font-size) * 3); margin-bottom: 15px; opacity: 0.3;">📭</div><div>没有条目</div></div>`,
+      );
+    }
+  } else {
+    entriesHtmlParts.push(
+      ...entries.map(
+        (entry, index) => `
+         <div class="entry-item" data-index="${index}" data-side="${side}" data-identifier="${escapeAttr(resolveEntryKey(entry))}" style="border-color: ${vars.inputBorder}; background: ${
             vars.inputBg
           }; transition: all 0.3s ease; cursor: pointer; position: relative; display: flex; align-items: center; padding: ${
             isSmallScreen ? '8px 6px' : isMobile ? '8px 8px' : '12px 14px'
@@ -338,7 +471,7 @@ function displayEntries(entries, side) {
                : isMobile
                ? 'calc(var(--pt-font-size) * 0.75)'
                : 'calc(var(--pt-font-size) * 0.8125)'
-          }; word-break: break-word; line-height: 1.2;">${renderWorldbookTriggerDot(entry)}${escapeHtml(entry.name)}${
+          }; word-break: break-word; line-height: 1.2;">${renderWorldbookTriggerDot(entry)}${renderEntryTitle(entry)}${
              entry.isUninserted
                ? ' <span style="color: ${vars.accentColor}; font-size: calc(var(--pt-font-size) * 0.625);">🔸未插入</span>'
                : ''
@@ -357,13 +490,20 @@ function displayEntries(entries, side) {
                  </div>`
                  }
              </div>
-             <button class="create-here-btn" data-entry-index="${index}" data-entry-side="${side}" title="在此处新建">
+             ${renderFavoriteButton(entry, index)}
+             ${renderCreateButtons ? `<button class="create-here-btn" data-entry-index="${index}" data-entry-side="${side}" title="在此处新建">
                  ${createNewIcon()}
-             </button>
+             </button>` : ''}
          </div>`,
-        )),
-    renderPositionItem('bottom', '📍 插入到底部'),
-  ].join('');
+      ),
+    );
+  }
+
+  if (renderPositions) {
+    entriesHtmlParts.push(renderPositionItem('bottom', '📍 插入到底部'));
+  }
+
+  const entriesHtml = entriesHtmlParts.join('');
 
   entriesList.html(entriesHtml);
 
@@ -401,8 +541,38 @@ function displayEntries(entries, side) {
       updateSelectionCount();
     });
 
+    entriesContainer.off('click', '.pt-favorite-toggle').on('click', '.pt-favorite-toggle', async function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const $btn = parentJQuery(this);
+      const entrySide = String($btn.data('entry-side') ?? '').trim();
+      const identifier = String($btn.data('entry-identifier') ?? '').trim();
+      const adapter = getActiveTransferAdapter();
+      let resolvedContainer = resolveContainerName(entrySide);
+      if (entrySide === 'favorites') {
+        const entryContainer = String($btn.data('entry-container') ?? '').trim();
+        if (entryContainer) resolvedContainer = entryContainer;
+      }
+
+      if (!adapter?.id || !resolvedContainer || !identifier) return;
+
+      try {
+        const nextState = await toggleFavoriteEntry(adapter.id, resolvedContainer, identifier);
+        updateFavoriteButtonState($btn, nextState);
+      } catch (error) {
+        console.error('收藏切换失败:', error);
+        if (window.toastr) {
+          toastr.error('收藏切换失败: ' + (error?.message ?? error));
+        } else {
+          alert('收藏切换失败: ' + (error?.message ?? error));
+        }
+      }
+    });
+
     entriesContainer.off('click', '.entry-item').on('click', '.entry-item', async function (e) {
-      if (!parentJQuery(e.target).is('.entry-checkbox') && !parentJQuery(e.target).is('.create-here-btn')) {
+      const $target = parentJQuery(e.target);
+      if (!$target.closest('.entry-checkbox, .create-here-btn, .pt-favorite-toggle').length) {
         e.preventDefault();
         const $item = parentJQuery(this);
         const itemSide = $item.data('side');
@@ -418,7 +588,7 @@ function displayEntries(entries, side) {
         // 位置项点击逻辑
         if ($item.hasClass('position-item')) {
           const position = $item.data('position');
-          if (window.transferMode && (window.transferMode.toSide === itemSide || window.transferMode.toSide === 'any')) {
+          if (window.transferMode && (!window.transferMode.toSide || window.transferMode.toSide === itemSide || window.transferMode.toSide === 'any')) {
             executeTransferToPosition(window.transferMode.apiInfo, window.transferMode.fromSide, itemSide, position);
           } else if (window.newEntryMode && window.newEntryMode.side === itemSide) {
             executeNewEntryAtPosition(window.newEntryMode.apiInfo, itemSide, position);
@@ -429,7 +599,7 @@ function displayEntries(entries, side) {
         }
 
         // 转移模式下的目标条目点击逻辑
-        if (window.transferMode && (window.transferMode.toSide === itemSide || window.transferMode.toSide === 'any')) {
+        if (window.transferMode && (!window.transferMode.toSide || window.transferMode.toSide === itemSide || window.transferMode.toSide === 'any')) {
           const index = parseInt($item.data('index'));
           const identifier = $item.data('identifier');
           const adapter = getActiveTransferAdapter();
@@ -555,16 +725,36 @@ function displayEntries(entries, side) {
   }
 
   bindEntryListEvents();
+
+  if (supportsFavorites && adapter?.id === 'worldbook' && containerName) {
+    getFavoriteIdsForContainer(adapter.id, containerName)
+      .then(ids => syncFavoriteButtons(ids))
+      .catch(() => null);
+  } else if (favoriteIds) {
+    syncFavoriteButtons(favoriteIds);
+  } else if (favoriteIdsByContainer) {
+    syncFavoriteButtons(favoriteIdsByContainer);
+  }
+
+  // 应用分组显示（如果有分组配置）
+  if (containerName && adapter?.id === 'preset' && !isFavoritesSide) {
+    setTimeout(() => {
+      applyGroupDisplayToRenderedEntries(entriesList, entries, side, containerName);
+    }, 100);
+  }
 }
 
 // 统一获取当前侧已选中的条目（优先按 identifier 对应，保证顺序稳定）
-function getSelectedEntries(side) {
+function getSelectedEntries(side, options = {}) {
   const $ = getJQuery();
   const selected = [];
   let entries;
   let listSelector;
 
-  if (side === 'single') {
+  if (side === 'favorites') {
+    entries = Array.isArray(options.entries) ? options.entries : Array.isArray(window.ptFavoriteEntries) ? window.ptFavoriteEntries : [];
+    listSelector = options.listSelector || window.ptFavoriteListSelector || '#pt-favorites-entries-main';
+  } else if (side === 'single') {
     entries = window.singleEntries;
     listSelector = '#single-entries-list';
   } else {
@@ -581,7 +771,13 @@ function getSelectedEntries(side) {
     const index = parseInt($item.data('index'));
 
     if (identifier && entries) {
-      const entryByIdentifier = entries.find(entry => entry.identifier === identifier);
+      const entryByIdentifier = entries.find(entry => {
+        if (side === 'favorites') {
+          const key = String(entry?.ptFavoriteKey ?? '').trim();
+          return key && key === identifier;
+        }
+        return entry.identifier === identifier;
+      });
       if (entryByIdentifier) {
         identifierIndexMap.push({
           entry: entryByIdentifier,

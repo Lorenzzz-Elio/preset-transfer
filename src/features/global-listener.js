@@ -43,6 +43,18 @@ let globalPresetListener = {
       // 方案 3：轮询检测（最后兜底）
       this.startPolling();
 
+      // 初始化时也对当前预设执行一次处理（跨设备进入时保证正则绑定/面板状态能被正确应用）
+      const initialPreset = this.currentPreset;
+      if (initialPreset) {
+        setTimeout(() => {
+          try {
+            void this.handlePresetChange(null, initialPreset);
+          } catch {
+            /* ignore */
+          }
+        }, 0);
+      }
+
       this.isActive = true;
     } catch (error) {
       console.error('初始化全局预设监听器失败:', error);

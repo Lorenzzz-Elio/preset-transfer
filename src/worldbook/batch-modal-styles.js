@@ -42,8 +42,15 @@ function getWorldbookBatchManageModalStyles(vars) {
     #batch-delete-modal .preset-item input {
       margin-right: 12px; transform: scale(1.2);
     }
+    #batch-delete-modal .preset-item input:disabled {
+      opacity: 0.5;
+    }
     #batch-delete-modal .preset-name {
       flex: 1; font-weight: 500;
+    }
+    #batch-delete-modal .current-badge {
+      background: #f59e0b; color: white; padding: 2px 8px;
+      border-radius: ${vars.borderRadiusMedium}; font-size: ${vars.fontSizeSmall}; font-weight: 600;
     }
 
     #batch-delete-modal .pt-wb-top-group {

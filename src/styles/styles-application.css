@@ -412,40 +412,221 @@ select option {
     display: block;
 }
 
-#preset-transfer-modal .pt-search-settings-btn {
+#preset-transfer-modal .search-input-wrapper input[type='text'] {
+    padding-right: 50px;
+}
+
+#preset-transfer-modal .search-input-wrapper.has-favorites input[type='text'] {
+    padding-right: 92px;
+}
+
+#preset-transfer-modal .pt-favorites-btn {
     position: absolute;
     top: 50%;
-    right: 10px;
-    transform: translateY(-50%);
+    right: 50px;
+    margin-top: -15px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 34px;
     height: 30px;
+    box-sizing: border-box;
+    padding: 0;
+    line-height: 1;
     border-radius: 8px;
     border: none;
     background: var(--pt-accent-color-muted);
     color: var(--pt-body-color);
     cursor: pointer;
     z-index: 2;
-    transition: all 0.3s ease;
-    transform: translateY(-50%) translateZ(0);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease, transform 0.3s ease;
+    transform: translateZ(0);
     will-change: background-color, transform;
+}
+
+#preset-transfer-modal .pt-favorites-btn:hover {
+    filter: brightness(1.05);
+    transform: scale(1.05) translateZ(0);
+}
+
+#preset-transfer-modal .pt-favorites-btn:active {
+    filter: brightness(0.95);
+    transform: scale(0.98) translateZ(0);
 }
 
 #preset-transfer-modal .pt-search-settings-btn:hover {
     filter: brightness(1.05);
-    transform: translateY(-50%) scale(1.05);
+    transform: translateY(-50%) scale(1.05) translateZ(0);
 }
 
 #preset-transfer-modal .pt-search-settings-btn:active {
     filter: brightness(0.95);
-    transform: translateY(-50%) scale(0.98);
+    transform: translateY(-50%) scale(0.98) translateZ(0);
 }
 
+#preset-transfer-modal .pt-favorites-btn.is-active {
+    box-shadow: 0 0 0 2px var(--pt-border-color);
+}
+
+#preset-transfer-modal .pt-favorites-btn .pt-icon,
 #preset-transfer-modal .pt-search-settings-btn .pt-icon {
     width: 18px;
     height: 18px;
+}
+
+#preset-transfer-modal .pt-search-settings-btn {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 30px;
+    box-sizing: border-box;
+    padding: 0;
+    line-height: 1;
+    border-radius: 8px;
+    border: none;
+    background: var(--pt-accent-color-muted);
+    color: var(--pt-body-color);
+    cursor: pointer;
+    z-index: 2;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease, transform 0.3s ease;
+    transform: translateY(-50%) translateZ(0);
+    transform-origin: center;
+    will-change: background-color, transform;
+}
+
+
+#preset-transfer-modal .pt-favorites-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 8px);
+    border-radius: 12px;
+    border: 1.5px solid var(--pt-border-color);
+    background: var(--pt-scrollbar-track-color);
+    backdrop-filter: blur(35px) brightness(0.85) saturate(1.2);
+    -webkit-backdrop-filter: blur(35px) brightness(0.85) saturate(1.2);
+    color: var(--pt-body-color);
+    box-shadow: 0 15px 45px var(--pt-entry-hover-shadow), inset 0 1px 2px var(--pt-border-color);
+    z-index: 10005;
+    overflow: hidden;
+    opacity: 0.98;
+}
+
+#preset-transfer-modal .pt-favorites-header {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--pt-border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+#preset-transfer-modal .pt-favorites-title-group {
+    min-width: 0;
+}
+
+#preset-transfer-modal .pt-favorites-title {
+    font-weight: 600;
+}
+
+#preset-transfer-modal .pt-favorites-sub {
+    font-size: calc(var(--pt-font-size) * 0.75);
+    color: var(--pt-quote-color);
+    margin-top: 2px;
+}
+
+#preset-transfer-modal .pt-favorites-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+#preset-transfer-modal .pt-favorites-transfer {
+    border: none;
+    border-radius: 8px;
+    padding: 6px 10px;
+    background: var(--pt-accent-color);
+    color: var(--pt-body-color);
+    cursor: pointer;
+    font-weight: 700;
+    font-size: calc(var(--pt-font-size) * 0.75);
+    transition: opacity 0.15s ease, transform 0.05s ease;
+}
+
+#preset-transfer-modal .pt-favorites-transfer:hover {
+    opacity: 0.92;
+}
+
+#preset-transfer-modal .pt-favorites-transfer:active {
+    transform: translateY(1px);
+}
+
+#preset-transfer-modal .pt-favorites-transfer:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#preset-transfer-modal .pt-favorites-body {
+    padding: 8px 10px 12px;
+}
+
+#preset-transfer-modal .pt-favorites-entries {
+    max-height: 260px;
+    overflow: auto;
+    padding-right: 4px;
+}
+
+#preset-transfer-modal .pt-favorites-empty {
+    color: var(--pt-quote-color);
+    text-align: center;
+    padding: 18px 8px;
+    font-size: calc(var(--pt-font-size) * 0.75);
+}
+
+#preset-transfer-modal .pt-favorite-toggle {
+    background: transparent;
+    border: 1px solid var(--pt-border-color);
+    color: var(--pt-body-color);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transform: translateZ(0);
+    will-change: background-color, transform;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    margin-left: 8px;
+    flex-shrink: 0;
+}
+
+#preset-transfer-modal .pt-favorite-toggle:hover {
+    background: var(--pt-accent-color-muted);
+}
+
+#preset-transfer-modal .pt-favorite-toggle:active {
+    transform: scale(0.98);
+}
+
+#preset-transfer-modal .pt-favorite-toggle .pt-icon {
+    width: 18px;
+    height: 18px;
+}
+
+#preset-transfer-modal .pt-favorite-toggle.is-favorite {
+    background: var(--pt-accent-color-muted);
+}
+
+#preset-transfer-modal .pt-favorite-toggle.is-favorite svg {
+    fill: currentColor;
 }
 
 #preset-transfer-modal .pt-search-settings-popover {

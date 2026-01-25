@@ -1,9 +1,10 @@
 import { ensureViewportCssVars, escapeAttr, escapeHtml, getCurrentApiInfo, getDeviceInfo, getJQuery } from '../core/utils.js';
 import { bindTransferEvents } from '../events/event-binding.js';
 import { loadLocalManifest } from '../features/extension-update.js';
+import { initPresetListGrouping } from '../features/preset-list-grouping.js';
 import { initializeEnhancedFeatures } from '../settings/enhanced-features.js';
 import { getActiveTransferAdapter, getTransferEngine, setActiveTransferAdapterKey } from '../transfer/transfer-context.js';
-import { gearIcon, getCurrentPresetIcon } from './icons.js';
+import { favoriteStarIcon, gearIcon, getCurrentPresetIcon } from './icons.js';
 import { applyStyles } from './styles-application.js';
 
 async function createTransferUI({ adapterKey = 'preset' } = {}) {
@@ -29,6 +30,30 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
   const $ = getJQuery();
   const { isMobile, isSmallScreen, isPortrait } = getDeviceInfo();
   ensureViewportCssVars();
+
+  const renderFavoritesButton = (context) => `
+        <button type="button" class="pt-favorites-btn" data-pt-fav-context="${context}" title="收藏条目">
+            ${favoriteStarIcon()}
+        </button>
+    `;
+
+  const renderFavoritesPanel = (context) => `
+        <div class="pt-favorites-panel" data-pt-fav-context="${context}" style="display:none;">
+            <div class="pt-favorites-header">
+                <div class="pt-favorites-title-group">
+                    <div class="pt-favorites-title">收藏条目</div>
+                    <div class="pt-favorites-sub"></div>
+                </div>
+                <div class="pt-favorites-actions">
+                    <button type="button" class="pt-favorites-transfer">转移</button>
+                </div>
+            </div>
+            <div class="pt-favorites-body">
+                <div class="pt-favorites-empty">暂无收藏条目</div>
+                <div id="pt-favorites-entries-${context}" class="pt-favorites-entries"></div>
+            </div>
+        </div>
+    `;
 
   const extensionManifest = await loadLocalManifest()
     .then(r => r.manifest)
@@ -84,7 +109,7 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
                 </div>
                 <div class="action-section">
                     <button id="load-entries" disabled>加载条目</button>
-                    <button id="batch-delete-presets">批量删除预设</button>
+                    <button id="batch-delete-presets">批量管理预设</button>
                     <label class="auto-switch-label">
                         <input type="checkbox" id="auto-close-modal" checked>
                         <span>完成后自动关闭</span>
@@ -99,7 +124,8 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
                         <h4>双向预设管理</h4>
                         <p>提示：左右两侧显示不同预设的条目，可以互相转移、编辑、删除，点击条目右侧的 ➕ 按钮可在此处新建</p>
                         <div class="search-section">
-                            <div class="search-input-wrapper">
+                            <div class="search-input-wrapper has-favorites">
+                                ${renderFavoritesButton('main')}
                                 <input type="text" id="entry-search" placeholder="搜索条目...">
                                 <button type="button" class="pt-search-settings-btn" data-pt-search-context="main" title="搜索选项">
                                     ${gearIcon()}
@@ -114,6 +140,7 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
                                         <span>含内容（可能卡顿）</span>
                                     </label>
                                 </div>
+                                ${renderFavoritesPanel('main')}
                             </div>
                         </div>
                     </div>
@@ -184,27 +211,29 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
                                         </button>
                                     </div>
                                 </div>
-                                <span id="left-selection-count" class="selection-count"></span>
-                            </div>
-                            <div class="left-search-container" style="display: none;">
-                                <div class="search-input-wrapper">
-                                    <input type="text" id="left-entry-search-inline" placeholder="搜索左侧条目...">
-                                    <button type="button" class="pt-search-settings-btn" data-pt-search-context="left" title="搜索选项">
-                                        ${gearIcon()}
-                                    </button>
+                            <span id="left-selection-count" class="selection-count"></span>
+                        </div>
+                        <div class="left-search-container" style="display: none;">
+                            <div class="search-input-wrapper has-favorites">
+                                ${renderFavoritesButton('left')}
+                                <input type="text" id="left-entry-search-inline" placeholder="搜索左侧条目...">
+                                <button type="button" class="pt-search-settings-btn" data-pt-search-context="left" title="搜索选项">
+                                    ${gearIcon()}
+                                </button>
                                     <div class="pt-search-settings-popover" data-pt-search-context="left" style="display:none;">
                                         <label class="pt-search-option">
                                             <input type="checkbox" class="pt-search-opt-global">
                                             <span>跨预设搜索</span>
                                         </label>
                                         <label class="pt-search-option">
-                                            <input type="checkbox" class="pt-search-opt-content">
-                                            <span>含内容（可能卡顿）</span>
-                                        </label>
-                                    </div>
+                                        <input type="checkbox" class="pt-search-opt-content">
+                                        <span>含内容（可能卡顿）</span>
+                                    </label>
                                 </div>
+                                ${renderFavoritesPanel('left')}
                             </div>
-                            <div id="left-entries-list" class="entries-list"></div>
+                        </div>
+                        <div id="left-entries-list" class="entries-list"></div>
                             <div class="side-actions">
                                 <button id="left-edit" disabled>编辑</button>
                                 <button id="left-delete" disabled>删除</button>
@@ -241,26 +270,28 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
                                         </button>
                                     </div>
                                 </div>
-                                <span id="right-selection-count" class="selection-count"></span>
-                            </div>
-                            <div class="right-search-container" style="display: none;">
-                                <div class="search-input-wrapper">
-                                    <input type="text" id="right-entry-search-inline" placeholder="搜索右侧条目...">
-                                    <button type="button" class="pt-search-settings-btn" data-pt-search-context="right" title="搜索选项">
-                                        ${gearIcon()}
-                                    </button>
+                            <span id="right-selection-count" class="selection-count"></span>
+                        </div>
+                        <div class="right-search-container" style="display: none;">
+                            <div class="search-input-wrapper has-favorites">
+                                ${renderFavoritesButton('right')}
+                                <input type="text" id="right-entry-search-inline" placeholder="搜索右侧条目...">
+                                <button type="button" class="pt-search-settings-btn" data-pt-search-context="right" title="搜索选项">
+                                    ${gearIcon()}
+                                </button>
                                     <div class="pt-search-settings-popover" data-pt-search-context="right" style="display:none;">
                                         <label class="pt-search-option">
                                             <input type="checkbox" class="pt-search-opt-global">
                                             <span>跨预设搜索</span>
                                         </label>
                                         <label class="pt-search-option">
-                                            <input type="checkbox" class="pt-search-opt-content">
-                                            <span>含内容（可能卡顿）</span>
-                                        </label>
-                                    </div>
+                                        <input type="checkbox" class="pt-search-opt-content">
+                                        <span>含内容（可能卡顿）</span>
+                                    </label>
                                 </div>
+                                ${renderFavoritesPanel('right')}
                             </div>
+                        </div>
                             <div id="right-entries-list" class="entries-list"></div>
                             <div class="side-actions">
                                 <button id="right-edit" disabled>编辑</button>
@@ -390,9 +421,7 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
 
     populateContainerOptions(containerNames, { loading: isLoadingContainers });
 
-    $('#batch-delete-presets').text(
-      adapter.id === 'worldbook' ? `批量管理${adapter.ui.containerLabel}` : `批量删除${adapter.ui.containerLabel}`,
-    );
+    $('#batch-delete-presets').text(`批量管理${adapter.ui.containerLabel}`);
 
     if (adapter.id === 'worldbook') {
       try {
@@ -577,6 +606,10 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
 
   applyStyles(isMobile, isSmallScreen, isPortrait);
   bindTransferEvents(apiInfo, $('#preset-transfer-modal'));
+  if (adapter.id === 'preset') {
+    initPresetListGrouping('#left-preset');
+    initPresetListGrouping('#right-preset');
+  }
 
   if (isLoadingContainers) {
     // Avoid blocking UI during panel open: load container list async and then populate selects.

@@ -178,6 +178,52 @@
   min-width: 400px !important;
 }
 
+/* Preset list grouping - fix select2 container width */
+#openai_api-presets .select2-container {
+  flex: 1 !important;
+  width: auto !important;
+  max-width: 100% !important;
+}
+
+/* Preset list grouping - allow scrolling when dropdown is open */
+.select2-container--open + .select2-container--dropdown {
+  pointer-events: auto !important;
+}
+
+.pt-preset-list-dropdown {
+  pointer-events: auto !important;
+}
+
+/* 为预设列表下拉菜单添加滚动条样式 */
+.pt-preset-list-dropdown .select2-results__options {
+  max-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(127, 127, 127, 0.3) transparent;
+}
+
+.pt-preset-list-dropdown .select2-results__options::-webkit-scrollbar {
+  width: 8px;
+}
+
+.pt-preset-list-dropdown .select2-results__options::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pt-preset-list-dropdown .select2-results__options::-webkit-scrollbar-thumb {
+  background: rgba(127, 127, 127, 0.3);
+  border-radius: 4px;
+}
+
+.pt-preset-list-dropdown .select2-results__options::-webkit-scrollbar-thumb:hover {
+  background: rgba(127, 127, 127, 0.5);
+}
+
+/* Prevent select2 from blocking scroll */
+.select2-dropdown {
+  pointer-events: auto !important;
+}
+
 @media (max-width: 768px) {
   .select2-container--open .select2-dropdown {
     min-width: 300px !important;
@@ -270,7 +316,7 @@
 /* Theme dropdown: keep menu buttons flush-right (mobile-friendly) */
 .pt-theme-grouping-results li.select2-results__option:not(.pt-theme-group) {
   position: relative;
-  padding-right: 34px;
+  padding-right: 58px;
 }
 
 .pt-theme-grouping-results .pt-theme-menu {
@@ -280,6 +326,50 @@
   top: 50%;
   transform: translateY(-50%);
   margin-left: 0;
+}
+
+.pt-theme-grouping-results .pt-theme-batch-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  user-select: none;
+  position: absolute;
+  right: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 1px solid var(--pt-border, var(--SmartThemeBorderColor, #444));
+  border-radius: 4px;
+  color: var(--pt-text, var(--SmartThemeBodyColor, #fff));
+  background: rgba(0, 0, 0, 0.05);
+  opacity: 0.85;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.pt-theme-grouping-results .pt-theme-batch-toggle:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pt-theme-grouping-results .pt-theme-batch-toggle::after {
+  content: '';
+  width: 8px;
+  height: 4px;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  opacity: 0;
+}
+
+.pt-theme-grouping-results .pt-theme-batch-toggle[aria-checked="true"]::after {
+  opacity: 1;
+}
+
+.pt-theme-grouping-results li.pt-theme-batch-selected {
+  box-shadow: 0 0 0 2px var(--SmartThemeEmColor, var(--active, #3b82f6)) inset;
+  border-radius: 4px;
 }
 
 .pt-theme-grouping-results .pt-theme-group > .select2-results__group {
@@ -317,6 +407,35 @@
 
 .pt-theme-context-menu .pt-menu-item:hover {
   background: var(--pt-border, var(--SmartThemeBorderColor, #333));
+}
+
+.pt-theme-context-menu .pt-menu-sep {
+  margin: 4px 0;
+  border-top: 1px solid var(--pt-border, var(--SmartThemeBorderColor, #333));
+  opacity: 0.7;
+}
+
+.pt-theme-context-menu.pt-theme-filter-menu .pt-theme-filter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pt-theme-context-menu.pt-theme-filter-menu .pt-theme-filter-checkbox {
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.pt-theme-context-menu.pt-theme-filter-menu .pt-theme-filter-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#pt-theme-group-filter-btn.is-active {
+  box-shadow: 0 0 0 2px var(--SmartThemeEmColor, var(--active, #3b82f6)) inset;
 }
 
 .pt-theme-context-menu .pt-submenu {
@@ -545,4 +664,77 @@
 #pt-wb-common-button {
   white-space: nowrap;
   writing-mode: horizontal-tb;
+}
+
+/* 新功能样式 - 分组一键开关、转移界面分组显示、预设列表分组 */
+
+/* 分组一键开关按钮样式 */
+.pt-entry-group-toggle-all-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  min-width: 0;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--SmartThemeQuoteColor, var(--pt-tip, inherit));
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+}
+
+.pt-entry-group-toggle-all-btn i,
+.pt-entry-group-toggle-all-btn span {
+  pointer-events: none;
+}
+
+.pt-entry-group-toggle-all-btn.is-mixed {
+  opacity: 0.6;
+}
+
+.pt-entry-group-toggle-all-btn:hover {
+  transform: scale(1.05);
+}
+
+.pt-entry-group-toggle-all-btn:active {
+  transform: scale(0.95);
+}
+
+.pt-entry-group-toggle-all-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 转移界面分组显示样式 */
+.pt-transfer-group-header {
+  user-select: none;
+}
+
+.pt-transfer-group-header:hover {
+  opacity: 0.9;
+}
+
+.pt-transfer-group-header .pt-group-toggle-icon {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.pt-transfer-group-container {
+  padding-left: 20px;
+}
+
+/* 预设列表分组样式 */
+.pt-preset-list-group .select2-results__group {
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pt-preset-list-group .select2-results__group:hover {
+  opacity: 0.8;
+}
+
+.pt-preset-list-group .select2-results__options--nested {
+  padding-left: 16px;
 }

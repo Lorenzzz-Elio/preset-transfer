@@ -4,6 +4,7 @@ import { PT } from '../core/api-compat.js';
 import { debounce, ensureViewportCssVars, getJQuery, getSillyTavernContext } from '../core/utils.js';
 import { getAllPresetGroupings, addPresetGrouping, updatePresetGrouping, removePresetGrouping } from '../features/entry-grouping.js';
 import { CommonStyles } from '../styles/common-styles.js';
+import { addToggleAllButtonToGroupHeader, toggleAllEntriesInGroup } from './entry-group-toggle-button.js';
 
 // 临时标记状态
 const tempMarks = { start: null, end: null };
@@ -659,7 +660,20 @@ function createGroupUI(groupItems, grouping, presetName, groupIndex) {
     </div>
   `);
   groupHeader.find('.pt-entry-group-name').text(grouping.name || '分组');
-  groupHeader.find('.pt-entry-group-count').text(String(groupItems.length));
+  const totalCount = groupItems.length;
+  let enabledCount = 0;
+  groupItems.forEach((item) => {
+    const $item = $(item);
+    const $toggle = $item.find('.prompt-manager-toggle-action');
+    if (!$toggle.length) {
+      enabledCount += 1;
+      return;
+    }
+
+    const isEnabled = !$toggle.hasClass('disabled') && !$toggle.hasClass('fa-toggle-off');
+    if (isEnabled) enabledCount += 1;
+  });
+  groupHeader.find('.pt-entry-group-count').text(`${totalCount}/${enabledCount}`);
 
   // 保存 groupIndex 到 header 的 data 属性
   groupHeader.data('group-index', groupIndex);
@@ -707,6 +721,17 @@ function createGroupUI(groupItems, grouping, presetName, groupIndex) {
       if (window.toastr) toastr.success('分组已取消');
     }
   });
+
+  // 添加一键开关按钮
+  const $groupWrapper = groupHeader.next('.pt-entry-group-wrapper');
+  if ($groupWrapper.length) {
+    const groupItemElements = $groupWrapper.find('li[data-pm-identifier]').toArray();
+    if (groupItemElements.length > 0) {
+      addToggleAllButtonToGroupHeader(groupHeader, groupItemElements, async (enabled, items) => {
+        await toggleAllEntriesInGroup(enabled, items);
+      });
+    }
+  }
 }
 
 // 绑定三连击事件

@@ -1,8 +1,8 @@
 import { PT } from '../core/api-compat.js';
 import { getJQuery, escapeHtml } from '../core/utils.js';
 import {
-  getEntryStatesGroupByPrefix,
-  setEntryStatesGroupByPrefix,
+  getEntryStatesSaveWorldBindings,
+  setEntryStatesSaveWorldBindings,
   getPresetEntryStates,
   getCurrentEntryStates,
   saveCurrentEntryStatesAsVersion,
@@ -12,7 +12,7 @@ import {
 } from '../features/entry-states.js';
 
 // 本地缓存一份条目状态偏好，避免直接依赖未声明的全局变量
-let entryStatesGroupByPrefix = getEntryStatesGroupByPrefix();
+let entryStatesSaveWorldBindings = getEntryStatesSaveWorldBindings();
 
 function removeNativeEntryStatesPanel() {
   const $ = getJQuery();
@@ -55,8 +55,8 @@ function ensureNativeEntryStatesPanelInjected() {
         <span class="title">条目状态</span>
         <div style="flex:1;"></div>
         <button id="save-current-entry-states" class="menu_button" style="font-size: 11px; padding: 2px 6px; display: inline-block; white-space: nowrap;" title="保存当前条目状态">保存</button>
-        <button id="entry-states-group-toggle" class="menu_button" style="font-size: 11px; padding: 2px 6px; display: inline-block; white-space: nowrap;" title="按名称前缀分组显示">${
-          entryStatesGroupByPrefix ? '分组:开' : '分组:关'
+        <button id="entry-states-world-bindings-toggle" class="menu_button" style="font-size: 11px; padding: 2px 6px; display: inline-block; white-space: nowrap;" title="保存绑定世界书">${
+          entryStatesSaveWorldBindings ? '世界书:启用' : '世界书:暂停'
         }</button>
       </div>
       <div class="content" style="display:none; max-height:50vh; overflow:auto; padding:10px;">
@@ -138,22 +138,21 @@ function renderNativeEntryStatesContent(presetName) {
           </div>
         </div>`;
     };
-    if (entryStatesGroupByPrefix) {
-      const getGroupName = name => {
-        const m = (name || '').match(/^(【[^】]+】|[^-\[\]_.:：]+[-\[\]_.:：])/);
-        let g = m ? m[1].replace(/[-\[\]_.:：]$/, '').replace(/^【|】$/g, '') : '未分组';
-        g = (g || '未分组').replace(/['"\\]/g, '').trim();
-        return g.length ? g : '未分组';
-      };
-      const groups = new Map();
-      statesConfig.versions.forEach(v => {
-        const g = getGroupName(v.name || '');
-        if (!groups.has(g)) groups.set(g, []);
-        groups.get(g).push(v);
-      });
-      html += '<div id="es-groups">';
-      for (const [gname, list] of groups.entries()) {
-        html += `
+    const getGroupName = name => {
+      const m = (name || '').match(/^(【[^】]+】|[^-\[\]_.:：]+[-\[\]_.:：])/);
+      let g = m ? m[1].replace(/[-\[\]_.:：]$/, '').replace(/^【|】$/g, '') : '未分组';
+      g = (g || '未分组').replace(/['"\\]/g, '').trim();
+      return g.length ? g : '未分组';
+    };
+    const groups = new Map();
+    statesConfig.versions.forEach(v => {
+      const g = getGroupName(v.name || '');
+      if (!groups.has(g)) groups.set(g, []);
+      groups.get(g).push(v);
+    });
+    html += '<div id="es-groups">';
+    for (const [gname, list] of groups.entries()) {
+      html += `
           <div class="es-group" data-group="${escapeHtml(gname)}">
             <div class="es-group-title" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:6px 8px;">
               <span class="es-group-toggle" style="width:16px; text-align:center;">▶</span>
@@ -161,17 +160,12 @@ function renderNativeEntryStatesContent(presetName) {
               <span class="es-group-count" style="opacity:.7; font-size:12px;">${list.length}</span>
             </div>
             <div class="es-group-content" style="display:none;">`;
-        list.forEach(v => {
-          html += renderVersionItem(v);
-        });
-        html += '</div></div>';
-      }
-      html += '</div>';
-    } else {
-      statesConfig.versions.forEach(v => {
+      list.forEach(v => {
         html += renderVersionItem(v);
       });
+      html += '</div></div>';
     }
+    html += '</div>';
   }
 
   panel.find('.content').html(html);
@@ -310,16 +304,14 @@ function bindNativeEntryStatesMainPanelEvents() {
       }
     });
 
-  // 分组开关按钮
-  $('#entry-states-group-toggle')
+  // 保存世界书绑定开关按钮
+  $('#entry-states-world-bindings-toggle')
     .off('click')
     .on('click', function () {
-      entryStatesGroupByPrefix = !entryStatesGroupByPrefix;
-      setEntryStatesGroupByPrefix(entryStatesGroupByPrefix);
-      localStorage.setItem('preset-transfer-entry-states-group', entryStatesGroupByPrefix);
-      $(this).text(entryStatesGroupByPrefix ? '分组:开' : '分组:关');
-      const presetName = PT.API.getLoadedPresetName?.();
-      if (presetName) renderNativeEntryStatesContent(presetName);
+      entryStatesSaveWorldBindings = !entryStatesSaveWorldBindings;
+      setEntryStatesSaveWorldBindings(entryStatesSaveWorldBindings);
+      localStorage.setItem('preset-transfer-entry-states-save-world-bindings', entryStatesSaveWorldBindings);
+      $(this).text(entryStatesSaveWorldBindings ? '世界书:启用' : '世界书:暂停');
     });
 }
 

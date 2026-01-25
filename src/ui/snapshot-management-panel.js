@@ -1,6 +1,6 @@
 import { getJQuery } from '../core/utils.js';
 import * as SnapshotStorage from '../features/snapshot-storage.js';
-import { checkAndMigrate, migrateFromLocalStorage } from '../features/snapshot-migration.js';
+import { migrateFromLocalStorage } from '../features/snapshot-migration.js';
 
 let snapshotListCache = [];
 
@@ -236,7 +236,6 @@ function bindSnapshotPanelEvents() {
 
 async function initSnapshotManagementPanel() {
   // 先执行迁移
-  await checkAndMigrate();
 
   // 然后初始化面板
   bindSnapshotPanelEvents();

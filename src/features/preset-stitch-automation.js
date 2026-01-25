@@ -1,10 +1,17 @@
 import { PT } from '../core/api-compat.js';
 import { getCurrentApiInfo, getParentWindow, getSillyTavernContext } from '../core/utils.js';
 import { arePresetsSameDifferentVersion, extractPresetVersionInfo } from '../core/preset-name-utils.js';
-import { loadTransferSettings } from '../settings/settings-manager.js';
+import { getPresetTransferSettingsNode } from '../core/pt-extension-settings.js';
+import { getDefaultSettings } from '../settings/settings-manager.js';
 import { getPresetDataFromManager, switchToPreset } from '../preset/preset-manager.js';
 import { extractStitchPatch, applyStitchPatch } from '../preset/stitch-patch.js';
-import { countPatchStitches, getStitchPatchSnapshotForBase, hasAnyStitchMeta, recordStitchPatchSnapshot } from './preset-stitch-state.js';
+import {
+  countPatchStitches,
+  findBestStitchPatchSnapshotForPresetName,
+  getStitchPatchSnapshotForBase,
+  hasAnyStitchMeta,
+  recordStitchPatchSnapshot,
+} from './preset-stitch-state.js';
 import { showPresetGitUpdateModal } from '../ui/preset-git-update-modal.js';
 import { getPresetGitSource, setPresetGitSource } from './preset-stitch-settings.js';
 import {
@@ -21,6 +28,21 @@ import {
 
 const SKIP_AUTO_MIGRATE_KEY = '__ptPresetTransferSkipAutoMigrateUntilByPresetName';
 const SKIP_AUTO_MIGRATE_DEFAULT_TTL_MS = 60 * 1000;
+
+function loadAutomationSettings() {
+  const defaults = getDefaultSettings();
+  let sharedRaw = null;
+  try {
+    const { node } = getPresetTransferSettingsNode();
+    const shared = node?.transferToolsSettings;
+    if (shared && typeof shared === 'object') {
+      sharedRaw = shared;
+    }
+  } catch {
+    // ignore
+  }
+  return sharedRaw ? { ...defaults, ...sharedRaw } : defaults;
+}
 
 function getSkipAutoMigrateStore() {
   const pw = typeof getParentWindow === 'function' ? getParentWindow() : window;
@@ -53,13 +75,23 @@ function shouldSkipAutoMigrateForPresetName(presetName) {
   return false;
 }
 
-function hasUsableSnapshotPatchForPresetName(presetName) {
+async function getUsableSnapshotPatchForPresetName(presetName) {
   const info = extractPresetVersionInfo(presetName);
   if (!info?.normalizedBase || !info?.version) return null;
-  const patch = getStitchPatchSnapshotForBase(info.normalizedBase);
-  if (!patch) return null;
-  if (countPatchStitches(patch) === 0) return null;
-  return { base: info.normalizedBase, patch };
+
+  const patch = await getStitchPatchSnapshotForBase(info.normalizedBase);
+  if (patch && countPatchStitches(patch) > 0) {
+    return { base: info.normalizedBase, patch };
+  }
+
+  // Base name may change across versions (e.g., adding/removing "Beta").
+  // Fall back to fuzzy matching against snapshot metadata.
+  const fuzzy = await findBestStitchPatchSnapshotForPresetName(presetName);
+  if (fuzzy?.patch && countPatchStitches(fuzzy.patch) > 0) {
+    return { base: fuzzy.base, patch: fuzzy.patch };
+  }
+
+  return null;
 }
 
 function ensurePresetManagerSavePresetWrapped(presetManager) {
@@ -287,7 +319,7 @@ function findLocalPresetByBaseAndVersion(apiInfo, baseNormalized, version) {
 }
 
 async function maybeAutoMigrateOnImport(apiInfo, newPresetName) {
-  const settings = loadTransferSettings();
+  const settings = loadAutomationSettings();
   const enabled = settings.presetAutoMigrateOnImportEnabled === true;
   if (!enabled) return false;
 
@@ -296,7 +328,7 @@ async function maybeAutoMigrateOnImport(apiInfo, newPresetName) {
   const info = extractPresetVersionInfo(newPresetName);
   if (!info?.version) return false;
 
-  const snapshot = hasUsableSnapshotPatchForPresetName(newPresetName);
+  const snapshot = await getUsableSnapshotPatchForPresetName(newPresetName);
   if (snapshot?.patch) {
     const stitchCount = countPatchStitches(snapshot.patch);
     if (stitchCount > 0) {
@@ -347,7 +379,7 @@ async function maybeAutoMigrateOnImport(apiInfo, newPresetName) {
 }
 
 async function maybeAutoUpdateFromGit(apiInfo, presetName) {
-  const settings = loadTransferSettings();
+  const settings = loadAutomationSettings();
   const enabled = settings.presetGitAutoUpdateEnabled === true;
   if (!enabled) return false;
 
@@ -486,7 +518,7 @@ function refreshKnownPresets(apiInfo) {
 }
 
 async function pollPresetList() {
-  const settings = loadTransferSettings();
+  const settings = loadAutomationSettings();
   const wantImport = settings.presetAutoMigrateOnImportEnabled === true;
   if (!wantImport) return;
 
@@ -532,7 +564,7 @@ function shouldGitCheckNow(baseNormalized, intervalMs = 10 * 60 * 1000) {
 }
 
 async function handlePresetChanged(presetName) {
-  const settings = loadTransferSettings();
+  const settings = loadAutomationSettings();
   const wantGit = settings.presetGitAutoUpdateEnabled === true;
 
   // Note: Snapshot recording removed from here - snapshots should only be created
@@ -581,7 +613,7 @@ function findSourcePresetForOaiImport(apiInfo, importingPresetName) {
 }
 
 async function handleOaiPresetImportReady(payload) {
-  const settings = loadTransferSettings();
+  const settings = loadAutomationSettings();
   const enabled = settings.presetAutoMigrateOnImportEnabled === true;
   if (!enabled) return;
 
@@ -607,7 +639,7 @@ async function handleOaiPresetImportReady(payload) {
   state.importInProgress.add(presetName);
 
   try {
-    const snapshot = hasUsableSnapshotPatchForPresetName(presetName);
+    const snapshot = await getUsableSnapshotPatchForPresetName(presetName);
     const patch = snapshot?.patch ?? null;
 
     let result = { stitchCount: 0, applied: null };

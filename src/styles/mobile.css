@@ -63,6 +63,10 @@
     padding-right: 50px;
   }
 
+  #preset-transfer-modal .search-input-wrapper.has-favorites input[type='text'] {
+    padding-right: 92px;
+  }
+
   /* 移动端双栏视图强制样式 */
   #preset-transfer-modal .dual-entries-container.mobile-dual-view {
     display: grid !important;

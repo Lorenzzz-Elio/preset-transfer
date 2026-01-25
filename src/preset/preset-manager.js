@@ -84,7 +84,7 @@ function getPromptEntries(presetData) {
     return [];
   }
   return presetData.prompts.filter(
-    prompt => prompt && !prompt.system_prompt && !prompt.marker && prompt.name && prompt.name.trim() !== '',
+    prompt => prompt && prompt.name && prompt.name.trim() !== '',
   );
 }
 
@@ -130,8 +130,8 @@ function getOrderedPromptEntries(presetData, displayMode = 'default') {
 
     if (promptMap.has(orderEntry.identifier)) {
       const prompt = promptMap.get(orderEntry.identifier);
-      // Filter out system prompts, markers, and empty names.
-      if (prompt && !prompt.system_prompt && !prompt.marker && prompt.name && prompt.name.trim() !== '') {
+      // Filter out empty names.
+      if (prompt && prompt.name && prompt.name.trim() !== '') {
         orderedEntries.push({
           ...prompt,
           enabled: orderEntry.enabled, // Always include the enabled status

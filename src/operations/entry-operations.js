@@ -127,26 +127,67 @@ async function startTransferMode(apiInfo, fromSide, toSide) {
   const $ = getJQuery();
   const adapter = getActiveTransferAdapter();
   const selectedEntries = getSelectedEntries(fromSide);
-  const toPreset = $(`#${toSide}-preset`).val();
 
-  if (selectedEntries.length === 0) {
+  // 过滤掉 marker 类型的条目
+  const transferableEntries = selectedEntries.filter(entry => !entry.marker);
+
+  if (transferableEntries.length === 0 && selectedEntries.length > 0) {
+    alert('选中的条目都是 Marker 类型，无法转移（Marker 条目没有实际内容）');
+    return;
+  }
+
+  if (transferableEntries.length < selectedEntries.length) {
+    const markerCount = selectedEntries.length - transferableEntries.length;
+    alert(`已自动排除 ${markerCount} 个 Marker 类型的条目，它们不能转移`);
+  }
+
+  let sourceContainer =
+    fromSide === 'favorites'
+      ? String(window.ptFavoriteContainerName ?? '').trim()
+      : fromSide === 'single'
+      ? String(window.singlePresetName ?? '').trim()
+      : String($(`#${fromSide}-preset`).val() ?? '').trim();
+
+  if (transferableEntries.length === 0) {
     alert('请至少选择一个条目进行转移');
     return;
   }
 
-  if (!toPreset) {
-    alert('请选择目标预设');
-    return;
+  // 从收藏面板转移时，收集所有源预设
+  if (fromSide === 'favorites') {
+    const sourceNames = new Set(
+      transferableEntries.map(entry => String(entry?.ptFavoriteContainer ?? '').trim()).filter(Boolean),
+    );
+    if (sourceNames.size === 0) {
+      alert('无法确定源预设');
+      return;
+    }
+    // 如果只有一个源预设，使用它；否则保持为空，后续按条目分别处理
+    if (sourceNames.size === 1) {
+      sourceContainer = Array.from(sourceNames)[0];
+    } else {
+      sourceContainer = ''; // 多个源预设
+    }
   }
 
-  // 设置转移模式
+  // 不支持插入位置的适配器：需要预先确定目标
   if (!adapter.capabilities.supportsInsertPosition) {
-    const fromPreset = $(`#${fromSide}-preset`).val();
+    if (!toSide) {
+      alert('请先选择目标预设');
+      return;
+    }
+    const toPreset = toSide === 'single' ? window.singlePresetName : $(`#${toSide}-preset`).val();
+    if (!toPreset) {
+      alert('请选择目标预设');
+      return;
+    }
+
+    const fromPreset = sourceContainer;
     const displayMode = $(`#${toSide}-display-mode`).val();
     const autoEnable = $('#auto-enable-entry').prop('checked');
 
     try {
-      await performTransfer(apiInfo, fromPreset, toPreset, selectedEntries, null, autoEnable, displayMode);
+      await performTransfer(apiInfo, fromPreset, toPreset, transferableEntries, null, autoEnable, displayMode);
 
       if ($('#auto-close-modal').prop('checked')) {
         $('#preset-transfer-modal').remove();
@@ -161,19 +202,27 @@ async function startTransferMode(apiInfo, fromSide, toSide) {
     return;
   }
 
+  // 支持插入位置的适配器：设置转移模式，等待用户点击
   window.transferMode = {
     apiInfo: apiInfo,
     fromSide: fromSide,
     toSide: toSide,
-    selectedEntries: selectedEntries,
+    selectedEntries: transferableEntries,
+    sourceContainer: sourceContainer,
   };
 
   // 更新UI提示
-  alert(`转移模式已激活！请点击${toSide === 'left' ? '左侧' : '右侧'}面板中的条目来选择插入位置。`);
+  if (toSide) {
+    alert(`转移模式已激活！请点击${toSide === 'left' ? '左侧' : toSide === 'right' ? '右侧' : '目标'}面板中的条目来选择插入位置。`);
+    $(`#${toSide}-side`).addClass('transfer-target');
+  } else {
+    alert('转移模式已激活！请点击目标面板中的条目来选择插入位置。');
+    $('#left-side, #right-side, #single-container').addClass('transfer-target');
+  }
 
-  // 高亮目标面板
-  $(`#${toSide}-side`).addClass('transfer-target');
-  $(`#${fromSide}-side`).addClass('transfer-source');
+  if (fromSide !== 'favorites') {
+    $(`#${fromSide}-side`).addClass('transfer-source');
+  }
 }
 
 function startNewEntryMode(apiInfo, side) {
@@ -209,7 +258,7 @@ function startNewEntryMode(apiInfo, side) {
 async function executeTransferToPosition(apiInfo, fromSide, toSide, targetPosition) {
   const $ = getJQuery();
   const selectedEntries = window.transferMode.selectedEntries;
-  const fromPreset = window.transferMode?.sourceContainer || (fromSide ? $(`#${fromSide}-preset`).val() : '');
+  const sourceContainer = window.transferMode?.sourceContainer;
 
   let toPreset;
   let displayMode;
@@ -222,9 +271,6 @@ async function executeTransferToPosition(apiInfo, fromSide, toSide, targetPositi
   }
 
   try {
-    if (!fromPreset) {
-      throw new Error('请选择源预设');
-    }
     if (!toPreset) {
       throw new Error('请选择目标预设');
     }
@@ -237,11 +283,47 @@ async function executeTransferToPosition(apiInfo, fromSide, toSide, targetPositi
       insertPosition = `after-${targetPosition}`;
     }
 
-    // 执行转移
     const autoEnable = $('#auto-enable-entry').prop('checked');
-    await performTransfer(apiInfo, fromPreset, toPreset, selectedEntries, insertPosition, autoEnable, displayMode);
 
-    // 转移成功，通过按钮状态反馈
+    // 处理多源预设情况（从收藏面板转移）
+    if (fromSide === 'favorites' && !sourceContainer) {
+      // 按源预设分组
+      const entriesBySource = new Map();
+      for (const entry of selectedEntries) {
+        const source = String(entry?.ptFavoriteContainer ?? '').trim();
+        if (!source) continue;
+        if (!entriesBySource.has(source)) {
+          entriesBySource.set(source, []);
+        }
+        entriesBySource.get(source).push(entry);
+      }
+
+      // 串行转移每组（避免并发写入同一目标文件导致数据丢失）
+      const errors = [];
+      for (const [source, entries] of entriesBySource) {
+        try {
+          await performTransfer(apiInfo, source, toPreset, entries, insertPosition, autoEnable, displayMode);
+        } catch (error) {
+          errors.push({ source, error });
+        }
+      }
+
+      // 如果有部分失败，报告但不阻止后续操作
+      if (errors.length > 0) {
+        const errorMsg = errors.map(e => `从 ${e.source}: ${e.error.message}`).join('\n');
+        console.error('部分转移失败:', errors);
+        alert(`部分转移失败:\n${errorMsg}`);
+      }
+    } else {
+      // 单源预设情况
+      const fromPreset = sourceContainer || (fromSide ? $(`#${fromSide}-preset`).val() : '');
+      if (!fromPreset) {
+        throw new Error('请选择源预设');
+      }
+      await performTransfer(apiInfo, fromPreset, toPreset, selectedEntries, insertPosition, autoEnable, displayMode);
+    }
+
+    // 转移成功
     console.log(`成功转移 ${selectedEntries.length} 个条目`);
 
     // 检查是否需要自动关闭模态框
@@ -251,7 +333,7 @@ async function executeTransferToPosition(apiInfo, fromSide, toSide, targetPositi
     }
 
     // 刷新界面
-    loadAndDisplayEntries(apiInfo);
+    await loadAndDisplayEntries(apiInfo);
   } catch (error) {
     console.error('转移失败:', error);
     alert('转移失败: ' + error.message);
@@ -333,7 +415,7 @@ async function copyEntryBetweenPresets(apiInfo, fromPreset, toPreset, entryData,
     // 成功覆盖，无需弹窗提示
 
     // 刷新主界面和比较界面
-    loadAndDisplayEntries(apiInfo);
+    await loadAndDisplayEntries(apiInfo);
     const $ = getJQuery();
     $('#compare-modal').remove();
     // 重新打开比较模态框以显示更新后的状态
@@ -402,12 +484,32 @@ function editSelectedEntry(apiInfo, side) {
   } else if (selectedEntries.length === 1) {
     // 单独编辑
     const entry = selectedEntries[0];
+
+    // 检查是否为 marker 类型条目
+    if (entry.marker) {
+      alert('Marker 类型的条目不能编辑内容，它们的内容来自其他地方（如世界书）');
+      return;
+    }
+
     const entryIndex = entries.findIndex(e => e.name === entry.name && e.content === entry.content);
     createEditEntryModal(apiInfo, presetName, entry, null, false, side, entryIndex, displayMode);
   } else {
     // 批量编辑（2个或以上）
-    BatchEditor.showBatchEditDialog(selectedEntries, modifications => {
-      applyBatchModificationsToSide(side, selectedEntries, modifications, apiInfo);
+    // 过滤掉 marker 类型的条目
+    const editableEntries = selectedEntries.filter(entry => !entry.marker);
+
+    if (editableEntries.length === 0) {
+      alert('选中的条目都是 Marker 类型，无法编辑内容');
+      return;
+    }
+
+    if (editableEntries.length < selectedEntries.length) {
+      const markerCount = selectedEntries.length - editableEntries.length;
+      alert(`已自动排除 ${markerCount} 个 Marker 类型的条目，它们不能编辑内容`);
+    }
+
+    BatchEditor.showBatchEditDialog(editableEntries, modifications => {
+      applyBatchModificationsToSide(side, editableEntries, modifications, apiInfo);
     });
   }
 }

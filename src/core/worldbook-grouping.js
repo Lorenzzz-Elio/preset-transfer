@@ -2,6 +2,7 @@ import { debounce, getJQuery, getParentWindow, getSillyTavernContext } from './u
 import { CommonStyles } from '../styles/common-styles.js';
 import { computeCharacterLinkedWorldbooks } from './worldbook-api.js';
 import { loadWorldbookGroupState, normalizeWorldbookGroupState } from './worldbook-group-state.js';
+import { bindSelect2AutoClose } from '../features/preset-list-grouping.js';
 
 const openResultsObservers = new WeakMap();
 const lastRegroupAt = new WeakMap();
@@ -659,6 +660,29 @@ function installSelect2GroupingHandlers(selectEl) {
       startCloseOnHideMonitor();
       regroupDebounced();
       setTimeout(ensureObserver, 0);
+
+      // Listen for scroll events on parent containers to close Select2
+      // For world_popup (world book edit interface)
+      const $worldPopup = $select.closest('#world_popup');
+      if ($worldPopup.length) {
+        const scrollHandler = () => {
+          if (isSelect2Initialized($select) && $select.data('select2')?.isOpen?.()) {
+            $select.select2('close');
+          }
+        };
+        $worldPopup.off('scroll.pt-wb-grouping').on('scroll.pt-wb-grouping', scrollHandler);
+      }
+
+      // For WIMultiSelector (global world book selector)
+      const $wiMultiSelector = $select.closest('#WIMultiSelector');
+      if ($wiMultiSelector.length) {
+        const scrollHandler = () => {
+          if (isSelect2Initialized($select) && $select.data('select2')?.isOpen?.()) {
+            $select.select2('close');
+          }
+        };
+        $wiMultiSelector.off('scroll.pt-wb-grouping').on('scroll.pt-wb-grouping', scrollHandler);
+      }
     })
     .off('select2:close.pt-wb-grouping')
     .on('select2:close.pt-wb-grouping', () => {
@@ -668,6 +692,10 @@ function installSelect2GroupingHandlers(selectEl) {
       $results?.off?.('click.pt-wb-grouping');
       stopObserver();
       clearWorldEditorDropdownMobileClamp(selectEl);
+
+      // Clean up scroll handlers
+      $select.closest('#world_popup').off('scroll.pt-wb-grouping');
+      $select.closest('#WIMultiSelector').off('scroll.pt-wb-grouping');
     });
 }
 
@@ -715,6 +743,10 @@ async function tryInit() {
 
     installSelect2GroupingHandlers($globalWorldSelect[0]);
     installSelect2GroupingHandlers($worldEditorSelect[0]);
+
+    // 绑定滚动自动关闭逻辑
+    bindSelect2AutoClose('world_popup');
+    bindSelect2AutoClose('WIMultiSelector');
 
     return true;
   } catch {

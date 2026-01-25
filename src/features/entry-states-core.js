@@ -6,8 +6,7 @@ import { getPresetDataFromManager, getOrderedPromptEntries } from '../preset/pre
 // 条目状态管理开关
 let entryStatesSaveWorldBindings =
   localStorage.getItem('preset-transfer-entry-states-save-world-bindings') !== 'false';
-let entryStatesGroupByPrefix =
-  localStorage.getItem('preset-transfer-entry-states-group') !== 'false';
+let entryStatesGroupByPrefix = true;
 
 export function getEntryStatesSaveWorldBindings() {
   return entryStatesSaveWorldBindings;
@@ -365,8 +364,11 @@ export async function applyEntryStates(presetName, versionId, applyWorldBindings
     }
 
     characterPromptOrder.order.forEach(orderEntry => {
-      if (orderEntry.identifier && version.states.hasOwnProperty(orderEntry.identifier)) {
+      if (!orderEntry.identifier) return;
+      if (Object.prototype.hasOwnProperty.call(version.states, orderEntry.identifier)) {
         orderEntry.enabled = version.states[orderEntry.identifier];
+      } else {
+        orderEntry.enabled = false;
       }
     });
 
@@ -388,8 +390,11 @@ export async function applyEntryStates(presetName, versionId, applyWorldBindings
           }
 
           settingsOrder.order.forEach(orderEntry => {
-            if (orderEntry.identifier && version.states.hasOwnProperty(orderEntry.identifier)) {
+            if (!orderEntry.identifier) return;
+            if (Object.prototype.hasOwnProperty.call(version.states, orderEntry.identifier)) {
               orderEntry.enabled = version.states[orderEntry.identifier];
+            } else {
+              orderEntry.enabled = false;
             }
           });
 

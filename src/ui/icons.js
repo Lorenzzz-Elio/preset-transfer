@@ -43,6 +43,15 @@ function gearIcon() {
   `;
 }
 
+function favoriteStarIcon() {
+  // "Favorite" icon - hollow star outline
+  return `
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pt-icon pt-icon-star">
+      <polygon points="12 2 15.1 8.3 22 9.3 17 14.1 18.2 21 12 17.6 5.8 21 7 14.1 2 9.3 8.9 8.3 12 2"></polygon>
+    </svg>
+  `;
+}
+
 function regexGroupIcon() {
   // "Group" icon - bracket + list lines
   return `
@@ -57,4 +66,4 @@ function regexGroupIcon() {
   `;
 }
 
-export { createNewIcon, gearIcon, getCurrentPresetIcon, previewPresetIcon, regexGroupIcon };
+export { createNewIcon, favoriteStarIcon, gearIcon, getCurrentPresetIcon, previewPresetIcon, regexGroupIcon };

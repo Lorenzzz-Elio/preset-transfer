@@ -5,13 +5,14 @@ import { filterDualEntries, filterSideEntries, toggleNewEntries } from '../displ
 import { updateSelectionCount } from '../display/ui-updates.js';
 import { simpleCopyEntries, startMoveMode } from '../operations/copy-move.js';
 import { createNewWorldbookEntry, editSelectedEntry, startTransferMode } from '../operations/entry-operations.js';
-import { createBatchDeleteModal } from '../preset/batch-delete.js';
+import { createPresetBatchManageModal } from '../preset/batch-delete.js';
 import { setCurrentPreset } from '../preset/preset-manager.js';
 import { applyStoredSettings, saveCurrentSettings } from '../settings/settings-application.js';
 import { getActiveTransferAdapter } from '../transfer/transfer-context.js';
 import { showCompareModal } from '../ui/compare-modal.js';
 import { deleteSelectedEntries } from '../ui/edit-modal.js';
 import { initExtensionUpdateUI } from '../ui/extension-update-modal.js';
+import { bindFavoritesPanelEvents, closeFavoritesPanels } from '../ui/favorite-panel.js';
 import { updatePresetRegexStatus } from '../ui/regex-ui.js';
 import { createWorldbookBatchManageModal } from '../worldbook/batch-delete.js';
 import { loadSearchSettings, updateSearchSettings } from '../settings/search-settings.js';
@@ -191,6 +192,11 @@ function bindTransferEvents(apiInfo, modal) {
     $('.pt-search-settings-popover').hide();
   }
 
+  bindFavoritesPanelEvents(apiInfo, modal, {
+    closeSearchSettingsPopovers,
+    closeGlobalSearchPanels: closeAllGlobalSearchPanels,
+  });
+
   function getWrapperForContext(context) {
     if (context === 'left') return $('#left-entry-search-inline').closest('.search-input-wrapper');
     if (context === 'right') return $('#right-entry-search-inline').closest('.search-input-wrapper');
@@ -256,6 +262,7 @@ function bindTransferEvents(apiInfo, modal) {
     cancelGlobalSearch();
     closeAllGlobalSearchPanels();
     closeSearchSettingsPopovers();
+    closeFavoritesPanels();
     window.ptWorldbookPickTarget = null;
     $('#left-side, #right-side').removeClass('transfer-target');
     // Reset the "show new" buttons (icon cleared, only文字“新增”保留)
@@ -368,16 +375,16 @@ function bindTransferEvents(apiInfo, modal) {
 
     const adapter = getActiveTransferAdapter();
     try {
-      if (adapter.id === 'worldbook') {
-        await createWorldbookBatchManageModal();
-      } else {
-        createBatchDeleteModal(currentApiInfo);
-      }
-    } catch (error) {
-      const actionLabel = adapter.id === 'worldbook' ? '批量管理' : '批量删除';
-      console.error(`${actionLabel}打开失败:`, error);
-      alert(`${actionLabel}打开失败: ` + (error?.message ?? error));
+    if (adapter.id === 'worldbook') {
+      await createWorldbookBatchManageModal();
+    } else {
+      await createPresetBatchManageModal(currentApiInfo);
     }
+  } catch (error) {
+    const actionLabel = '批量管理';
+    console.error(`${actionLabel}打开失败:`, error);
+    alert(`${actionLabel}打开失败: ` + (error?.message ?? error));
+  }
   });
 
   // 智能导入按钮事件
@@ -397,6 +404,7 @@ function bindTransferEvents(apiInfo, modal) {
   $('.pt-search-settings-btn').on('click', function (e) {
     e.preventDefault();
     e.stopPropagation();
+    closeFavoritesPanels();
     const context = $(this).data('pt-search-context');
     const $popover = $(`.pt-search-settings-popover[data-pt-search-context="${context}"]`);
     const isOpen = $popover.is(':visible');
@@ -532,7 +540,7 @@ function bindTransferEvents(apiInfo, modal) {
       if (!window.ptWorldbookPickTarget) return;
 
       const $t = $(e.target);
-      if ($t.closest('.pt-global-search-panel, .pt-search-settings-popover, .pt-search-settings-btn').length) return;
+      if ($t.closest('.pt-global-search-panel, .pt-search-settings-popover, .pt-search-settings-btn, .pt-favorites-panel, .pt-favorites-btn').length) return;
       if ($t.closest('.entry-item, .create-here-btn, .entry-checkbox').length) return;
 
       e.preventDefault();

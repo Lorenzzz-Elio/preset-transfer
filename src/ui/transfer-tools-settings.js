@@ -44,6 +44,7 @@ import {
   setWorldbookCommonEnabled,
   setWorldbookGroupingEnabled,
   setThemeGroupingEnabled,
+  setPresetListGroupingEnabled,
 } from '../features/feature-toggles.js';
 
 const CONTAINER_ID = 'preset-transfer-extension-settings';
@@ -1045,6 +1046,10 @@ function renderPanel() {
                   <input id="pt-enable-theme-grouping" type="checkbox" style="accent-color: ${themeAccentColor};" />
                   <small>UI主题分组</small>
                 </label>
+                <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-preset-list-grouping">
+                  <input id="pt-enable-preset-list-grouping" type="checkbox" style="accent-color: ${themeAccentColor};" />
+                  <small>AI响应预设分组</small>
+                </label>
               </div>
             </div>
 
@@ -1164,6 +1169,7 @@ function syncUiFromFlags(flags) {
   $('#pt-enable-worldbook-entry-grouping').prop('checked', !!flags.worldbookEntryGroupingEnabled);
   $('#pt-enable-worldbook-common').prop('checked', !!flags.worldbookCommonEnabled);
   $('#pt-enable-theme-grouping').prop('checked', !!flags.themeGroupingEnabled);
+  $('#pt-enable-preset-list-grouping').prop('checked', !!flags.presetListGroupingEnabled);
 }
 
 function getSuggestedGitTemplates(info) {
@@ -1332,6 +1338,13 @@ function bindEvents() {
     .off('input.pt')
     .on('input.pt', function () {
       setRegexScriptGroupingEnabled($(this).prop('checked'));
+      applyTransferToolFeatureToggles();
+    });
+
+  $('#pt-enable-preset-list-grouping')
+    .off('input.pt')
+    .on('input.pt', function () {
+      setPresetListGroupingEnabled($(this).prop('checked'));
       applyTransferToolFeatureToggles();
     });
 

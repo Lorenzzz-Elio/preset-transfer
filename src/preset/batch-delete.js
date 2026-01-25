@@ -1,5 +1,26 @@
-import { escapeAttr, escapeHtml, getCurrentApiInfo, getJQuery, debounce } from '../core/utils.js';
+import { debounce, ensureViewportCssVars, getCurrentApiInfo, getJQuery } from '../core/utils.js';
 import { CommonStyles } from '../styles/common-styles.js';
+import { bindWorldbookBatchOrderDnd, unbindWorldbookBatchOrderDnd } from '../core/worldbook-order-dnd.js';
+import { getWorldbookBatchManageModalHtml } from '../worldbook/batch-modal-template.js';
+import { getWorldbookBatchManageModalStyles } from '../worldbook/batch-modal-styles.js';
+import {
+  assignPresetsToGroup,
+  deletePresetListGroupInState,
+  loadPresetListGroupState,
+  normalizePresetListGroupState,
+  prunePresetListGroupState,
+  removePresetsFromAllGroups,
+  renamePresetListGroupInState,
+  savePresetListGroupState,
+  setPresetListGroupCollapsed,
+  setPresetListGroupOrder,
+} from '../features/preset-list-grouping.js';
+import { renderPresetGroupedListParts } from './batch-list-render.js';
+import { showGroupActionsDialog, showGroupInputDialog } from '../ui/batch-group-dialogs.js';
+
+const GROUP_DIALOG_ID = 'pt-preset-batch-group-dialog';
+const GROUP_ACTIONS_DIALOG_ID = 'pt-preset-batch-group-actions-dialog';
+
 async function batchDeletePresets(presetNames) {
   const results = [];
   const errors = [];
@@ -7,7 +28,6 @@ async function batchDeletePresets(presetNames) {
 
   for (const presetName of presetNames) {
     try {
-      // 使用正确的删除方法
       const success = await apiInfo.presetManager.deletePreset(presetName);
       results.push({ name: presetName, success });
       if (!success) {
@@ -22,7 +42,7 @@ async function batchDeletePresets(presetNames) {
   return { results, errors };
 }
 
-function createBatchDeleteModal(apiInfo) {
+async function createPresetBatchManageModal(apiInfo) {
   const $ = getJQuery();
   const currentApiInfo = getCurrentApiInfo();
   const effectiveApiInfo = currentApiInfo || apiInfo;
@@ -31,196 +51,247 @@ function createBatchDeleteModal(apiInfo) {
     return;
   }
 
-  // 移除已存在的模态框
-  $('#batch-delete-modal').remove();
+  let isClosed = false;
 
-  // 使用公共样式管理器 - 简化了很多重复代码喵~
+  const closeModal = () => {
+    isClosed = true;
+    try {
+      unbindWorldbookBatchOrderDnd($('#batch-delete-modal')[0]);
+    } catch {
+      // ignore
+    }
+    $('#batch-delete-modal').remove();
+    $('#batch-delete-modal-styles').remove();
+    $(`#${GROUP_DIALOG_ID}`).remove();
+    $(`#${GROUP_ACTIONS_DIALOG_ID}`).remove();
+    $(document).off('keydown.batch-delete');
+  };
+
+  closeModal();
+  isClosed = false;
+  ensureViewportCssVars();
+
   const vars = CommonStyles.getVars();
+  $('body').append(
+    getWorldbookBatchManageModalHtml({
+      listHtml: '<div class="pt-wb-batch-loading">正在加载预设列表...</div>',
+      title: '批量管理预设',
+      description: '勾选预设后可分组或删除',
+      searchPlaceholder: '搜索预设...',
+    }),
+  );
 
-  const modalHtml = `
-    <div id="batch-delete-modal">
-      <div class="batch-delete-modal-content">
-        <div class="modal-header">
-          <h3>批量删除预设</h3>
-          <p>选择要删除的预设，此操作不可撤销！</p>
-        </div>
-        <div class="preset-list-container">
-          <div class="preset-search">
-            <input type="text" id="preset-search" placeholder="搜索预设...">
-          </div>
-          <div class="preset-list" id="preset-list">
-            ${effectiveApiInfo.presetNames
-              .map(
-                name => `
-              <label class="preset-item">
-                <input type="checkbox" value="${escapeAttr(name)}" ${name === 'in_use' ? 'disabled' : ''}>
-                <span class="preset-name">${escapeHtml(name)}</span>
-                ${name === 'in_use' ? '<span class="current-badge">当前使用</span>' : ''}
-              </label>
-            `,
-              )
-              .join('')}
-          </div>
-        </div>
-        <div class="batch-actions">
-          <button id="select-all-presets">全选</button>
-          <button id="select-none-presets">全不选</button>
-          <span id="selected-count">已选择: 0</span>
-        </div>
-        <div class="modal-actions">
-          <button id="execute-batch-delete" disabled>删除选中预设</button>
-          <button id="cancel-batch-delete">❌ 取消</button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  $('body').append(modalHtml);
-
-  // Ensure cancel button has no emoji
-  $('#cancel-batch-delete').text('取消');
-
-  // 使用公共样式管理器生成样式 - 大幅简化代码喵~
-  const styles = `
-    #batch-delete-modal {
-      --pt-font-size: ${vars.fontSize};
-      ${CommonStyles.getModalBaseStyles()}
-    }
-    #batch-delete-modal .batch-delete-modal-content {
-      ${CommonStyles.getModalContentStyles()}
-    }
-    #batch-delete-modal .modal-header {
-      text-align: center; margin-bottom: ${vars.margin};
-      padding-bottom: ${vars.paddingSmall}; border-bottom: 1px solid ${vars.borderColor};
-    }
-    #batch-delete-modal .modal-header h3 {
-      margin: 0 0 8px 0; font-size: ${vars.fontSizeLarge}; font-weight: 700;
-    }
-    #batch-delete-modal .modal-header p {
-      margin: 0; font-size: ${vars.fontSizeMedium}; color: ${vars.tipColor};
-    }
-    #batch-delete-modal .preset-search {
-      margin-bottom: ${vars.paddingSmall};
-    }
-    #batch-delete-modal #preset-search {
-      width: 100%; padding: ${vars.paddingSmall}; background: ${vars.inputBg};
-      color: ${vars.textColor}; border: 1px solid ${vars.inputBorder};
-      border-radius: ${vars.borderRadiusSmall}; font-size: ${vars.fontSizeMedium}; box-sizing: border-box;
-    }
-    #batch-delete-modal .preset-list {
-      max-height: 300px; overflow-y: auto; border: 1px solid ${vars.borderColor};
-      border-radius: ${vars.borderRadiusSmall}; background: ${vars.inputBg}; padding: 8px;
-    }
-    #batch-delete-modal .preset-item {
-      display: flex; align-items: center; padding: 8px 12px;
-      border-radius: 6px; cursor: pointer; transition: background 0.2s ease;
-      margin-bottom: 4px;
-    }
-    #batch-delete-modal .preset-item:hover:not(:has(input:disabled)) {
-      background: ${vars.sectionBg};
-    }
-    #batch-delete-modal .preset-item input {
-      margin-right: 12px; transform: scale(1.2);
-    }
-    #batch-delete-modal .preset-item input:disabled {
-      opacity: 0.5;
-    }
-    #batch-delete-modal .preset-name {
-      flex: 1; font-weight: 500;
-    }
-    #batch-delete-modal .current-badge {
-      background: #f59e0b; color: white; padding: 2px 8px;
-      border-radius: ${vars.borderRadiusMedium}; font-size: ${vars.fontSizeSmall}; font-weight: 600;
-    }
-    #batch-delete-modal .batch-actions {
-      display: flex; align-items: center; gap: ${vars.gap}; margin: ${vars.paddingSmall} 0;
-      padding: ${vars.paddingSmall}; background: ${vars.sectionBg}; border-radius: ${vars.borderRadiusSmall};
-    }
-    #batch-delete-modal .batch-actions button {
-      padding: ${vars.buttonPaddingSmall};
-      background: ${vars.accentMutedColor};
-      border: none;
-      color: ${vars.textColor};
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: ${vars.fontSizeSmall};
-      font-weight: 600;
-      transition: background 0.2s ease, opacity 0.2s ease;
-    }
-    #batch-delete-modal .batch-actions button:hover {
-      opacity: 0.9;
-    }
-    #batch-delete-modal #selected-count {
-      margin-left: auto; font-size: ${vars.fontSizeMedium}; font-weight: 600;
-      color: ${vars.tipColor};
-    }
-    #batch-delete-modal .modal-actions {
-      display: flex; gap: ${vars.gap}; justify-content: center; margin-top: ${vars.margin};
-    }
-    #batch-delete-modal .modal-actions button {
-      padding: ${vars.buttonPadding};
-      border: none;
-      border-radius: ${vars.buttonRadius};
-      font-size: ${vars.fontSizeMedium};
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      background: ${vars.accentMutedColor};
-      color: ${vars.textColor};
-    }
-    #batch-delete-modal #execute-batch-delete {
-      background: ${vars.dangerColor};
-    }
-    #batch-delete-modal #execute-batch-delete:hover:not(:disabled) {
-      opacity: 0.9;
-    }
-    #batch-delete-modal #execute-batch-delete:disabled {
-      background: ${vars.borderColor};
-      color: ${vars.tipColor};
-      cursor: not-allowed;
-    }
-    #batch-delete-modal #cancel-batch-delete {
-      background: ${vars.accentMutedColor};
-      color: ${vars.textColor};
-    }
-    #batch-delete-modal #cancel-batch-delete:hover {
-      opacity: 0.9;
-    }
-
-
-  `;
-
+  const styles = getWorldbookBatchManageModalStyles(vars);
   $('head').append(`<style id="batch-delete-modal-styles">${styles}</style>`);
 
-  // 绑定事件
-  bindBatchDeleteEvents();
-}
+  const disabledPresets = new Set(['in_use']);
+  let presetNames = [];
+  let groupState = normalizePresetListGroupState(loadPresetListGroupState());
 
-function bindBatchDeleteEvents() {
-  const $ = getJQuery();
+  const normalizePresetNames = (names) => {
+    const out = [];
+    const seen = new Set();
+    for (const raw of Array.isArray(names) ? names : []) {
+      const trimmed = String(raw ?? '').trim();
+      if (!trimmed || seen.has(trimmed)) continue;
+      seen.add(trimmed);
+      out.push(trimmed);
+    }
+    return out;
+  };
 
-  function applyPresetSearchFilter() {
-    const searchTerm = $('#preset-search').val().toLowerCase();
-    $('#preset-list .preset-item').each(function () {
-      const presetName = $(this).find('.preset-name').text().toLowerCase();
-      const matches = presetName.includes(searchTerm);
-      $(this).toggle(matches);
+  const isSearchActive = () => Boolean(String($('#preset-search').val() ?? '').trim());
+
+  const applyCollapseState = () => {
+    $('#preset-list .pt-wb-subgroup').each(function () {
+      const encoded = String($(this).attr('data-pt-sub') ?? '');
+      if (!encoded) return;
+      let groupName = '';
+      try {
+        groupName = decodeURIComponent(encoded);
+      } catch {
+        groupName = encoded;
+      }
+      if (!groupName) return;
+      const collapsed = !!groupState.collapsed?.[groupName];
+      $(this).toggleClass('is-collapsed', collapsed);
     });
-  }
+  };
 
-  // 更新选中计数
-  function updateSelectedCount() {
+  const applyPresetSearchFilter = () => {
+    const searchTerm = String($('#preset-search').val() ?? '').toLowerCase().trim();
+    const hasSearch = Boolean(searchTerm);
+
+    if (hasSearch) {
+      $('#preset-list .pt-wb-subgroup').removeClass('is-collapsed');
+    } else {
+      applyCollapseState();
+      $('#preset-list .pt-wb-subgroup').show();
+    }
+
+    $('#preset-list .pt-wb-item').each(function () {
+      const name = $(this).find('.preset-name').text().toLowerCase();
+      $(this).toggle(!hasSearch || name.includes(searchTerm));
+    });
+
+    if (hasSearch) {
+      $('#preset-list .pt-wb-subgroup').each(function () {
+        const hasVisibleItems = $(this).find('.pt-wb-item:visible').length > 0;
+        $(this).toggle(hasVisibleItems);
+      });
+    }
+  };
+
+  const updateSelectedCount = () => {
     const selected = $('#preset-list input[type="checkbox"]:checked:not(:disabled)').length;
     $('#selected-count').text(`已选择: ${selected}`);
+    $('#execute-batch-group').prop('disabled', selected === 0);
     $('#execute-batch-delete').prop('disabled', selected === 0);
-  }
+  };
 
-  // 搜索功能 (添加防抖优化)
-  const debouncedPresetSearch = debounce(applyPresetSearchFilter, 300);
+  let listRenderToken = 0;
+  const rerenderPresetList = ({ preserveChecked = true } = {}) => {
+    const checked = new Set();
+    if (preserveChecked) {
+      $('#preset-list input[type="checkbox"]:checked').each(function () {
+        checked.add(String($(this).val() ?? ''));
+      });
+    }
 
-  $('#preset-search').on('input', debouncedPresetSearch);
+    const listEl = $('#preset-list')[0];
+    if (!listEl) return;
 
-  // 全选/全不选
+    listRenderToken += 1;
+    const token = String(listRenderToken);
+    listEl.dataset.ptPresetListRenderToken = token;
+    listEl.innerHTML = '';
+
+    const parts = renderPresetGroupedListParts({ presetNames, groupState, disabledPresets });
+    if (!parts.length) {
+      listEl.innerHTML = '<div class="pt-wb-batch-empty">暂无预设</div>';
+      applyCollapseState();
+      applyPresetSearchFilter();
+      updateSelectedCount();
+      return;
+    }
+
+    const CHUNK_SIZE = 12;
+    let idx = 0;
+
+    const appendChunk = () => {
+      if (isClosed) return;
+      if (listEl.dataset.ptPresetListRenderToken !== token) return;
+
+      const end = Math.min(parts.length, idx + CHUNK_SIZE);
+      const chunkHtml = parts.slice(idx, end).join('');
+      idx = end;
+      if (chunkHtml) listEl.insertAdjacentHTML('beforeend', chunkHtml);
+
+      if (idx < parts.length) {
+        requestAnimationFrame(appendChunk);
+        return;
+      }
+
+      if (preserveChecked && checked.size) {
+        $('#preset-list input[type="checkbox"]').each(function () {
+          if (checked.has(String($(this).val() ?? ''))) {
+            $(this).prop('checked', true);
+          }
+        });
+      }
+
+      applyCollapseState();
+      applyPresetSearchFilter();
+      updateSelectedCount();
+    };
+
+    requestAnimationFrame(appendChunk);
+  };
+
+  let selectRenderToken = 0;
+  const populatePresetSelectOptions = async ($select, names, { placeholder, selectedValue } = {}) => {
+    const el = $select?.[0];
+    if (!el) return;
+
+    const doc = el.ownerDocument || document;
+    const normalized = normalizePresetNames(names);
+
+    el.innerHTML = '';
+    const placeholderOpt = doc.createElement('option');
+    placeholderOpt.value = '';
+    placeholderOpt.textContent = String(placeholder ?? '请选择预设');
+    el.appendChild(placeholderOpt);
+
+    if (!normalized.length) {
+      el.value = '';
+      return;
+    }
+
+    const CHUNK_THRESHOLD = 900;
+    const CHUNK_SIZE = 300;
+
+    const makeOption = (value, text) => {
+      const opt = doc.createElement('option');
+      opt.value = value;
+      opt.textContent = text;
+      return opt;
+    };
+
+    const applySelectedValue = () => {
+      const selected = String(selectedValue ?? '').trim();
+      if (selected && normalized.includes(selected)) el.value = selected;
+      else el.value = '';
+    };
+
+    if (normalized.length <= CHUNK_THRESHOLD) {
+      const frag = doc.createDocumentFragment();
+      for (const name of normalized) frag.appendChild(makeOption(name, name));
+      el.appendChild(frag);
+      applySelectedValue();
+      return;
+    }
+
+    selectRenderToken += 1;
+    const token = String(selectRenderToken);
+    el.dataset.ptPresetSelectRenderToken = token;
+
+    let idx = 0;
+    await new Promise((resolve) => {
+      const appendChunk = () => {
+        if (el.dataset.ptPresetSelectRenderToken !== token) return resolve();
+
+        const frag = doc.createDocumentFragment();
+        const end = Math.min(normalized.length, idx + CHUNK_SIZE);
+        for (; idx < end; idx += 1) {
+          const name = normalized[idx];
+          frag.appendChild(makeOption(name, name));
+        }
+        el.appendChild(frag);
+
+        if (idx < normalized.length) {
+          requestAnimationFrame(appendChunk);
+          return;
+        }
+
+        applySelectedValue();
+        resolve();
+      };
+
+      requestAnimationFrame(appendChunk);
+    });
+  };
+
+  const getSelectedPresets = () => {
+    const selected = [];
+    $('#preset-list input[type="checkbox"]:checked:not(:disabled)').each(function () {
+      selected.push(String($(this).val() ?? ''));
+    });
+    return selected;
+  };
+
+  const debouncedSearch = debounce(applyPresetSearchFilter, 300);
+  $('#preset-search').on('input', debouncedSearch);
+
   $('#select-all-presets').on('click', function () {
     $('#preset-list input[type="checkbox"]:not(:disabled):visible').prop('checked', true);
     updateSelectedCount();
@@ -231,27 +302,124 @@ function bindBatchDeleteEvents() {
     updateSelectedCount();
   });
 
-  // 复选框变化
   $('#preset-list').on('change', 'input[type="checkbox"]', updateSelectedCount);
+  $('#preset-list').on('click', '.pt-wb-drag-handle', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  });
 
-  // 执行批量删除
-  $('#execute-batch-delete').on('click', async function () {
-    const selectedPresets = [];
-    $('#preset-list input[type="checkbox"]:checked:not(:disabled)').each(function () {
-      selectedPresets.push($(this).val());
+  const toggleSubGroup = (groupEl) => {
+    const $group = $(groupEl);
+    if ($group.children('.pt-wb-subgroup-header').length === 0) return;
+    const encodedKey = String($group.attr('data-pt-sub') ?? '');
+    if (!encodedKey) return;
+    let groupName = '';
+    try {
+      groupName = decodeURIComponent(encodedKey);
+    } catch {
+      groupName = String($group.find('.pt-wb-subgroup-title').first().text() ?? '').trim();
+    }
+    if (!groupName) return;
+
+    const nextCollapsed = !$group.hasClass('is-collapsed');
+    $group.toggleClass('is-collapsed', nextCollapsed);
+
+    groupState = setPresetListGroupCollapsed(groupState, groupName, nextCollapsed);
+    savePresetListGroupState(groupState);
+  };
+
+  $('#preset-list')
+    .on('click', '.pt-wb-subgroup-menu', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const $subgroup = $(this).closest('.pt-wb-subgroup');
+      const encodedKey = String($subgroup.attr('data-pt-sub') ?? '');
+      if (!encodedKey) return;
+
+      let groupName = '';
+      try {
+        groupName = decodeURIComponent(encodedKey);
+      } catch {
+        groupName = String($subgroup.find('.pt-wb-subgroup-title').first().text() ?? '').trim();
+      }
+      if (!groupName) return;
+
+      showGroupActionsDialog({
+        dialogId: GROUP_DIALOG_ID,
+        actionsDialogId: GROUP_ACTIONS_DIALOG_ID,
+        title: `分组：${groupName}`,
+        onRename: () => {
+          showGroupInputDialog({
+            dialogId: GROUP_DIALOG_ID,
+            actionsDialogId: GROUP_ACTIONS_DIALOG_ID,
+            title: '重命名分组',
+            placeholder: '输入新的分组名',
+            defaultValue: groupName,
+            confirmLabel: '重命名',
+            onConfirm: (newName) => {
+              const trimmed = String(newName ?? '').trim();
+              if (!trimmed) return;
+              groupState = renamePresetListGroupInState(groupState, groupName, trimmed);
+              savePresetListGroupState(groupState);
+              rerenderPresetList({ preserveChecked: true });
+            },
+          });
+        },
+        onDissolve: () => {
+          groupState = deletePresetListGroupInState(groupState, groupName);
+          savePresetListGroupState(groupState);
+          rerenderPresetList({ preserveChecked: true });
+        },
+      });
+    })
+    .on('click', '.pt-wb-subgroup-header', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (isSearchActive()) return;
+      toggleSubGroup($(this).closest('.pt-wb-subgroup')[0]);
+    })
+    .on('keydown', '.pt-wb-subgroup-header', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (isSearchActive()) return;
+      toggleSubGroup($(this).closest('.pt-wb-subgroup')[0]);
     });
 
-    if (selectedPresets.length === 0) {
+  $('#execute-batch-group').on('click', function () {
+    const selectedPresets = getSelectedPresets();
+    if (!selectedPresets.length) return;
+
+    showGroupInputDialog({
+      dialogId: GROUP_DIALOG_ID,
+      actionsDialogId: GROUP_ACTIONS_DIALOG_ID,
+      title: `设置分组（${selectedPresets.length}）`,
+      placeholder: '输入分组名称（新建或追加到已有）',
+      defaultValue: '',
+      confirmLabel: '分组',
+      onConfirm: (groupName) => {
+        groupState = assignPresetsToGroup(groupState, { presetNames: selectedPresets, groupName });
+        savePresetListGroupState(groupState);
+        rerenderPresetList({ preserveChecked: false });
+      },
+      onUngroup: () => {
+        groupState = removePresetsFromAllGroups(groupState, selectedPresets);
+        savePresetListGroupState(groupState);
+        rerenderPresetList({ preserveChecked: false });
+      },
+    });
+  });
+
+  $('#execute-batch-delete').on('click', async function () {
+    const selectedPresets = getSelectedPresets();
+    if (!selectedPresets.length) {
       alert('请选择要删除的预设');
       return;
     }
 
-    const confirmMessage = `确定要删除以下 ${
-      selectedPresets.length
-    } 个预设吗？此操作不可撤销！\n\n${selectedPresets.join('\n')}`;
-    if (!confirm(confirmMessage)) {
-      return;
-    }
+    const confirmMessage = `确定要删除以下 ${selectedPresets.length} 个预设吗？此操作不可撤销！\n\n${selectedPresets.join('\n')}`;
+    if (!confirm(confirmMessage)) return;
 
     const $button = $(this);
     const originalText = $button.text();
@@ -260,94 +428,91 @@ function bindBatchDeleteEvents() {
     try {
       const { results, errors } = await batchDeletePresets(selectedPresets);
 
-      // 只在有错误时显示提示
       if (errors.length > 0) {
-        const failCount = results.filter(r => !r.success).length;
+        const failCount = results.filter((r) => !r.success).length;
         alert(`删除完成，但有 ${failCount} 个失败:\n${errors.join('\n')}`);
       }
 
-      // 刷新主界面的预设列表
       const refreshedApiInfo = getCurrentApiInfo();
       if (refreshedApiInfo) {
-        // 刷新当前批量删除面板的列表（不自动关闭）
-        const preservedSearch = $('#preset-search').val();
-        const newPresetItems = refreshedApiInfo.presetNames
-          .map(
-            name => `
-              <label class="preset-item">
-                <input type="checkbox" value="${escapeAttr(name)}" ${name === 'in_use' ? 'disabled' : ''}>
-                <span class="preset-name">${escapeHtml(name)}</span>
-                ${name === 'in_use' ? '<span class="current-badge">当前使用</span>' : ''}
-              </label>
-            `,
-          )
-          .join('');
-        $('#preset-list').html(newPresetItems);
-        $('#preset-search').val(preservedSearch);
-        applyPresetSearchFilter();
-        updateSelectedCount();
+        presetNames = normalizePresetNames(refreshedApiInfo.presetNames);
+        groupState = prunePresetListGroupState(groupState, new Set(presetNames));
+        savePresetListGroupState(groupState);
 
-        // 更新预设下拉框
+        rerenderPresetList({ preserveChecked: false });
+
         const leftSelect = $('#left-preset');
         const rightSelect = $('#right-preset');
         const currentLeft = leftSelect.val();
         const currentRight = rightSelect.val();
 
-        // 重新填充选项
-        const newOptions = refreshedApiInfo.presetNames
-          .map(name => `<option value="${escapeAttr(name)}">${escapeHtml(name)}</option>`)
-          .join('');
-        leftSelect.html('<option value="">请选择预设</option>' + newOptions);
-        rightSelect.html('<option value="">请选择预设</option>' + newOptions);
-
-        // 恢复选择（如果预设仍然存在）
-        if (refreshedApiInfo.presetNames.includes(currentLeft)) {
-          leftSelect.val(currentLeft);
-        }
-        if (refreshedApiInfo.presetNames.includes(currentRight)) {
-          rightSelect.val(currentRight);
-        }
+        await Promise.all([
+          populatePresetSelectOptions(leftSelect, presetNames, { placeholder: '请选择预设', selectedValue: currentLeft }),
+          populatePresetSelectOptions(rightSelect, presetNames, { placeholder: '请选择预设', selectedValue: currentRight }),
+        ]);
 
         leftSelect.trigger('change');
         rightSelect.trigger('change');
       }
     } catch (error) {
       console.error('批量删除失败:', error);
-      alert('批量删除失败: ' + error.message);
+      alert('批量删除失败: ' + (error?.message ?? error));
     } finally {
       $button.prop('disabled', false).text(originalText);
     }
   });
 
-  // 取消按钮
-  $('#cancel-batch-delete').on('click', function () {
-    $('#batch-delete-modal').remove();
-    $('#batch-delete-modal-styles').remove();
-  });
+  $('#cancel-batch-delete').on('click', closeModal);
 
-  // 点击背景关闭
   $('#batch-delete-modal').on('click', function (e) {
-    if (e.target === this) {
-      $(this).remove();
-      $('#batch-delete-modal-styles').remove();
-    }
+    if (e.target === this) closeModal();
   });
 
-  // ESC键关闭
   $(document).on('keydown.batch-delete', function (e) {
-    if (e.key === 'Escape') {
-      $('#batch-delete-modal').remove();
-      $('#batch-delete-modal-styles').remove();
-      $(document).off('keydown.batch-delete');
-    }
+    if (e.key === 'Escape') closeModal();
   });
 
-  // 初始化计数
-  updateSelectedCount();
+  bindWorldbookBatchOrderDnd({
+    rootEl: $('#batch-delete-modal')[0],
+    isSearchActive,
+    onBucketOrderChange: ({ order }) => {
+      if (!Array.isArray(order)) return;
+      const normalized = order.map((token) => (token.startsWith('w:') ? `p:${token.slice(2)}` : token));
+      groupState = setPresetListGroupOrder(groupState, normalized);
+      savePresetListGroupState(groupState);
+    },
+    onGroupItemOrderChange: ({ groupName, itemOrder }) => {
+      if (!groupName || !Array.isArray(itemOrder)) return;
+      groupState = normalizePresetListGroupState(groupState);
+      if (!groupState.groups || typeof groupState.groups !== 'object') groupState.groups = {};
+      groupState.groups[groupName] = itemOrder.slice();
+      savePresetListGroupState(groupState);
+    },
+  });
+
+  try {
+    await new Promise((r) => requestAnimationFrame(r));
+    if (isClosed) return;
+
+    presetNames = normalizePresetNames(effectiveApiInfo.presetNames);
+    groupState = prunePresetListGroupState(groupState, new Set(presetNames));
+    savePresetListGroupState(groupState);
+
+    rerenderPresetList({ preserveChecked: false });
+  } catch (error) {
+    console.error('批量管理预设加载失败:', error);
+    closeModal();
+    throw error;
+  }
+}
+
+function bindBatchDeleteEvents() {
+  console.warn('PresetTransfer: bindBatchDeleteEvents 已废弃，请使用 createPresetBatchManageModal。');
 }
 
 export {
   batchDeletePresets,
-  createBatchDeleteModal,
-  bindBatchDeleteEvents
+  createPresetBatchManageModal,
+  createPresetBatchManageModal as createBatchDeleteModal,
+  bindBatchDeleteEvents,
 };

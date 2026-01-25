@@ -2,11 +2,39 @@
 import { debounce, getJQuery } from '../core/utils.js';
 import { CommonStyles } from '../styles/common-styles.js';
 import { getPresetTransferSettingsNode, trySaveSillyTavernSettings } from '../core/pt-extension-settings.js';
+import { bindSelect2AutoClose } from './preset-list-grouping.js';
 
 const STORAGE_KEY = 'pt-theme-grouping-state';
 const EXTENSION_SETTINGS_KEY = 'themeGroupingState';
 const openResultsObservers = new WeakMap();
 const lastRegroupAt = new WeakMap();
+const batchSelections = new WeakMap();
+
+function getThemeBatchSelection(selectEl) {
+  let set = batchSelections.get(selectEl);
+  if (!set) {
+    set = new Set();
+    batchSelections.set(selectEl, set);
+  }
+  return set;
+}
+
+function clearThemeBatchSelection(selectEl) {
+  const set = batchSelections.get(selectEl);
+  if (!set || set.size === 0) return;
+  set.clear();
+
+  try {
+    const $ = getJQuery();
+    const $results = getOpenSelect2ResultsRoot(selectEl);
+    if ($results?.length) {
+      $results.find('.pt-theme-batch-toggle').attr('aria-checked', 'false');
+      $results.find('li.pt-theme-batch-selected').removeClass('pt-theme-batch-selected');
+    }
+  } catch {
+    /* ignore */
+  }
+}
 
 function safeLocalStorageGet(key) {
   try {
@@ -126,7 +154,7 @@ function getThemeLabelFromResultItem(li) {
 
   try {
     const clone = li.cloneNode(true);
-    clone.querySelectorAll?.('.pt-theme-menu')?.forEach?.((el) => el.remove());
+    clone.querySelectorAll?.('.pt-theme-menu, .pt-theme-batch-toggle')?.forEach?.((el) => el.remove());
     return sanitizeThemeLabel(clone.textContent);
   } catch {
     return sanitizeThemeLabel(li.textContent);
@@ -374,7 +402,7 @@ function getOpenSelect2ResultsRoot(selectEl) {
 
 function clearInjectedGroups($results) {
   $results.find('.pt-theme-group').remove();
-  $results.off('click.pt-theme-grouping');
+  $results.off('.pt-theme-grouping');
 }
 
 function getSelect2SearchValue() {
@@ -427,7 +455,8 @@ async function regroupOpenSelect2Results(selectEl) {
     for (const li of optionItems) {
       const $li = $(li);
       // Avoid duplicating injected menu icons across re-renders.
-      $li.find('.pt-theme-menu').remove();
+      $li.find('.pt-theme-menu, .pt-theme-batch-toggle').remove();
+      $li.removeClass('pt-theme-batch-selected');
       $li.removeAttr('data-pt-theme data-pt-theme-text');
       const value = resolveThemeValueFromResultItem(li, selectEl, maps);
       if (!value) continue;
@@ -445,6 +474,8 @@ async function regroupOpenSelect2Results(selectEl) {
     }
     const groups = groupState.groups || {};
     const collapsed = groupState.collapsed || {};
+
+    const batchSelection = getThemeBatchSelection(selectEl);
 
     const createCollapsibleGroupNode = ({ groupKey, title, count, children, expanded }) => {
       const group = document.createElement('li');
@@ -511,6 +542,13 @@ async function regroupOpenSelect2Results(selectEl) {
         if (maps.valueToText.has(v)) {
           $li.attr('data-pt-theme-text', maps.valueToText.get(v));
         }
+        const isBatchSelected = batchSelection.has(v);
+        $li.toggleClass('pt-theme-batch-selected', isBatchSelected);
+        const batchToggle = document.createElement('span');
+        batchToggle.className = 'pt-theme-batch-toggle';
+        batchToggle.setAttribute('role', 'checkbox');
+        batchToggle.setAttribute('aria-checked', isBatchSelected ? 'true' : 'false');
+        $li.append(batchToggle);
         // Add menu icon to theme option
         const menuIcon = document.createElement('span');
         menuIcon.className = 'pt-theme-menu';
@@ -546,13 +584,20 @@ async function regroupOpenSelect2Results(selectEl) {
           const li = byValue.get(themeValue);
           if (li) {
             const $li = $(li);
-            $li.attr('data-pt-theme', themeValue);
-            if (maps.valueToText.has(themeValue)) {
-              $li.attr('data-pt-theme-text', maps.valueToText.get(themeValue));
-            }
-            // Add menu icon to ungrouped theme
-            const menuIcon = document.createElement('span');
-            menuIcon.className = 'pt-theme-menu';
+             $li.attr('data-pt-theme', themeValue);
+             if (maps.valueToText.has(themeValue)) {
+               $li.attr('data-pt-theme-text', maps.valueToText.get(themeValue));
+             }
+             const isBatchSelected = batchSelection.has(themeValue);
+             $li.toggleClass('pt-theme-batch-selected', isBatchSelected);
+             const batchToggle = document.createElement('span');
+             batchToggle.className = 'pt-theme-batch-toggle';
+             batchToggle.setAttribute('role', 'checkbox');
+             batchToggle.setAttribute('aria-checked', isBatchSelected ? 'true' : 'false');
+             $li.append(batchToggle);
+             // Add menu icon to ungrouped theme
+             const menuIcon = document.createElement('span');
+             menuIcon.className = 'pt-theme-menu';
             menuIcon.textContent = '⋮';
             menuIcon.setAttribute('data-theme-name', themeValue);
             $li.append(menuIcon);
@@ -577,6 +622,13 @@ async function regroupOpenSelect2Results(selectEl) {
         if (maps.valueToText.has(value)) {
           $li.attr('data-pt-theme-text', maps.valueToText.get(value));
         }
+        const isBatchSelected = batchSelection.has(value);
+        $li.toggleClass('pt-theme-batch-selected', isBatchSelected);
+        const batchToggle = document.createElement('span');
+        batchToggle.className = 'pt-theme-batch-toggle';
+        batchToggle.setAttribute('role', 'checkbox');
+        batchToggle.setAttribute('aria-checked', isBatchSelected ? 'true' : 'false');
+        $li.append(batchToggle);
         // Add menu icon to ungrouped theme
         const menuIcon = document.createElement('span');
         menuIcon.className = 'pt-theme-menu';
@@ -591,6 +643,35 @@ async function regroupOpenSelect2Results(selectEl) {
     for (const node of nodes) fragment.appendChild(node);
 
     $results.empty().append(fragment);
+
+    $results.on('mousedown.pt-theme-grouping mouseup.pt-theme-grouping touchstart.pt-theme-grouping touchend.pt-theme-grouping pointerdown.pt-theme-grouping pointerup.pt-theme-grouping', '.pt-theme-batch-toggle', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      return false;
+    });
+
+    $results.on('click.pt-theme-grouping', '.pt-theme-batch-toggle', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      const $li = $(this).closest('li.select2-results__option');
+      const themeValue = String($li.attr('data-pt-theme') ?? '').trim();
+      if (!themeValue) return false;
+
+      const selected = getThemeBatchSelection(selectEl);
+      if (selected.has(themeValue)) {
+        selected.delete(themeValue);
+      } else {
+        selected.add(themeValue);
+      }
+
+      const isSelected = selected.has(themeValue);
+      $(this).attr('aria-checked', isSelected ? 'true' : 'false');
+      $li.toggleClass('pt-theme-batch-selected', isSelected);
+      return false;
+    });
 
     $results.on('click.pt-theme-grouping', '.pt-theme-group > .select2-results__group', function(e) {
       e.preventDefault();
@@ -648,19 +729,27 @@ function showThemeMenu($icon, themeName, currentGroup, selectEl) {
 
   const $menu = $('<div>').addClass('pt-theme-context-menu');
   const groupState = loadThemeGroupState();
+  const batchSelection = getThemeBatchSelection(selectEl);
+  const shouldUseBatch = batchSelection.size > 0 && batchSelection.has(themeName);
+  const themesToOperate = shouldUseBatch ? Array.from(batchSelection) : [themeName];
 
   // Move to group submenu
   const $moveToSubmenu = $('<div>').addClass('pt-menu-item pt-submenu').text('移动到...');
   const $submenuList = $('<div>').addClass('pt-submenu-list');
 
   for (const groupName of Object.keys(groupState.groups)) {
-    if (groupName !== currentGroup) {
+    if (shouldUseBatch || groupName !== currentGroup) {
       const $item = $('<div>')
         .addClass('pt-menu-item')
         .text(groupName)
         .on('click', (e) => {
           e.stopPropagation();
-          addThemeToGroup(themeName, groupName);
+          for (const theme of themesToOperate) {
+            addThemeToGroup(theme, groupName);
+          }
+          if (shouldUseBatch) {
+            clearThemeBatchSelection(selectEl);
+          }
           $('.pt-theme-context-menu').remove();
           void regroupOpenSelect2Results(selectEl);
         });
@@ -682,7 +771,12 @@ function showThemeMenu($icon, themeName, currentGroup, selectEl) {
       .addClass('pt-menu-item')
       .text('移出分组')
       .on('click', () => {
-        removeThemeFromGroup(themeName);
+        for (const theme of themesToOperate) {
+          removeThemeFromGroup(theme);
+        }
+        if (shouldUseBatch) {
+          clearThemeBatchSelection(selectEl);
+        }
         $('.pt-theme-context-menu').remove();
         void regroupOpenSelect2Results(selectEl);
       });
@@ -704,6 +798,100 @@ function showThemeMenu($icon, themeName, currentGroup, selectEl) {
 
   // Prevent all events from bubbling
   $menu.on('mousedown mouseup touchstart touchend', function(e) {
+    e.stopPropagation();
+  });
+
+  setTimeout(() => {
+    $(document).one('click', () => $('.pt-theme-context-menu').remove());
+  }, 0);
+}
+
+function showThemeGroupFilterMenu($icon, selectEl) {
+  const $ = getJQuery();
+  $('.pt-theme-context-menu').remove();
+  return;
+
+  const groupState = loadThemeGroupState();
+  const groups = Object.keys(groupState.groups || {}).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  const selected = new Set(Array.isArray(groupState.filterGroups) ? groupState.filterGroups : []);
+  let includeUngrouped = groupState.filterIncludeUngrouped !== false;
+
+  const $menu = $('<div>').addClass('pt-theme-context-menu pt-theme-filter-menu');
+  applyThemeVarsToElement($menu[0]);
+
+  if (!groups.length) {
+    $menu.append($('<div>').addClass('pt-menu-item').text('暂无分组'));
+  } else {
+    for (const groupName of groups) {
+      const $item = $('<div>').addClass('pt-menu-item pt-theme-filter-item');
+      const $checkbox = $('<input>')
+        .attr('type', 'checkbox')
+        .attr('data-pt-group', groupName)
+        .addClass('pt-theme-filter-checkbox')
+        .prop('checked', selected.has(groupName))
+        .on('change', function () {
+          const next = new Set(selected);
+          if ($(this).prop('checked')) next.add(groupName);
+          else next.delete(groupName);
+          const nextState = setThemeGroupFilter(Array.from(next), { includeUngrouped });
+          selected.clear();
+          (nextState.filterGroups || []).forEach((g) => selected.add(g));
+          void regroupOpenSelect2Results(selectEl);
+        });
+      const $label = $('<span>').addClass('pt-theme-filter-label').text(groupName);
+      $item.append($checkbox, $label);
+      $menu.append($item);
+    }
+
+    $menu.append($('<div>').addClass('pt-menu-sep'));
+
+    const $includeUngrouped = $('<div>').addClass('pt-menu-item pt-theme-filter-item');
+    const $includeCheckbox = $('<input>')
+      .attr('type', 'checkbox')
+      .attr('data-pt-ungrouped', '1')
+      .addClass('pt-theme-filter-checkbox')
+      .prop('checked', includeUngrouped)
+      .on('change', function () {
+        const nextInclude = $(this).prop('checked');
+        includeUngrouped = nextInclude;
+        setThemeGroupFilter(Array.from(selected), { includeUngrouped: nextInclude });
+        void regroupOpenSelect2Results(selectEl);
+      });
+    $includeUngrouped.append($includeCheckbox, $('<span>').addClass('pt-theme-filter-label').text('包含未分组'));
+    $menu.append($includeUngrouped);
+
+    const $clearItem = $('<div>')
+      .addClass('pt-menu-item')
+      .text('清除筛选')
+      .on('click', () => {
+        const nextState = setThemeGroupFilter([], { includeUngrouped: FILTER_INCLUDE_UNGROUPED_DEFAULT });
+        selected.clear();
+        (nextState.filterGroups || []).forEach((g) => selected.add(g));
+        includeUngrouped = nextState.filterIncludeUngrouped !== false;
+        $menu.find('input.pt-theme-filter-checkbox[data-pt-group]').prop('checked', false);
+        $menu.find('input.pt-theme-filter-checkbox[data-pt-ungrouped]').prop('checked', includeUngrouped);
+        void regroupOpenSelect2Results(selectEl);
+      });
+    $menu.append($clearItem);
+  }
+
+  const iconOffset = $icon.offset();
+  const viewportHeight = window?.innerHeight || 800;
+  $menu.css({
+    position: 'fixed',
+    top: iconOffset.top + $icon.outerHeight(),
+    left: Math.max(8, iconOffset.left - 140),
+    maxHeight: Math.max(160, Math.min(0.6 * viewportHeight, 420)),
+    overflowY: 'auto',
+  });
+
+  $('body').append($menu);
+  $menu.on('click', function (e) {
+    if ($(e.target).hasClass('pt-menu-item') || $(e.target).closest('.pt-menu-item').length) return;
+    e.stopPropagation();
+  });
+
+  $menu.on('mousedown mouseup touchstart touchend', function (e) {
     e.stopPropagation();
   });
 
@@ -792,6 +980,39 @@ function installSelect2GroupingHandlers(selectEl) {
     openResultsObservers.delete(selectEl);
   };
 
+  // Theme switching can be heavy and may interrupt Select2's normal open/close lifecycle.
+  // Keep cleanup aligned with SillyTavern's native "change -> applyTheme" flow to avoid UI leftovers.
+  const cleanupAfterThemeChange = () => {
+    try {
+      $('.pt-theme-context-menu').remove();
+    } catch {
+      /* ignore */
+    }
+
+    clearThemeBatchSelection(selectEl);
+
+    // If Select2 is still open for any reason, close it to match native UX.
+    try {
+      if (isSelect2Initialized($select) && $select.data('select2')?.isOpen?.()) {
+        $select.select2('close');
+      }
+    } catch {
+      /* ignore */
+    }
+
+    // Ensure our observers/handlers don't keep running while the theme is applying.
+    stopObserver();
+    unbindDragEvents();
+    resetDragState();
+
+    // Refresh theme-derived vars for the next open (some themes update async).
+    try {
+      applyThemeVarsToElement(selectEl);
+    } catch {
+      /* ignore */
+    }
+  };
+
   // Prevent Select2 dropdown clicks from closing the settings panel
   const preventSettingsPanelClose = (e) => {
     e.stopPropagation();
@@ -856,18 +1077,39 @@ function installSelect2GroupingHandlers(selectEl) {
         drawerObserver.observe(drawerEl, { attributes: true, attributeFilter: ['class'] });
         $select.data('ptDrawerObserver', drawerObserver);
       }
+
+      // Listen for scroll events on drawer to close Select2
+      const $drawerContent = $select.closest('.drawer-content');
+      if ($drawerContent.length) {
+        const scrollHandler = () => {
+          if (isSelect2Initialized($select) && $select.data('select2')?.isOpen?.()) {
+            $select.select2('close');
+          }
+        };
+        $drawerContent.off('scroll.pt-theme-grouping').on('scroll.pt-theme-grouping', scrollHandler);
+      }
     })
     .off('select2:close.pt-theme-grouping')
     .on('select2:close.pt-theme-grouping', () => {
       $('.pt-theme-context-menu').remove();
+      clearThemeBatchSelection(selectEl);
       const $results = getOpenSelect2ResultsRoot(selectEl);
-      $results?.off?.('click.pt-theme-grouping');
+      $results?.off?.('.pt-theme-grouping');
       stopObserver();
 
       // Clean up event handlers
       $('.select2-container--open').off('.pt-prevent-close');
       $('.select2-container--open .select2-search__field').off('.pt-prevent-close');
       $('.select2-container--open .select2-dropdown').off('.pt-prevent-close');
+    });
+
+  // Also clean up on actual theme selection (change event) to prevent leftover UI in edge cases.
+  // Use setTimeout to ensure SillyTavern's native applyTheme handler runs first.
+  $select
+    .off('change.pt-theme-grouping')
+    .on('change.pt-theme-grouping', () => {
+      setTimeout(() => cleanupAfterThemeChange(), 0);
+      setTimeout(() => cleanupAfterThemeChange(), 120);
     });
 }
 
@@ -894,32 +1136,53 @@ function uninstallSelect2GroupingHandlers(selectEl) {
 let enabled = false;
 let retryTimer = null;
 
-function addCreateGroupButton() {
+function addCreateGroupButton(selectEl) {
   const $ = getJQuery();
-  if ($('#pt-create-theme-group-btn').length) return;
 
-  const $btn = $('<div>')
-    .attr('id', 'pt-create-theme-group-btn')
-    .attr('title', '新建主题分组')
-    .addClass('menu_button margin0')
-    .html('<i class="fa-solid fa-folder-plus"></i>')
-    .on('click', () => {
-      const groupName = prompt('输入分组名称:');
-      if (!groupName || !groupName.trim()) return;
+  let $btn = $('#pt-create-theme-group-btn');
+  if (!$btn.length) {
+    $btn = $('<div>')
+      .attr('id', 'pt-create-theme-group-btn')
+      .attr('title', '新建主题分组')
+      .addClass('menu_button margin0')
+      .html('<i class="fa-solid fa-folder-plus"></i>')
+      .on('click', () => {
+        const groupName = prompt('输入分组名称:');
+        if (!groupName || !groupName.trim()) return;
 
-      const trimmedName = groupName.trim();
-      if (createGroup(trimmedName)) {
-        if (typeof toastr !== 'undefined') {
-          toastr.success(`分组"${trimmedName}"已创建`, '创建成功');
+        const trimmedName = groupName.trim();
+        if (createGroup(trimmedName)) {
+          if (typeof toastr !== 'undefined') {
+            toastr.success(`分组"${trimmedName}"已创建`, '创建成功');
+          }
+        } else {
+          if (typeof toastr !== 'undefined') {
+            toastr.error('该分组已存在或创建失败', '创建失败');
+          }
         }
-      } else {
-        if (typeof toastr !== 'undefined') {
-          toastr.error('该分组已存在或创建失败', '创建失败');
-        }
-      }
-    });
+      });
 
-  $('#ui-preset-save-button').after($btn);
+    $('#ui-preset-save-button').after($btn);
+  }
+
+  let $filterBtn = $('#pt-theme-group-filter-btn');
+  if (false && !$filterBtn.length) {
+    $filterBtn = $('<div>')
+      .attr('id', 'pt-theme-group-filter-btn')
+      .attr('title', '筛选主题分组')
+      .addClass('menu_button margin0')
+      .html('<i class="fa-solid fa-filter"></i>')
+      .on('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        showThemeGroupFilterMenu($filterBtn, selectEl);
+        return false;
+      });
+
+    $btn.after($filterBtn);
+  }
+
+  $('#pt-theme-group-filter-btn').remove();
 }
 
 async function tryInit() {
@@ -948,7 +1211,10 @@ async function tryInit() {
     applyThemeVarsToElement($themesSelect[0]);
     installSelect2GroupingHandlers($themesSelect[0]);
     initDragAndDrop($themesSelect[0]);
-    addCreateGroupButton();
+    addCreateGroupButton($themesSelect[0]);
+
+    // 绑定滚动自动关闭逻辑
+    bindSelect2AutoClose('dialogue_popup');
 
     console.log('[ThemeGrouping] Initialized successfully');
     return true;
@@ -1010,7 +1276,7 @@ let dragState = {
   startY: 0,
   lastX: 0,
   lastY: 0,
-  threshold: 5,
+  threshold: 8,
   longPressTimer: null,
   longPressDelay: 300,
   ghostElement: null,
@@ -1095,7 +1361,7 @@ function onDocumentClickCapture(e) {
 }
 
 function onThemeChangeCapture(e) {
-  if (!dragState.isDragging && !dragState.wasDragging) return;
+  if (!dragState.isDragging) return;
   suppressEvent(e);
 }
 
@@ -1116,6 +1382,17 @@ function initDragAndDrop(selectEl) {
   // Prevent Select2 from selecting a theme right after a drag operation.
   $select.off('select2:selecting.theme-drag').on('select2:selecting.theme-drag', (e) => {
     if (dragState.isDragging || dragState.wasDragging) {
+      e.preventDefault();
+    }
+  });
+
+  // Prevent theme selection when the user clicks the batch checkbox.
+  $select.off('select2:selecting.pt-theme-batch').on('select2:selecting.pt-theme-batch', (e) => {
+    const target = e?.params?.originalEvent?.target;
+    if (!target) return;
+
+    const $target = $(target);
+    if ($target.hasClass('pt-theme-batch-toggle') || $target.closest('.pt-theme-batch-toggle').length) {
       e.preventDefault();
     }
   });
@@ -1191,7 +1468,7 @@ function onPointerStart(e) {
   const $ = getJQuery();
   const $target = $(e.currentTarget);
 
-  if ($(e.target).hasClass('pt-theme-menu') || $(e.target).hasClass('pt-theme-group-menu')) return;
+  if ($(e.target).hasClass('pt-theme-menu') || $(e.target).hasClass('pt-theme-group-menu') || $(e.target).hasClass('pt-theme-batch-toggle')) return;
 
   const isTouch = e.type === 'touchstart';
 
@@ -1684,7 +1961,7 @@ function resetDragState({ preserveWasDragging = false } = {}) {
     startY: 0,
     lastX: 0,
     lastY: 0,
-    threshold: 5,
+    threshold: 8,
     longPressTimer: null,
     longPressDelay: 300,
     ghostElement: null,

@@ -4,6 +4,8 @@ import { editEntryInPreset, copyEntryBetweenPresets } from '../operations/entry-
 import { ensureNewVersionFields } from '../preset/new-version-fields.js';
 import { getPresetDataFromManager, getPromptEntries } from '../preset/preset-manager.js';
 import { CommonStyles } from '../styles/common-styles.js';
+import { arePresetsSameDifferentVersion } from '../core/preset-name-utils.js';
+import { showChangelogModal, changelogIcon } from './changelog-modal.js';
 function showCompareModal(apiInfo) {
   const $ = getJQuery();
   ensureViewportCssVars();
@@ -58,6 +60,10 @@ function createCompareModal(apiInfo, leftPreset, rightPreset, commonEntries) {
   const differentEntries = commonEntries.filter(e => e.isDifferent);
   const sameEntries = commonEntries.filter(e => !e.isDifferent);
 
+  // 检查是否为同一基地的不同版本
+  const versionCheck = arePresetsSameDifferentVersion(leftPreset, rightPreset);
+  const isSameBaseDifferentVersion = versionCheck.match;
+
   const modalHtml = `
         <div id="compare-modal">
             <div class="compare-modal-content">
@@ -65,6 +71,11 @@ function createCompareModal(apiInfo, leftPreset, rightPreset, commonEntries) {
                 <div class="compare-modal-scroll">
                     <div class="compare-modal-header">
                         <div class="title-row">
+                            ${
+                              isSameBaseDifferentVersion
+                                ? `<button class="changelog-btn-header" id="generate-changelog-header" title="生成更新日志">${changelogIcon()}</button>`
+                                : ''
+                            }
                             <h2>预设比较</h2>
                         </div>
                         <div class="compare-info">${escapeHtml(leftPreset)} vs ${escapeHtml(rightPreset)}</div>
@@ -128,9 +139,10 @@ function createCompareDetailHtml(side, presetName, entry, otherEntry) {
   const other = ensureNewVersionFields(otherEntry);
   const content = current.content || '';
   const otherContent = other.content || '';
+  const currentTriggers = Array.isArray(current.injection_trigger) ? current.injection_trigger : [];
+  const otherTriggers = Array.isArray(other.injection_trigger) ? other.injection_trigger : [];
   const triggersDifferent =
-    JSON.stringify([...(current.injection_trigger || [])].sort()) !==
-    JSON.stringify([...(other.injection_trigger || [])].sort());
+    JSON.stringify([...currentTriggers].sort()) !== JSON.stringify([...otherTriggers].sort());
 
   return `
     <div class="compare-side ${side}-side">
@@ -158,7 +170,7 @@ function createCompareDetailHtml(side, presetName, entry, otherEntry) {
             </div>
             <div class="detail-row">
                 <span class="label">触发:</span>
-                <span class="value ${triggersDifferent ? 'different' : ''}">${escapeHtml(current.injection_trigger.join(', ') || '无')}</span>
+                <span class="value ${triggersDifferent ? 'different' : ''}">${escapeHtml(currentTriggers.join(', ') || '无')}</span>
             </div>
             <div class="detail-row">
                 <span class="label">内容:</span>
@@ -200,11 +212,17 @@ function applyCompareModalStyles(isMobile, isSmallScreen, isPortrait) {
   const $ = getJQuery();
   const vars = CommonStyles.getVars();
 
-  const cssLink = document.createElement('link');
-  cssLink.rel = 'stylesheet';
-  cssLink.href = './scripts/extensions/third-party/preset-transfer/src/styles/compare-modal.css';
-  if (!document.querySelector(`link[href="${cssLink.href}"]`)) {
-    document.head.appendChild(cssLink);
+  const cssHref = './scripts/extensions/third-party/preset-transfer/src/styles/compare-modal.css';
+  const cssLinkId = 'compare-modal-css-link';
+
+  let cssLink = document.getElementById(cssLinkId);
+  if (!cssLink) {
+    cssLink = document.createElement('link');
+    cssLink.id = cssLinkId;
+    cssLink.rel = 'stylesheet';
+    cssLink.href = cssHref;
+  } else if (cssLink.getAttribute('href') !== cssHref) {
+    cssLink.setAttribute('href', cssHref);
   }
 
   const styles = `
@@ -235,6 +253,41 @@ function applyCompareModalStyles(isMobile, isSmallScreen, isPortrait) {
         }
         #compare-modal .compare-modal-header .title-row {
             gap: ${vars.gap}; padding: ${vars.isMobile ? '8px 0' : '12px 0'};
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+        }
+        #compare-modal .compare-modal-header .title-row h2 {
+            grid-column: 2;
+            justify-self: center;
+            margin: 0;
+            text-align: center;
+        }
+        #compare-modal .compare-modal-header .title-row .changelog-btn-header {
+            grid-column: 1;
+            justify-self: start;
+            align-self: center;
+        }
+        #compare-modal .compare-modal-header .title-row .changelog-btn-header .pt-icon-changelog {
+            display: block;
+            transform: translateY(-0.06em);
+        }
+        #compare-modal .changelog-btn-header {
+            background: ${vars.inputBg};
+            border: 1px solid ${vars.inputBorder};
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #compare-modal .changelog-btn-header:hover {
+            opacity: 0.8;
+        }
+        #compare-modal .changelog-btn-header svg {
+            color: ${vars.textColor};
         }
         #compare-modal .close-compare-btn {
             font-size: calc(${vars.fontSize} * 1.5);
@@ -356,8 +409,24 @@ function applyCompareModalStyles(isMobile, isSmallScreen, isPortrait) {
         }
     `;
 
-  if (!$('#compare-modal-styles').length) {
-    $('head').append(`<style id="compare-modal-styles">${styles}</style>`);
+  let styleEl = document.getElementById('compare-modal-styles');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'compare-modal-styles';
+  }
+  styleEl.textContent = styles;
+
+  if (cssLink.parentNode !== document.head) {
+    if (styleEl.parentNode === document.head) {
+      document.head.insertBefore(cssLink, styleEl);
+    } else {
+      document.head.appendChild(cssLink);
+    }
+  }
+  if (styleEl.parentNode !== document.head) {
+    document.head.appendChild(styleEl);
+  } else {
+    document.head.appendChild(styleEl); // move to end so it overrides compare-modal.css
   }
 }
 
@@ -392,6 +461,13 @@ function bindCompareModalEvents(apiInfo, leftPreset, rightPreset, commonEntries)
   }
 
   $('#close-compare-header').on('click', () => modal.remove());
+
+  // 生成更新日志按钮
+  $('#generate-changelog-header').on('click', () => {
+    const leftData = getPresetDataFromManager(apiInfo, leftPreset);
+    const rightData = getPresetDataFromManager(apiInfo, rightPreset);
+    showChangelogModal(leftData, rightData, leftPreset, rightPreset);
+  });
 
   // 操作按钮事件
   $('.compare-action-btn').on('click', function () {

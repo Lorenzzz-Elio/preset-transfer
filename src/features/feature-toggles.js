@@ -16,6 +16,7 @@ import { unhookPresetSaveToProtectExtensions } from './entry-states.js';
 import * as WorldbookGrouping from './worldbook-grouping.js';
 import { setWorldbookCommonFeatureActive } from './worldbook-common-integration.js';
 import * as ThemeGrouping from './theme-grouping.js';
+import { initPresetListGroupingForOpenAiSettings, destroyPresetListGrouping } from './preset-list-grouping.js';
 
 function getCurrentPresetName() {
   try {
@@ -36,6 +37,7 @@ export function getTransferToolFeatureFlags() {
     regexScriptGroupingEnabled: !!settings.regexScriptGroupingEnabled,
     regexBindingEnabled: getRegexBindingEnabled() !== false,
     themeGroupingEnabled: !!settings.themeGroupingEnabled,
+    presetListGroupingEnabled: !!settings.presetListGroupingEnabled,
   };
 }
 
@@ -78,6 +80,12 @@ export function setRegexScriptGroupingEnabled(enabled) {
 export function setThemeGroupingEnabled(enabled) {
   const settings = loadTransferSettings();
   settings.themeGroupingEnabled = !!enabled;
+  saveTransferSettings(settings);
+}
+
+export function setPresetListGroupingEnabled(enabled) {
+  const settings = loadTransferSettings();
+  settings.presetListGroupingEnabled = !!enabled;
   saveTransferSettings(settings);
 }
 
@@ -158,5 +166,12 @@ export function applyTransferToolFeatureToggles() {
     ThemeGrouping.initThemeGrouping?.();
   } else {
     ThemeGrouping.destroyThemeGrouping?.();
+  }
+
+  // Preset list grouping (AI response preset selector)
+  if (flags.presetListGroupingEnabled) {
+    initPresetListGroupingForOpenAiSettings?.();
+  } else {
+    destroyPresetListGrouping?.('#settings_preset_openai');
   }
 }

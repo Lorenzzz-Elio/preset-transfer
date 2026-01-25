@@ -1,4 +1,4 @@
-import { extractPresetVersionInfo } from '../core/preset-name-utils.js';
+import { arePresetsSameDifferentVersion, extractPresetVersionInfo } from '../core/preset-name-utils.js';
 import { loadTransferSettings } from '../settings/settings-manager.js';
 import { extractStitchPatch } from '../preset/stitch-patch.js';
 import { getStitchId } from '../preset/stitch-meta.js';
@@ -34,12 +34,15 @@ async function setStitchStateByBase(normalizedBase, state) {
   return await SnapshotStorage.saveSnapshot(key, state);
 }
 
-function getStitchPatchSnapshotForBase(normalizedBase) {
-  return getStitchStateByBase(normalizedBase).then(state => {
+async function getStitchPatchSnapshotForBase(normalizedBase) {
+  try {
+    const state = await getStitchStateByBase(normalizedBase);
     const patch = state?.patch;
     if (!patch || typeof patch !== 'object') return null;
     return patch;
-  }).catch(() => null);
+  } catch {
+    return null;
+  }
 }
 
 async function recordStitchPatchSnapshot(presetName, presetData, options = {}) {
@@ -81,6 +84,60 @@ export {
   getStitchStateByBase,
   setStitchStateByBase,
   getStitchPatchSnapshotForBase,
+  findBestStitchPatchSnapshotForPresetName,
   recordStitchPatchSnapshot,
 };
 
+async function findBestStitchPatchSnapshotForPresetName(presetName, options = {}) {
+  const { threshold = 0.82 } = options;
+
+  const targetName = String(presetName ?? '').trim();
+  if (!targetName) return null;
+
+  const targetInfo = extractPresetVersionInfo(targetName);
+  if (!targetInfo?.version) return null;
+
+  let snapshots = [];
+  try {
+    snapshots = await SnapshotStorage.getAllSnapshots();
+  } catch {
+    snapshots = [];
+  }
+
+  let best = null;
+
+  for (const snap of snapshots) {
+    const candidateName = String(snap?.presetName ?? '').trim();
+    if (!candidateName) continue;
+
+    const patch = snap?.patch;
+    if (!patch || typeof patch !== 'object') continue;
+
+    if (countPatchStitches(patch) === 0) continue;
+
+    const match = arePresetsSameDifferentVersion(targetName, candidateName, { threshold });
+    if (!match?.match) continue;
+
+    const similarity = typeof match.similarity === 'number' ? match.similarity : 0;
+    const updatedAt = typeof snap?.updatedAt === 'number' ? snap.updatedAt : 0;
+
+    if (!best || similarity > best.similarity || (similarity === best.similarity && updatedAt > best.updatedAt)) {
+      best = {
+        normalizedBase: String(snap?.normalizedBase ?? '').trim(),
+        presetName: candidateName,
+        patch,
+        similarity,
+        updatedAt,
+      };
+    }
+  }
+
+  if (!best?.normalizedBase) return null;
+
+  return {
+    base: best.normalizedBase,
+    presetName: best.presetName,
+    patch: best.patch,
+    similarity: best.similarity,
+  };
+}
