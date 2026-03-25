@@ -8,6 +8,7 @@ import {
   getDefaultRegexBindings,
   switchPresetRegexes,
 } from './regex-binding.js';
+import { initNativeEntryMoreBtns } from '../ui/native-entry-more-btn.js';
 import * as NativePanel from '../ui/native-panel.js';
 import * as EntryGroupingUI from '../ui/entry-grouping-ui.js';
 import * as RegexScriptGroupingUI from '../ui/regex-script-grouping-ui.js';
@@ -174,4 +175,7 @@ export function applyTransferToolFeatureToggles() {
   } else {
     destroyPresetListGrouping?.('#settings_preset_openai');
   }
+
+  // Entry more button (copy entry + beautify regex)
+  initNativeEntryMoreBtns();
 }
