@@ -1,11 +1,9 @@
-import { ensureViewportCssVars, escapeAttr, escapeHtml, getDeviceInfo, getJQuery, highlightDiff } from '../core/utils.js';
+﻿import { ensureViewportCssVars, escapeAttr, escapeHtml, getDeviceInfo, getJQuery, highlightDiff } from '../core/utils.js';
 import { isEntryDifferent, shouldHighlightPositionDifference, showConfirmDialog } from '../events/compare-events.js';
 import { editEntryInPreset, copyEntryBetweenPresets } from '../operations/entry-operations.js';
 import { ensureNewVersionFields } from '../preset/new-version-fields.js';
 import { getPresetDataFromManager, getPromptEntries } from '../preset/preset-manager.js';
 import { CommonStyles } from '../styles/common-styles.js';
-import { arePresetsSameDifferentVersion } from '../core/preset-name-utils.js';
-import { showChangelogModal, changelogIcon } from './changelog-modal.js';
 function showCompareModal(apiInfo) {
   const $ = getJQuery();
   ensureViewportCssVars();
@@ -58,11 +56,6 @@ function createCompareModal(apiInfo, leftPreset, rightPreset, commonEntries) {
   $('#compare-modal').remove();
 
   const differentEntries = commonEntries.filter(e => e.isDifferent);
-  const sameEntries = commonEntries.filter(e => !e.isDifferent);
-
-  // 检查是否为同一基地的不同版本
-  const versionCheck = arePresetsSameDifferentVersion(leftPreset, rightPreset);
-  const isSameBaseDifferentVersion = versionCheck.match;
 
   const modalHtml = `
         <div id="compare-modal">
@@ -71,11 +64,6 @@ function createCompareModal(apiInfo, leftPreset, rightPreset, commonEntries) {
                 <div class="compare-modal-scroll">
                     <div class="compare-modal-header">
                         <div class="title-row">
-                            ${
-                              isSameBaseDifferentVersion
-                                ? `<button class="changelog-btn-header" id="generate-changelog-header" title="生成更新日志">${changelogIcon()}</button>`
-                                : ''
-                            }
                             <h2>预设比较</h2>
                         </div>
                         <div class="compare-info">${escapeHtml(leftPreset)} vs ${escapeHtml(rightPreset)}</div>
@@ -253,41 +241,13 @@ function applyCompareModalStyles(isMobile, isSmallScreen, isPortrait) {
         }
         #compare-modal .compare-modal-header .title-row {
             gap: ${vars.gap}; padding: ${vars.isMobile ? '8px 0' : '12px 0'};
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            align-items: center;
-        }
-        #compare-modal .compare-modal-header .title-row h2 {
-            grid-column: 2;
-            justify-self: center;
-            margin: 0;
-            text-align: center;
-        }
-        #compare-modal .compare-modal-header .title-row .changelog-btn-header {
-            grid-column: 1;
-            justify-self: start;
-            align-self: center;
-        }
-        #compare-modal .compare-modal-header .title-row .changelog-btn-header .pt-icon-changelog {
-            display: block;
-            transform: translateY(-0.06em);
-        }
-        #compare-modal .changelog-btn-header {
-            background: ${vars.inputBg};
-            border: 1px solid ${vars.inputBorder};
-            border-radius: 8px;
-            padding: 8px 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        #compare-modal .changelog-btn-header:hover {
-            opacity: 0.8;
-        }
-        #compare-modal .changelog-btn-header svg {
-            color: ${vars.textColor};
+        #compare-modal .compare-modal-header .title-row h2 {
+            margin: 0;
+            text-align: center;
         }
         #compare-modal .close-compare-btn {
             font-size: calc(${vars.fontSize} * 1.5);
@@ -461,13 +421,6 @@ function bindCompareModalEvents(apiInfo, leftPreset, rightPreset, commonEntries)
   }
 
   $('#close-compare-header').on('click', () => modal.remove());
-
-  // 生成更新日志按钮
-  $('#generate-changelog-header').on('click', () => {
-    const leftData = getPresetDataFromManager(apiInfo, leftPreset);
-    const rightData = getPresetDataFromManager(apiInfo, rightPreset);
-    showChangelogModal(leftData, rightData, leftPreset, rightPreset);
-  });
 
   // 操作按钮事件
   $('.compare-action-btn').on('click', function () {
