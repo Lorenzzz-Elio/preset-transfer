@@ -88,12 +88,13 @@ function applyStyles(isMobile, isSmallScreen, isPortrait) {
         }
         #preset-transfer-modal .preset-selection {
             display: ${isMobile ? 'flex' : 'grid'};
-            ${isMobile ? 'flex-direction: column;' : 'grid-template-columns: 1fr 1fr;'}
+            ${isMobile ? 'flex-direction: column;' : 'grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);'}
             gap: ${isMobile ? '18px' : '22px'}; margin-bottom: ${isMobile ? '24px' : '28px'};
         }
         #preset-transfer-modal .preset-field {
             padding: ${isMobile ? '20px' : '24px'}; background: ${vars.sectionBg};
             border: 1px solid ${vars.borderColor};
+            min-width: 0;
         }
         #preset-transfer-modal .get-current-btn {
             padding: 0;
@@ -127,6 +128,22 @@ function applyStyles(isMobile, isSmallScreen, isPortrait) {
             display: flex;
             gap: 8px;
             align-items: center;
+            min-width: 0;
+        }
+        #preset-transfer-modal .preset-input-group > select,
+        #preset-transfer-modal .preset-input-group > .select2-container {
+            flex: 1 1 0;
+            min-width: 0;
+            max-width: 100%;
+        }
+        #preset-transfer-modal .preset-input-group > .select2-container {
+            width: 0 !important;
+        }
+        #preset-transfer-modal .preset-input-group .select2-selection--single,
+        #preset-transfer-modal .preset-input-group .select2-selection__rendered {
+            min-width: 0;
+            max-width: 100%;
+            box-sizing: border-box;
         }
         #preset-transfer-modal select {
             padding: ${isMobile ? '14px 16px' : '12px 14px'};

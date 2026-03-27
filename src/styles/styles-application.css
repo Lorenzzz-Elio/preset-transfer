@@ -122,16 +122,32 @@ select option {
 #preset-transfer-modal .preset-field {
     border-radius: 12px;
     transition: all 0.3s ease;
+    min-width: 0;
 }
 
 #preset-transfer-modal .preset-input-group {
     display: flex;
     gap: 8px;
     align-items: center;
+    min-width: 0;
 }
 
-#preset-transfer-modal .preset-input-group select {
-    flex: 1;
+#preset-transfer-modal .preset-input-group select,
+#preset-transfer-modal .preset-input-group > .select2-container {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 100%;
+}
+
+#preset-transfer-modal .preset-input-group > .select2-container {
+    width: 0 !important;
+}
+
+#preset-transfer-modal .preset-input-group .select2-selection--single,
+#preset-transfer-modal .preset-input-group .select2-selection__rendered {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 #preset-transfer-modal .get-current-btn {
