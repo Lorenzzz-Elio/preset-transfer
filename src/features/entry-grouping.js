@@ -5,6 +5,7 @@ import { getCurrentApiInfo } from '../core/utils.js';
 
 const DEFAULT_GROUP_NAME = '分组';
 const DEFAULT_MODE = 'inclusive';
+const pendingMigrationWrites = new Map();
 
 function createGroupId() {
   try {
@@ -28,6 +29,24 @@ function readGroupName(entry) {
   return entry?.name || entry?.groupName || DEFAULT_GROUP_NAME;
 }
 
+function normalizeMemberIdentifiers(list) {
+  const out = [];
+  const seen = new Set();
+  for (const raw of asArray(list)) {
+    const identifier = String(raw ?? '').trim();
+    if (!identifier || seen.has(identifier)) continue;
+    seen.add(identifier);
+    out.push(identifier);
+  }
+  return out;
+}
+
+function isMemberGrouping(entry) {
+  return Array.isArray(entry?.memberIdentifiers)
+    || Array.isArray(entry?.memberIds)
+    || Array.isArray(entry?.members);
+}
+
 function isLegacyIndexGrouping(entry) {
   return typeof entry?.startIndex === 'number' && typeof entry?.endIndex === 'number';
 }
@@ -36,18 +55,51 @@ function isIdentifierAnchorGrouping(entry) {
   return typeof entry?.startIdentifier === 'string' || typeof entry?.endIdentifier === 'string';
 }
 
+function resolveMemberIdentifiersFromAnchors(startIdentifier, endIdentifier, orderedIdentifiers) {
+  if (!Array.isArray(orderedIdentifiers) || orderedIdentifiers.length === 0) return null;
+  if (typeof startIdentifier !== 'string' || typeof endIdentifier !== 'string') return null;
+
+  const startIndex = orderedIdentifiers.indexOf(startIdentifier);
+  const endIndex = orderedIdentifiers.indexOf(endIdentifier);
+  if (startIndex === -1 || endIndex === -1) return null;
+
+  const start = Math.min(startIndex, endIndex);
+  const end = Math.max(startIndex, endIndex);
+  return normalizeMemberIdentifiers(orderedIdentifiers.slice(start, end + 1));
+}
+
+function resolveGroupingMemberIdentifiers(startIdentifierOrMembers, endIdentifier, orderedIdentifiers) {
+  if (Array.isArray(startIdentifierOrMembers)) {
+    return normalizeMemberIdentifiers(startIdentifierOrMembers);
+  }
+
+  return resolveMemberIdentifiersFromAnchors(startIdentifierOrMembers, endIdentifier, orderedIdentifiers);
+}
+
 function normalizeForRead(entry, orderedIdentifiers) {
   if (!isPlainObject(entry)) return null;
+
+  if (isMemberGrouping(entry)) {
+    const memberIdentifiers = normalizeMemberIdentifiers(entry.memberIdentifiers ?? entry.memberIds ?? entry.members);
+    if (memberIdentifiers.length === 0) return null;
+
+    return {
+      id: typeof entry.id === 'string' ? entry.id : createGroupId(),
+      name: readGroupName(entry),
+      memberIdentifiers,
+      mode: entry.mode || DEFAULT_MODE,
+    };
+  }
 
   if (isLegacyIndexGrouping(entry)) {
     const startIdentifier = Array.isArray(orderedIdentifiers) ? orderedIdentifiers[entry.startIndex] : null;
     const endIdentifier = Array.isArray(orderedIdentifiers) ? orderedIdentifiers[entry.endIndex] : null;
-    if (typeof startIdentifier === 'string' && typeof endIdentifier === 'string') {
+    const memberIdentifiers = resolveMemberIdentifiersFromAnchors(startIdentifier, endIdentifier, orderedIdentifiers);
+    if (memberIdentifiers && memberIdentifiers.length > 0) {
       return {
         id: typeof entry.id === 'string' ? entry.id : createGroupId(),
         name: readGroupName(entry),
-        startIdentifier,
-        endIdentifier,
+        memberIdentifiers,
         mode: entry.mode || DEFAULT_MODE,
       };
     }
@@ -65,12 +117,12 @@ function normalizeForRead(entry, orderedIdentifiers) {
   if (isIdentifierAnchorGrouping(entry)) {
     const startIdentifier = typeof entry.startIdentifier === 'string' ? entry.startIdentifier : null;
     const endIdentifier = typeof entry.endIdentifier === 'string' ? entry.endIdentifier : null;
-    if (startIdentifier && endIdentifier) {
+    const memberIdentifiers = resolveMemberIdentifiersFromAnchors(startIdentifier, endIdentifier, orderedIdentifiers);
+    if (memberIdentifiers && memberIdentifiers.length > 0) {
       return {
         id: typeof entry.id === 'string' ? entry.id : createGroupId(),
         name: readGroupName(entry),
-        startIdentifier,
-        endIdentifier,
+        memberIdentifiers,
         mode: entry.mode || DEFAULT_MODE,
       };
     }
@@ -80,6 +132,8 @@ function normalizeForRead(entry, orderedIdentifiers) {
       name: readGroupName(entry),
       mode: entry.mode || DEFAULT_MODE,
       unresolved: true,
+      startIdentifier,
+      endIdentifier,
       legacyStartIndex: entry.legacyStartIndex,
       legacyEndIndex: entry.legacyEndIndex,
     };
@@ -91,40 +145,32 @@ function normalizeForRead(entry, orderedIdentifiers) {
 function normalizeForWrite(entry, orderedIdentifiers) {
   if (!isPlainObject(entry)) return null;
 
-  // Already v2-ish format: normalize keys and fill id/name.
-  if (isIdentifierAnchorGrouping(entry)) {
-    const normalized = {
+  if (isMemberGrouping(entry)) {
+    const memberIdentifiers = normalizeMemberIdentifiers(entry.memberIdentifiers ?? entry.memberIds ?? entry.members);
+    if (memberIdentifiers.length === 0) return null;
+
+    return {
       id: typeof entry.id === 'string' ? entry.id : createGroupId(),
       name: readGroupName(entry),
+      memberIdentifiers,
       mode: entry.mode || DEFAULT_MODE,
     };
-
-    if (typeof entry.startIdentifier === 'string') normalized.startIdentifier = entry.startIdentifier;
-    if (typeof entry.endIdentifier === 'string') normalized.endIdentifier = entry.endIdentifier;
-
-    if (entry.unresolved) normalized.unresolved = true;
-    if (typeof entry.legacyStartIndex === 'number') normalized.legacyStartIndex = entry.legacyStartIndex;
-    if (typeof entry.legacyEndIndex === 'number') normalized.legacyEndIndex = entry.legacyEndIndex;
-
-    return normalized;
   }
 
-  // Legacy index-range -> identifier anchors (best-effort).
   if (isLegacyIndexGrouping(entry)) {
     const startIdentifier = Array.isArray(orderedIdentifiers) ? orderedIdentifiers[entry.startIndex] : null;
     const endIdentifier = Array.isArray(orderedIdentifiers) ? orderedIdentifiers[entry.endIndex] : null;
+    const memberIdentifiers = resolveMemberIdentifiersFromAnchors(startIdentifier, endIdentifier, orderedIdentifiers);
 
-    if (typeof startIdentifier === 'string' && typeof endIdentifier === 'string') {
+    if (memberIdentifiers && memberIdentifiers.length > 0) {
       return {
         id: typeof entry.id === 'string' ? entry.id : createGroupId(),
         name: readGroupName(entry),
-        startIdentifier,
-        endIdentifier,
+        memberIdentifiers,
         mode: entry.mode || DEFAULT_MODE,
       };
     }
 
-    // Keep as unresolved (v2 placeholder) to avoid writing index-range entries back.
     return {
       id: typeof entry.id === 'string' ? entry.id : createGroupId(),
       name: readGroupName(entry),
@@ -132,6 +178,32 @@ function normalizeForWrite(entry, orderedIdentifiers) {
       unresolved: true,
       legacyStartIndex: entry.startIndex,
       legacyEndIndex: entry.endIndex,
+    };
+  }
+
+  if (isIdentifierAnchorGrouping(entry)) {
+    const startIdentifier = typeof entry.startIdentifier === 'string' ? entry.startIdentifier : null;
+    const endIdentifier = typeof entry.endIdentifier === 'string' ? entry.endIdentifier : null;
+    const memberIdentifiers = resolveMemberIdentifiersFromAnchors(startIdentifier, endIdentifier, orderedIdentifiers);
+
+    if (memberIdentifiers && memberIdentifiers.length > 0) {
+      return {
+        id: typeof entry.id === 'string' ? entry.id : createGroupId(),
+        name: readGroupName(entry),
+        memberIdentifiers,
+        mode: entry.mode || DEFAULT_MODE,
+      };
+    }
+
+    return {
+      id: typeof entry.id === 'string' ? entry.id : createGroupId(),
+      name: readGroupName(entry),
+      mode: entry.mode || DEFAULT_MODE,
+      unresolved: true,
+      startIdentifier,
+      endIdentifier,
+      legacyStartIndex: entry.legacyStartIndex,
+      legacyEndIndex: entry.legacyEndIndex,
     };
   }
 
@@ -162,7 +234,181 @@ function syncEntryGroupingToActiveSettings(apiInfo, presetName, groupings) {
   }
 }
 
-// 获取预设的所有分组配置（会在内存中兼容/转换旧格式；写入时只写 v2 标识符格式）
+function queuePersistPresetGroupingMigration(presetName, groupings) {
+  const name = String(presetName ?? '').trim();
+  if (!name || !Array.isArray(groupings) || groupings.length === 0) return;
+
+  const signature = `${name}\u001f${JSON.stringify(groupings)}`;
+  if (pendingMigrationWrites.get(name) === signature) return;
+  pendingMigrationWrites.set(name, signature);
+
+  Promise.resolve().then(async () => {
+    if (pendingMigrationWrites.get(name) !== signature) return;
+
+    try {
+      const apiInfo = getCurrentApiInfo?.();
+      if (apiInfo?.presetManager) {
+        const presetObj = apiInfo.presetManager.getCompletionPresetByName(name);
+        if (presetObj) {
+          if (!presetObj.extensions) presetObj.extensions = {};
+          presetObj.extensions.entryGrouping = groupings;
+          syncEntryGroupingToActiveSettings(apiInfo, name, groupings);
+
+          const cachedPreset = PT.API.getPreset(name);
+          if (cachedPreset) {
+            if (!cachedPreset.extensions) cachedPreset.extensions = {};
+            cachedPreset.extensions.entryGrouping = groupings;
+          }
+
+          await apiInfo.presetManager.savePreset(name, presetObj, { skipUpdate: true });
+          return;
+        }
+      }
+
+      const preset = PT.API.getPreset(name);
+      if (!preset) return;
+      if (!preset.extensions) preset.extensions = {};
+      preset.extensions.entryGrouping = groupings;
+      await PT.API.replacePreset(name, preset);
+    } catch (error) {
+      console.warn(`持久化预设 "${name}" 的分组迁移失败:`, error);
+    } finally {
+      if (pendingMigrationWrites.get(name) === signature) {
+        pendingMigrationWrites.delete(name);
+      }
+    }
+  });
+}
+
+// 获取预设的所有分组配置。旧的 start/end 锚点方案会在内存中转换成显式成员列表，
+// 这样后续调整条目顺序时不再受创建分组时的起止锚点限制。
+function orderMemberIdentifiers(memberIdentifiers, orderedIdentifiers) {
+  const normalizedMembers = normalizeMemberIdentifiers(memberIdentifiers);
+  if (normalizedMembers.length === 0) return [];
+
+  const normalizedOrder = normalizeMemberIdentifiers(orderedIdentifiers);
+  if (normalizedOrder.length === 0) return normalizedMembers;
+
+  const orderedSet = new Set(normalizedOrder);
+  const memberSet = new Set(normalizedMembers);
+  const ordered = normalizedOrder.filter((identifier) => memberSet.has(identifier));
+  const missing = normalizedMembers.filter((identifier) => !orderedSet.has(identifier));
+  return [...ordered, ...missing];
+}
+
+async function persistPresetGroupings(presetName, groupings) {
+  const name = String(presetName ?? '').trim();
+  if (!name) return false;
+
+  const normalizedGroupings = getWritableGroupings(groupings, []);
+  const apiInfo = getCurrentApiInfo?.();
+
+  if (apiInfo?.presetManager) {
+    const presetObj = apiInfo.presetManager.getCompletionPresetByName(name);
+    if (!presetObj) throw new Error(`Preset "${name}" not found`);
+
+    if (!presetObj.extensions) presetObj.extensions = {};
+    presetObj.extensions.entryGrouping = normalizedGroupings;
+    syncEntryGroupingToActiveSettings(apiInfo, name, normalizedGroupings);
+
+    const cachedPreset = PT.API.getPreset(name);
+    if (cachedPreset) {
+      if (!cachedPreset.extensions) cachedPreset.extensions = {};
+      cachedPreset.extensions.entryGrouping = normalizedGroupings;
+    }
+
+    await apiInfo.presetManager.savePreset(name, presetObj, { skipUpdate: true });
+    return true;
+  }
+
+  const preset = PT.API.getPreset(name);
+  if (!preset) throw new Error(`Preset "${name}" not found`);
+  if (!preset.extensions) preset.extensions = {};
+  preset.extensions.entryGrouping = normalizedGroupings;
+
+  await PT.API.replacePreset(name, preset);
+  return true;
+}
+
+async function reassignPresetGroupingMembers(presetName, entryIdentifiers, orderedIdentifiers, options = {}) {
+  try {
+    const name = String(presetName ?? '').trim();
+    const movedIdentifiers = normalizeMemberIdentifiers(entryIdentifiers);
+    if (!name || movedIdentifiers.length === 0) return false;
+
+    const targetIdentifier = String(options?.targetIdentifier ?? '').trim();
+    const requestedGroupId = String(options?.targetGroupId ?? '').trim();
+    const groupings = getWritableGroupings(getAllPresetGroupings(name, orderedIdentifiers), orderedIdentifiers);
+    if (groupings.length === 0) return false;
+
+    const targetGroupId = requestedGroupId || (
+      targetIdentifier
+        ? String(
+          groupings.find((grouping) => normalizeMemberIdentifiers(grouping?.memberIdentifiers).includes(targetIdentifier))?.id ?? '',
+        ).trim()
+        : ''
+    );
+
+    let changed = false;
+    const nextGroupings = [];
+
+    for (const grouping of groupings) {
+      const beforeMembers = normalizeMemberIdentifiers(grouping?.memberIdentifiers);
+      const memberSet = new Set(beforeMembers);
+
+      for (const identifier of movedIdentifiers) {
+        memberSet.delete(identifier);
+      }
+
+      if (targetGroupId && String(grouping?.id ?? '').trim() === targetGroupId) {
+        for (const identifier of movedIdentifiers) {
+          memberSet.add(identifier);
+        }
+      }
+
+      const nextMembers = orderMemberIdentifiers(Array.from(memberSet), orderedIdentifiers);
+      if (nextMembers.length === 0) {
+        if (beforeMembers.length > 0) changed = true;
+        continue;
+      }
+
+      if (!changed && nextMembers.join('\u001f') !== beforeMembers.join('\u001f')) {
+        changed = true;
+      }
+
+      nextGroupings.push({
+        ...grouping,
+        memberIdentifiers: nextMembers,
+      });
+    }
+
+    if (!changed) return false;
+    await persistPresetGroupings(name, nextGroupings);
+    return true;
+  } catch (error) {
+    console.error('重新分配预设分组成员失败:', error);
+    return false;
+  }
+}
+
+function getPresetGroupingIdForIdentifier(presetName, entryIdentifier, orderedIdentifiers) {
+  try {
+    const name = String(presetName ?? '').trim();
+    const identifier = String(entryIdentifier ?? '').trim();
+    if (!name || !identifier) return null;
+
+    const groupings = getAllPresetGroupings(name, orderedIdentifiers);
+    const targetGrouping = groupings.find(
+      (grouping) => !grouping?.unresolved && normalizeMemberIdentifiers(grouping?.memberIdentifiers).includes(identifier),
+    );
+    const groupId = String(targetGrouping?.id ?? '').trim();
+    return groupId || null;
+  } catch (error) {
+    console.warn(`获取预设 "${presetName}" 条目 "${entryIdentifier}" 的分组失败:`, error);
+    return null;
+  }
+}
+
 function getAllPresetGroupings(presetName, orderedIdentifiers) {
   try {
     const preset = PT.API.getPreset(presetName);
@@ -171,20 +417,34 @@ function getAllPresetGroupings(presetName, orderedIdentifiers) {
     const grouping = preset.extensions.entryGrouping;
     if (!grouping) return [];
 
-    return asArray(grouping)
+    const rawGroupings = asArray(grouping);
+    const normalized = rawGroupings
       .map((entry) => normalizeForRead(entry, orderedIdentifiers))
       .filter(Boolean);
+
+    const writableGroupings = getWritableGroupings(rawGroupings, orderedIdentifiers);
+    const shouldMigrate =
+      writableGroupings.length === normalized.length
+      && rawGroupings.some((entry) => isPlainObject(entry) && !isMemberGrouping(entry));
+
+    if (shouldMigrate) {
+      preset.extensions.entryGrouping = writableGroupings;
+      queuePersistPresetGroupingMigration(presetName, writableGroupings);
+    }
+
+    return normalized;
   } catch (error) {
-    console.warn(`获取预设 "${presetName}" 的分组配置失败`, error);
+    console.warn(`获取预设 "${presetName}" 的分组配置失败:`, error);
     return [];
   }
 }
 
-// 添加新分组（startIdentifier/endIdentifier 为 li[data-pm-identifier] 的稳定标识）
-async function addPresetGrouping(presetName, startIdentifier, endIdentifier, groupName, orderedIdentifiers) {
+// 添加新分组。写入时优先存为显式成员标识列表。
+async function addPresetGrouping(presetName, startIdentifierOrMembers, endIdentifier, groupName, orderedIdentifiers) {
   try {
-    if (typeof startIdentifier !== 'string' || typeof endIdentifier !== 'string') {
-      throw new Error('Invalid identifier anchors');
+    const memberIdentifiers = resolveGroupingMemberIdentifiers(startIdentifierOrMembers, endIdentifier, orderedIdentifiers);
+    if (!Array.isArray(memberIdentifiers) || memberIdentifiers.length === 0) {
+      throw new Error('Invalid grouping members');
     }
 
     const apiInfo = getCurrentApiInfo?.();
@@ -198,17 +458,13 @@ async function addPresetGrouping(presetName, startIdentifier, endIdentifier, gro
       groupings.push({
         id: createGroupId(),
         name: groupName || DEFAULT_GROUP_NAME,
-        startIdentifier,
-        endIdentifier,
+        memberIdentifiers,
         mode: DEFAULT_MODE,
       });
       presetObj.extensions.entryGrouping = groupings;
 
-      // Keep current active settings (e.g. oai_settings) in sync so that
-      // SillyTavern's "Update current preset" won't overwrite the new grouping.
       syncEntryGroupingToActiveSettings(apiInfo, presetName, groupings);
 
-      // Update cache first to prevent flash
       const cachedPreset = PT.API.getPreset(presetName);
       if (cachedPreset) {
         if (!cachedPreset.extensions) cachedPreset.extensions = {};
@@ -227,8 +483,7 @@ async function addPresetGrouping(presetName, startIdentifier, endIdentifier, gro
     groupings.push({
       id: createGroupId(),
       name: groupName || DEFAULT_GROUP_NAME,
-      startIdentifier,
-      endIdentifier,
+      memberIdentifiers,
       mode: DEFAULT_MODE,
     });
     preset.extensions.entryGrouping = groupings;
@@ -241,8 +496,8 @@ async function addPresetGrouping(presetName, startIdentifier, endIdentifier, gro
   }
 }
 
-// 更新指定分组
-async function updatePresetGrouping(presetName, groupIndex, startIdentifier, endIdentifier, groupName, orderedIdentifiers) {
+// 更新指定分组。未传新成员时保持当前成员列表不变，仅更新名称。
+async function updatePresetGrouping(presetName, groupIndex, startIdentifierOrMembers, endIdentifier, groupName, orderedIdentifiers) {
   try {
     const apiInfo = getCurrentApiInfo?.();
     if (apiInfo && apiInfo.presetManager) {
@@ -256,11 +511,14 @@ async function updatePresetGrouping(presetName, groupIndex, startIdentifier, end
       }
 
       const existing = groupings[groupIndex] || {};
+      const memberIdentifiers = resolveGroupingMemberIdentifiers(startIdentifierOrMembers, endIdentifier, orderedIdentifiers);
       groupings[groupIndex] = {
         id: existing.id || createGroupId(),
         name: groupName || existing.name || DEFAULT_GROUP_NAME,
-        startIdentifier: typeof startIdentifier === 'string' ? startIdentifier : existing.startIdentifier,
-        endIdentifier: typeof endIdentifier === 'string' ? endIdentifier : existing.endIdentifier,
+        memberIdentifiers:
+          Array.isArray(memberIdentifiers) && memberIdentifiers.length > 0
+            ? memberIdentifiers
+            : normalizeMemberIdentifiers(existing.memberIdentifiers),
         mode: existing.mode || DEFAULT_MODE,
       };
 
@@ -288,11 +546,14 @@ async function updatePresetGrouping(presetName, groupIndex, startIdentifier, end
     }
 
     const existing = groupings[groupIndex] || {};
+    const memberIdentifiers = resolveGroupingMemberIdentifiers(startIdentifierOrMembers, endIdentifier, orderedIdentifiers);
     groupings[groupIndex] = {
       id: existing.id || createGroupId(),
       name: groupName || existing.name || DEFAULT_GROUP_NAME,
-      startIdentifier: typeof startIdentifier === 'string' ? startIdentifier : existing.startIdentifier,
-      endIdentifier: typeof endIdentifier === 'string' ? endIdentifier : existing.endIdentifier,
+      memberIdentifiers:
+        Array.isArray(memberIdentifiers) && memberIdentifiers.length > 0
+          ? memberIdentifiers
+          : normalizeMemberIdentifiers(existing.memberIdentifiers),
       mode: existing.mode || DEFAULT_MODE,
     };
 
@@ -356,7 +617,9 @@ async function removePresetGrouping(presetName, groupIndex, orderedIdentifiers) 
 
 export {
   getAllPresetGroupings,
+  getPresetGroupingIdForIdentifier,
   addPresetGrouping,
   updatePresetGrouping,
   removePresetGrouping,
+  reassignPresetGroupingMembers,
 };

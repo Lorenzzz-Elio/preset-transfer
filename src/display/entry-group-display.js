@@ -1,16 +1,60 @@
-// 转移界面中的分组显示功能
-// 允许在转移界面显示分组，并支持一键转移整个分组
-
-import { getJQuery } from '../core/utils.js';
+import { escapeAttr, getJQuery } from '../core/utils.js';
 import { CommonStyles } from '../styles/common-styles.js';
 import { getAllPresetGroupings } from '../features/entry-grouping.js';
 
+const transferGroupExpandStates = new Map();
+const transferListScrollStates = new Map();
+
+function getTransferListStateKey(side, presetName) {
+  return `${String(side ?? '').trim()}::${String(presetName ?? '').trim()}`;
+}
+
+function getTransferGroupStateKey(side, presetName, group, fallbackIndex = 0) {
+  const groupId = String(group?.grouping?.id ?? group?.id ?? '').trim();
+  const groupName = String(group?.name ?? group?.groupName ?? '').trim();
+  return `${getTransferListStateKey(side, presetName)}::${groupId || groupName || fallbackIndex}`;
+}
+
+export function rememberTransferPanelState($listContainer, side, presetName) {
+  const $ = getJQuery();
+
+  if (!$listContainer?.length || !presetName) return;
+
+  transferListScrollStates.set(getTransferListStateKey(side, presetName), $listContainer.scrollTop());
+
+  $listContainer.find(`.pt-transfer-group-header[data-side="${side}"]`).each(function (index) {
+    const $header = $(this);
+    const stateKey = String($header.attr('data-group-key') ?? '').trim()
+      || getTransferGroupStateKey(side, presetName, {
+        id: $header.attr('data-group-id'),
+        groupName: $header.attr('data-group-name'),
+      }, index);
+    transferGroupExpandStates.set(stateKey, $header.next('.pt-transfer-group-container').is(':visible'));
+  });
+}
+
+export function restoreTransferPanelScrollState($listContainer, side, presetName) {
+  if (!$listContainer?.length || !presetName) return;
+
+  const savedScrollTop = transferListScrollStates.get(getTransferListStateKey(side, presetName));
+  if (!Number.isFinite(savedScrollTop)) return;
+
+  const applyScroll = () => {
+    const node = $listContainer[0];
+    if (!node) return;
+    const maxScrollTop = Math.max(0, node.scrollHeight - node.clientHeight);
+    $listContainer.scrollTop(Math.min(savedScrollTop, maxScrollTop));
+  };
+
+  applyScroll();
+  requestAnimationFrame(applyScroll);
+  setTimeout(applyScroll, 80);
+}
+
 /**
- * 在转移界面中显示分组
- * @param {Array} entries - 条目数组
- * @param {string} side - 侧边标识 ('left', 'right', 'single')
- * @param {string} presetName - 预设名称
- * @returns {Object} - 包含分组信息的对象 { groups, ungroupedEntries }
+ * Build transfer-panel grouping data from the preset's entry grouping config.
+ * Group membership is resolved from explicit memberIdentifiers so it stays valid
+ * even after the storage format migrated away from start/end anchors.
  */
 export function organizeEntriesIntoGroups(entries, side, presetName) {
   if (!entries || !Array.isArray(entries) || entries.length === 0) {
@@ -21,8 +65,7 @@ export function organizeEntriesIntoGroups(entries, side, presetName) {
     return { groups: [], ungroupedEntries: entries };
   }
 
-  // 获取预设的分组配置
-  const orderedIdentifiers = entries.map(e => e.identifier).filter(Boolean);
+  const orderedIdentifiers = entries.map((entry) => entry.identifier).filter(Boolean);
   const groupings = getAllPresetGroupings(presetName, orderedIdentifiers);
 
   if (!groupings || groupings.length === 0) {
@@ -32,53 +75,64 @@ export function organizeEntriesIntoGroups(entries, side, presetName) {
   const groups = [];
   const groupedIdentifiers = new Set();
 
-  // 处理每个分组
   for (const grouping of groupings) {
-    if (grouping.unresolved) continue;
+    if (grouping?.unresolved) continue;
 
-    const { startIdentifier, endIdentifier, name } = grouping;
+    const memberIdentifiers = Array.isArray(grouping?.memberIdentifiers)
+      ? grouping.memberIdentifiers.map((id) => String(id ?? '').trim()).filter(Boolean)
+      : [];
 
-    // 找到起始和结束位置
-    const startIndex = entries.findIndex(e => e.identifier === startIdentifier);
-    const endIndex = entries.findIndex(e => e.identifier === endIdentifier);
+    if (memberIdentifiers.length === 0) continue;
 
-    if (startIndex === -1 || endIndex === -1 || startIndex > endIndex) continue;
+    const memberSet = new Set(memberIdentifiers);
+    const groupEntries = entries.filter((entry) => memberSet.has(String(entry?.identifier ?? '').trim()));
 
-    // 提取分组内的条目
-    const groupEntries = entries.slice(startIndex, endIndex + 1);
+    if (groupEntries.length === 0) continue;
 
-    // 标记已分组的条目
-    groupEntries.forEach(e => {
-      if (e.identifier) groupedIdentifiers.add(e.identifier);
-    });
+    const entryIdentifiers = groupEntries
+      .map((entry) => String(entry?.identifier ?? '').trim())
+      .filter(Boolean);
+
+    for (const identifier of entryIdentifiers) {
+      groupedIdentifiers.add(identifier);
+    }
+
+    const anchorIdentifier = entryIdentifiers[0] || '';
+    const anchorIndex = anchorIdentifier
+      ? entries.findIndex((entry) => String(entry?.identifier ?? '').trim() === anchorIdentifier)
+      : -1;
 
     groups.push({
-      name: name || '分组',
+      name: grouping?.name || '分组',
       entries: groupEntries,
-      startIndex,
-      endIndex,
+      entryIdentifiers,
+      anchorIndex,
       grouping,
     });
   }
 
-  // 未分组的条目
-  const ungroupedEntries = entries.filter(e => !groupedIdentifiers.has(e.identifier));
+  groups.sort((a, b) => {
+    const left = a.anchorIndex === -1 ? Number.MAX_SAFE_INTEGER : a.anchorIndex;
+    const right = b.anchorIndex === -1 ? Number.MAX_SAFE_INTEGER : b.anchorIndex;
+    return left - right;
+  });
+
+  const ungroupedEntries = entries.filter(
+    (entry) => !groupedIdentifiers.has(String(entry?.identifier ?? '').trim()),
+  );
 
   return { groups, ungroupedEntries };
 }
 
-/**
- * 渲染分组头部（在转移界面中）
- * @param {Object} group - 分组对象
- * @param {string} side - 侧边标识
- * @returns {string} - HTML字符串
- */
-export function renderGroupHeaderForTransfer(group, side) {
+export function renderGroupHeaderForTransfer(group, side, options = {}) {
   const vars = CommonStyles.getVars();
   const { isMobile } = vars;
+  const isExpanded = options.isExpanded === true;
+  const groupStateKey = String(options.groupStateKey ?? '').trim();
+  const groupId = String(group?.grouping?.id ?? '').trim();
 
   return `
-    <div class="pt-transfer-group-header" data-side="${side}" data-group-name="${group.name}" style="
+    <div class="pt-transfer-group-header" data-side="${escapeAttr(side)}" data-group-id="${escapeAttr(groupId)}" data-group-name="${escapeAttr(group.name)}" data-group-key="${escapeAttr(groupStateKey)}" style="
       background: ${vars.sectionBg};
       border: 1px solid ${vars.borderColor};
       border-radius: 8px;
@@ -103,6 +157,7 @@ export function renderGroupHeaderForTransfer(group, side) {
         font-size: ${isMobile ? '12px' : '14px'};
         color: ${vars.textColor};
         transition: transform 0.2s ease;
+        transform: rotate(${isExpanded ? '90deg' : '0deg'});
       ">▶</span>
       <div style="flex: 1;">
         <span class="pt-group-name" style="
@@ -120,110 +175,90 @@ export function renderGroupHeaderForTransfer(group, side) {
   `;
 }
 
-/**
- * 渲染分组容器（包含分组内的条目）
- * @param {Object} group - 分组对象
- * @param {string} side - 侧边标识
- * @returns {string} - HTML字符串
- */
-export function renderGroupContainerForTransfer(group, side) {
+export function renderGroupContainerForTransfer(group, side, options = {}) {
+  const isExpanded = options.isExpanded === true;
+  const groupStateKey = String(options.groupStateKey ?? '').trim();
+  const groupId = String(group?.grouping?.id ?? '').trim();
+
   return `
-    <div class="pt-transfer-group-container" data-side="${side}" data-group-name="${group.name}" style="
-      display: none;
+    <div class="pt-transfer-group-container" data-side="${escapeAttr(side)}" data-group-id="${escapeAttr(groupId)}" data-group-name="${escapeAttr(group.name)}" data-group-key="${escapeAttr(groupStateKey)}" style="
+      display: ${isExpanded ? 'block' : 'none'};
       margin-bottom: 6px;
     ">
-      <!-- 分组内的条目将在这里渲染 -->
     </div>
   `;
 }
 
-/**
- * 绑定分组相关的事件
- * @param {jQuery} $listContainer - 列表容器
- */
 export function bindGroupEventsForTransfer($listContainer) {
   const $ = getJQuery();
 
   if (!$listContainer || !$listContainer.length) return;
 
-  // 折叠/展开分组
-  $listContainer.off('click.pt-group-toggle', '.pt-transfer-group-header').on('click.pt-group-toggle', '.pt-transfer-group-header', function(e) {
-    // 如果点击的是复选框，不触发折叠/展开
-    if ($(e.target).hasClass('group-checkbox')) return;
+  $listContainer
+    .off('click.pt-group-toggle', '.pt-transfer-group-header')
+    .on('click.pt-group-toggle', '.pt-transfer-group-header', function (e) {
+      if ($(e.target).hasClass('group-checkbox')) return;
 
-    const $header = $(this);
-    const groupName = $header.data('group-name');
-    const side = $header.data('side');
-    const $container = $listContainer.find(`.pt-transfer-group-container[data-side="${side}"][data-group-name="${groupName}"]`);
-    const $icon = $header.find('.pt-group-toggle-icon');
+      const $header = $(this);
+      const stateKey = String($header.attr('data-group-key') ?? '').trim();
+      const $container = $header.next('.pt-transfer-group-container');
+      const $icon = $header.find('.pt-group-toggle-icon');
+      const willExpand = !$container.is(':visible');
 
-    if ($container.is(':visible')) {
-      $container.slideUp(200);
-      $icon.css('transform', 'rotate(0deg)');
-    } else {
-      $container.slideDown(200);
-      $icon.css('transform', 'rotate(90deg)');
-    }
-  });
+      if (willExpand) {
+        $container.slideDown(200);
+        $icon.css('transform', 'rotate(90deg)');
+      } else {
+        $container.slideUp(200);
+        $icon.css('transform', 'rotate(0deg)');
+      }
 
-  // 分组复选框变化时，同步选中/取消选中分组内的所有条目
-  $listContainer.off('change.pt-group-checkbox', '.pt-transfer-group-header .group-checkbox').on('change.pt-group-checkbox', '.pt-transfer-group-header .group-checkbox', function(e) {
-    e.stopPropagation();
+      if (stateKey) transferGroupExpandStates.set(stateKey, willExpand);
+    });
 
-    const $checkbox = $(this);
-    const $header = $checkbox.closest('.pt-transfer-group-header');
-    const groupName = $header.data('group-name');
-    const side = $header.data('side');
-    const isChecked = $checkbox.prop('checked');
+  $listContainer
+    .off('change.pt-group-checkbox', '.pt-transfer-group-header .group-checkbox')
+    .on('change.pt-group-checkbox', '.pt-transfer-group-header .group-checkbox', function (e) {
+      e.stopPropagation();
 
-    // 找到分组容器内的所有条目复选框
-    const $container = $listContainer.find(`.pt-transfer-group-container[data-side="${side}"][data-group-name="${groupName}"]`);
-    const $entryCheckboxes = $container.find('.entry-checkbox');
+      const $checkbox = $(this);
+      const $header = $checkbox.closest('.pt-transfer-group-header');
+      const isChecked = $checkbox.prop('checked');
 
-    // 同步选中状态
-    $entryCheckboxes.prop('checked', isChecked);
+      const $container = $header.next('.pt-transfer-group-container');
+      const $entryCheckboxes = $container.find('.entry-checkbox');
 
-    // 触发选中数量更新
-    if (typeof window.updateSelectionCount === 'function') {
-      window.updateSelectionCount();
-    }
-  });
+      $entryCheckboxes.prop('checked', isChecked);
 
-  // 分组内条目复选框变化时，更新分组复选框状态
-  $listContainer.off('change.pt-entry-in-group', '.pt-transfer-group-container .entry-checkbox').on('change.pt-entry-in-group', '.pt-transfer-group-container .entry-checkbox', function() {
-    const $entryCheckbox = $(this);
-    const $container = $entryCheckbox.closest('.pt-transfer-group-container');
-    const groupName = $container.data('group-name');
-    const side = $container.data('side');
+      if (typeof window.updateSelectionCount === 'function') {
+        window.updateSelectionCount();
+      }
+    });
 
-    // 找到对应的分组头部复选框
-    const $groupHeader = $listContainer.find(`.pt-transfer-group-header[data-side="${side}"][data-group-name="${groupName}"]`);
-    const $groupCheckbox = $groupHeader.find('.group-checkbox');
+  $listContainer
+    .off('change.pt-entry-in-group', '.pt-transfer-group-container .entry-checkbox')
+    .on('change.pt-entry-in-group', '.pt-transfer-group-container .entry-checkbox', function () {
+      const $entryCheckbox = $(this);
+      const $container = $entryCheckbox.closest('.pt-transfer-group-container');
+      const $groupHeader = $container.prev('.pt-transfer-group-header');
+      const $groupCheckbox = $groupHeader.find('.group-checkbox');
+      const $allEntryCheckboxes = $container.find('.entry-checkbox');
+      const checkedCount = $allEntryCheckboxes.filter(':checked').length;
+      const totalCount = $allEntryCheckboxes.length;
 
-    // 检查分组内所有条目的选中状态
-    const $allEntryCheckboxes = $container.find('.entry-checkbox');
-    const checkedCount = $allEntryCheckboxes.filter(':checked').length;
-    const totalCount = $allEntryCheckboxes.length;
-
-    if (checkedCount === 0) {
-      $groupCheckbox.prop('checked', false);
-      $groupCheckbox.prop('indeterminate', false);
-    } else if (checkedCount === totalCount) {
-      $groupCheckbox.prop('checked', true);
-      $groupCheckbox.prop('indeterminate', false);
-    } else {
-      $groupCheckbox.prop('checked', false);
-      $groupCheckbox.prop('indeterminate', true);
-    }
-  });
+      if (checkedCount === 0) {
+        $groupCheckbox.prop('checked', false);
+        $groupCheckbox.prop('indeterminate', false);
+      } else if (checkedCount === totalCount) {
+        $groupCheckbox.prop('checked', true);
+        $groupCheckbox.prop('indeterminate', false);
+      } else {
+        $groupCheckbox.prop('checked', false);
+        $groupCheckbox.prop('indeterminate', true);
+      }
+    });
 }
 
-/**
- * 获取选中的分组（包括分组内的所有条目）
- * @param {string} side - 侧边标识
- * @param {jQuery} $listContainer - 列表容器（可选）
- * @returns {Array} - 选中的分组数组
- */
 export function getSelectedGroups(side, $listContainer) {
   const $ = getJQuery();
 
@@ -235,20 +270,17 @@ export function getSelectedGroups(side, $listContainer) {
 
   const selectedGroups = [];
 
-  $listContainer.find(`.pt-transfer-group-header[data-side="${side}"] .group-checkbox:checked`).each(function() {
+  $listContainer.find(`.pt-transfer-group-header[data-side="${side}"] .group-checkbox:checked`).each(function () {
     const $checkbox = $(this);
     const $header = $checkbox.closest('.pt-transfer-group-header');
     const groupName = $header.data('group-name');
-
-    // 获取分组内的所有条目
-    const $container = $listContainer.find(`.pt-transfer-group-container[data-side="${side}"][data-group-name="${groupName}"]`);
+    const $container = $header.next('.pt-transfer-group-container');
     const entries = [];
 
-    $container.find('.entry-item').each(function() {
+    $container.find('.entry-item').each(function () {
       const $item = $(this);
       const index = parseInt($item.data('index'));
       const identifier = $item.data('identifier');
-
       entries.push({ index, identifier });
     });
 
@@ -261,55 +293,57 @@ export function getSelectedGroups(side, $listContainer) {
   return selectedGroups;
 }
 
-/**
- * 在现有的条目列表中应用分组显示
- * 这个函数会重新组织已渲染的条目，将它们按分组包装
- * @param {jQuery} $listContainer - 列表容器
- * @param {Array} entries - 条目数组
- * @param {string} side - 侧边标识
- * @param {string} presetName - 预设名称
- */
-export function applyGroupDisplayToRenderedEntries($listContainer, entries, side, presetName) {
+function findRenderedEntryByIdentifier($listContainer, side, identifier) {
   const $ = getJQuery();
 
+  return $listContainer
+    .find(`.entry-item[data-side="${side}"]`)
+    .filter(function () {
+      return String($(this).attr('data-identifier') ?? '').trim() === String(identifier ?? '').trim();
+    })
+    .first();
+}
+
+/**
+ * Wrap already-rendered entry rows into transfer-panel groups.
+ */
+export function applyGroupDisplayToRenderedEntries($listContainer, entries, side, presetName) {
   if (!$listContainer || !$listContainer.length) return;
   if (!entries || !Array.isArray(entries) || entries.length === 0) return;
   if (!presetName) return;
 
-  // 获取分组信息
-  const { groups, ungroupedEntries } = organizeEntriesIntoGroups(entries, side, presetName);
+  const { groups } = organizeEntriesIntoGroups(entries, side, presetName);
 
   if (groups.length === 0) return;
 
-  // 为每个分组创建头部和容器
-  for (const group of groups) {
-    const { startIndex, endIndex } = group;
+  for (const [groupIndex, group] of groups.entries()) {
+    const entryIdentifiers = Array.isArray(group.entryIdentifiers) ? group.entryIdentifiers : [];
+    const firstIdentifier = entryIdentifiers[0];
 
-    // 找到分组的第一个条目元素
-    const $firstEntry = $listContainer.find(`.entry-item[data-side="${side}"][data-index="${startIndex}"]`);
+    if (!firstIdentifier) continue;
 
+    const $firstEntry = findRenderedEntryByIdentifier($listContainer, side, firstIdentifier);
     if (!$firstEntry.length) continue;
 
-    // 插入分组头部
-    const groupHeaderHtml = renderGroupHeaderForTransfer(group, side);
+    const groupStateKey = getTransferGroupStateKey(side, presetName, group, groupIndex);
+    const isExpanded = transferGroupExpandStates.get(groupStateKey) === true;
+
+    const groupHeaderHtml = renderGroupHeaderForTransfer(group, side, { groupStateKey, isExpanded });
     $firstEntry.before(groupHeaderHtml);
 
-    // 创建分组容器
-    const groupContainerHtml = renderGroupContainerForTransfer(group, side);
+    const groupContainerHtml = renderGroupContainerForTransfer(group, side, { groupStateKey, isExpanded });
     const $groupHeader = $firstEntry.prev('.pt-transfer-group-header');
     $groupHeader.after(groupContainerHtml);
 
-    // 将分组内的条目移动到容器中
     const $groupContainer = $groupHeader.next('.pt-transfer-group-container');
 
-    for (let i = startIndex; i <= endIndex; i++) {
-      const $entry = $listContainer.find(`.entry-item[data-side="${side}"][data-index="${i}"]`);
+    for (const identifier of entryIdentifiers) {
+      const $entry = findRenderedEntryByIdentifier($listContainer, side, identifier);
       if ($entry.length) {
         $groupContainer.append($entry);
       }
     }
   }
 
-  // 绑定事件
   bindGroupEventsForTransfer($listContainer);
 }

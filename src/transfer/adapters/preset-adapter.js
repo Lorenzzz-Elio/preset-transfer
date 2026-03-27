@@ -4,6 +4,7 @@ import { batchTransferWithNewFields, ensureAllEntriesHaveNewFields } from '../..
 import { getOrderedPromptEntries, getPresetDataFromManager } from '../../preset/preset-manager.js';
 import { ensureStitchMeta } from '../../preset/stitch-meta.js';
 import { getTargetPromptsList, getOrCreateDummyCharacterPromptOrder } from '../../preset/prompt-order-utils.js';
+import { reassignPresetGroupingMembers } from '../../features/entry-grouping.js';
 
 function withPtKey(entries) {
     return entries.map(entry => ({
@@ -12,7 +13,7 @@ function withPtKey(entries) {
     }));
 }
 
-async function insertEntry(apiInfo, targetPreset, newEntry, insertPosition, autoEnable, displayMode = 'default') {
+async function insertEntry(apiInfo, targetPreset, newEntry, insertPosition, autoEnable, displayMode = 'default', options = {}) {
     const targetData = getPresetDataFromManager(apiInfo, targetPreset);
     if (!targetData) throw new Error('无法获取目标预设数据');
 
@@ -35,6 +36,8 @@ async function insertEntry(apiInfo, targetPreset, newEntry, insertPosition, auto
     const stitchedPrompt = ensureStitchMeta(newPrompt);
     targetData.prompts.push(stitchedPrompt);
     const newOrderEntry = { identifier: stitchedPrompt.identifier, enabled: !!autoEnable };
+    let targetIdentifier = String(options?.targetIdentifier ?? '').trim() || null;
+    const targetGroupId = String(options?.targetGroupId ?? '').trim();
 
     if (insertPosition === 'top') {
         characterPromptOrder.order.unshift(newOrderEntry);
@@ -44,6 +47,7 @@ async function insertEntry(apiInfo, targetPreset, newEntry, insertPosition, auto
 
         if (afterIndex >= 0 && afterIndex < referencePromptList.length) {
             const targetPrompt = referencePromptList[afterIndex];
+            targetIdentifier = String(targetPrompt?.identifier ?? '').trim() || null;
             const orderIndex = characterPromptOrder.order.findIndex(e => e.identifier === targetPrompt.identifier);
             if (orderIndex !== -1) {
                 characterPromptOrder.order.splice(orderIndex + 1, 0, newOrderEntry);
@@ -58,6 +62,16 @@ async function insertEntry(apiInfo, targetPreset, newEntry, insertPosition, auto
     }
 
     await apiInfo.presetManager.savePreset(targetPreset, targetData);
+
+    if (targetIdentifier || targetGroupId) {
+        const orderedIdentifiers = characterPromptOrder.order.map(entry => String(entry?.identifier ?? '').trim()).filter(Boolean);
+        await reassignPresetGroupingMembers(
+            targetPreset,
+            [stitchedPrompt.identifier],
+            orderedIdentifiers,
+            { targetIdentifier, targetGroupId },
+        );
+    }
 }
 
 async function transferEntries(
@@ -68,6 +82,7 @@ async function transferEntries(
     insertPosition,
     autoEnable,
     displayMode = 'default',
+    options = {},
 ) {
     const sourceData = getPresetDataFromManager(apiInfo, sourcePreset);
     const targetData = getPresetDataFromManager(apiInfo, targetPreset);
@@ -77,7 +92,9 @@ async function transferEntries(
     const characterPromptOrder = getOrCreateDummyCharacterPromptOrder(targetData);
 
     const targetPromptMap = new Map(targetData.prompts.map((p, i) => [p.name, i]));
-    const newOrderEntries = [];
+    const insertedOrderEntries = [];
+    let targetIdentifier = String(options?.targetIdentifier ?? '').trim() || null;
+    const targetGroupId = String(options?.targetGroupId ?? '').trim();
 
     const entriesToTransfer = batchTransferWithNewFields(selectedEntries);
 
@@ -99,7 +116,7 @@ async function transferEntries(
             // Preserve existing enabled state when present; otherwise apply the current autoEnable setting.
             const existingOrderEntry = characterPromptOrder.order.find(o => o.identifier === existingIdentifier);
             if (!existingOrderEntry) {
-                characterPromptOrder.order.push({ identifier: existingIdentifier, enabled: !!autoEnable });
+                insertedOrderEntries.push({ identifier: existingIdentifier, enabled: !!autoEnable });
             }
         } else {
             const newPrompt = {
@@ -112,34 +129,45 @@ async function transferEntries(
             };
             const stitchedPrompt = ensureStitchMeta(newPrompt);
             targetData.prompts.push(stitchedPrompt);
-            newOrderEntries.push({ identifier: stitchedPrompt.identifier, enabled: !!autoEnable });
+            insertedOrderEntries.push({ identifier: stitchedPrompt.identifier, enabled: !!autoEnable });
         }
     });
 
-    if (newOrderEntries.length > 0) {
+    if (insertedOrderEntries.length > 0) {
         if (insertPosition === 'top') {
-            characterPromptOrder.order.unshift(...newOrderEntries);
+            characterPromptOrder.order.unshift(...insertedOrderEntries);
         } else if (typeof insertPosition === 'string' && insertPosition.startsWith('after-')) {
             const afterIndex = parseInt(insertPosition.replace('after-', ''), 10);
             const referencePromptList = getTargetPromptsList(targetPreset, 'include_disabled');
 
             if (afterIndex >= 0 && afterIndex < referencePromptList.length) {
                 const targetPrompt = referencePromptList[afterIndex];
+                targetIdentifier = String(targetPrompt?.identifier ?? '').trim() || null;
                 const orderIndex = characterPromptOrder.order.findIndex(e => e.identifier === targetPrompt.identifier);
                 if (orderIndex !== -1) {
-                    characterPromptOrder.order.splice(orderIndex + 1, 0, ...newOrderEntries);
+                    characterPromptOrder.order.splice(orderIndex + 1, 0, ...insertedOrderEntries);
                 } else {
-                    characterPromptOrder.order.push(...newOrderEntries);
+                    characterPromptOrder.order.push(...insertedOrderEntries);
                 }
             } else {
-                characterPromptOrder.order.push(...newOrderEntries);
+                characterPromptOrder.order.push(...insertedOrderEntries);
             }
         } else {
-            characterPromptOrder.order.push(...newOrderEntries);
+            characterPromptOrder.order.push(...insertedOrderEntries);
         }
     }
 
     await apiInfo.presetManager.savePreset(targetPreset, targetData);
+
+    if ((targetIdentifier || targetGroupId) && insertedOrderEntries.length > 0) {
+        const orderedIdentifiers = characterPromptOrder.order.map(entry => String(entry?.identifier ?? '').trim()).filter(Boolean);
+        await reassignPresetGroupingMembers(
+            targetPreset,
+            insertedOrderEntries.map(entry => entry.identifier),
+            orderedIdentifiers,
+            { targetIdentifier, targetGroupId },
+        );
+    }
 }
 
 async function deleteEntries(apiInfo, presetName, selectedEntries) {
@@ -197,6 +225,10 @@ export function createPresetTransferAdapter() {
                 params.insertPosition,
                 params.autoEnable,
                 params.displayMode,
+                {
+                    targetGroupId: params.targetGroupId,
+                    targetIdentifier: params.targetIdentifier,
+                },
             );
         },
         async deleteEntries(apiInfo, params) {
@@ -210,6 +242,10 @@ export function createPresetTransferAdapter() {
                 params.insertPosition,
                 params.autoEnable,
                 params.displayMode,
+                {
+                    targetGroupId: params.targetGroupId,
+                    targetIdentifier: params.targetIdentifier,
+                },
             );
         },
     };

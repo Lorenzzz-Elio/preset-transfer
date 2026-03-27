@@ -19,6 +19,7 @@ function createEditEntryModal(
   entryIndex = null,
   displayMode = 'default',
   fromCompare = false,
+  insertContext = null,
 ) {
   const $ = getJQuery();
   const { isMobile, isSmallScreen, isPortrait } = getDeviceInfo();
@@ -176,9 +177,10 @@ function createEditEntryModal(
     side,
     displayMode,
     fromCompare,
+    insertContext,
   });
   applyEditModalStyles(isMobile, isSmallScreen, isPortrait);
-  bindEditModalEvents(apiInfo, presetName, entry, insertPosition, autoEnable, side, displayMode, fromCompare);
+  bindEditModalEvents(apiInfo, presetName, entry, insertPosition, autoEnable, side, displayMode, fromCompare, insertContext);
 }
 
 function applyEditModalStyles(isMobile, isSmallScreen, isPortrait) {
@@ -332,6 +334,7 @@ function bindEditModalEvents(
   side = null,
   displayMode = 'default',
   fromCompare = false,
+  insertContext = null,
 ) {
   const $ = getJQuery();
   const modal = $('#edit-entry-modal');
@@ -455,7 +458,15 @@ function bindEditModalEvents(
       if (isNewEntry) {
         // 新建条目，使用指定的插入位置
         const actualInsertPosition = insertPosition || 'bottom';
-        await performInsertNewEntry(apiInfo, presetName, updatedEntry, actualInsertPosition, autoEnable, displayMode);
+        await performInsertNewEntry(
+          apiInfo,
+          presetName,
+          updatedEntry,
+          actualInsertPosition,
+          autoEnable,
+          displayMode,
+          insertContext || {},
+        );
         // 成功创建，无需弹窗提示
 
         if ($('#auto-close-modal').prop('checked')) {

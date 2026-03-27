@@ -1,10 +1,11 @@
 import { getJQuery } from '../core/utils.js';
 import { getPresetDataFromManager } from '../preset/preset-manager.js';
 import { assignNewStitchMeta } from '../preset/stitch-meta.js';
-import { getOrCreateDummyCharacterPromptOrder } from '../ui/edit-modal.js';
+import { getOrCreateDummyCharacterPromptOrder } from '../preset/prompt-order-utils.js';
 import { getSelectedEntries, loadAndDisplayEntries } from '../display/entry-display.js';
 import { getPresetNameForSide } from '../batch/batch-modifications.js';
 import { getActiveTransferAdapter } from '../transfer/transfer-context.js';
+import { getPresetGroupingIdForIdentifier, reassignPresetGroupingMembers } from '../features/entry-grouping.js';
 // ==================== 新增功能模块 ====================
 
 // QuickCopy模块已移除 - 复制功能已被"在此处新建"功能替代
@@ -121,6 +122,114 @@ async function copyWorldbookEntries(side, apiInfo) {
 }
 
 // 简化的复制功能
+async function duplicatePresetEntries(apiInfo, presetName, sourceEntries, options = {}) {
+  const { refreshDisplay = true } = options;
+
+  if (!apiInfo?.presetManager) {
+    throw new Error('Preset manager is not available.');
+  }
+
+  if (!presetName) {
+    throw new Error('Preset name is required.');
+  }
+
+  const normalizedEntries = Array.isArray(sourceEntries)
+    ? sourceEntries.filter((entry) => entry?.identifier)
+    : [];
+
+  if (normalizedEntries.length === 0) {
+    throw new Error('No valid entries were provided for duplication.');
+  }
+
+  const presetData = getPresetDataFromManager(apiInfo, presetName);
+  if (!presetData.prompts) presetData.prompts = [];
+
+  const characterPromptOrder = getOrCreateDummyCharacterPromptOrder(presetData);
+  const orderedIdentifiersBeforeCopy = characterPromptOrder.order
+    .map((item) => String(item?.identifier ?? '').trim())
+    .filter(Boolean);
+  const orderMap = new Map(characterPromptOrder.order.map((item, index) => [item.identifier, index]));
+  const copiedEntries = [];
+  const copiedIdentifiersByGroup = new Map();
+
+  const recordCopiedIdentifierGroup = (sourceIdentifier, copiedIdentifier) => {
+    const sourceGroupId = getPresetGroupingIdForIdentifier(
+      presetName,
+      sourceIdentifier,
+      orderedIdentifiersBeforeCopy,
+    );
+    if (!sourceGroupId || !copiedIdentifier) return;
+
+    if (!copiedIdentifiersByGroup.has(sourceGroupId)) {
+      copiedIdentifiersByGroup.set(sourceGroupId, []);
+    }
+
+    copiedIdentifiersByGroup.get(sourceGroupId).push(copiedIdentifier);
+  };
+
+  const appendCopiedEntry = (entry, insertIndex = null) => {
+    const copiedEntry = assignNewStitchMeta({
+      ...entry,
+      identifier: generateIdentifier(),
+      name: generateCopyName(entry.name),
+    });
+
+    presetData.prompts.push(copiedEntry);
+
+    if (typeof insertIndex === 'number' && insertIndex >= 0) {
+      characterPromptOrder.order.splice(insertIndex + 1, 0, {
+        identifier: copiedEntry.identifier,
+        enabled: true,
+      });
+    } else {
+      characterPromptOrder.order.push({
+        identifier: copiedEntry.identifier,
+        enabled: true,
+      });
+    }
+
+    recordCopiedIdentifierGroup(entry.identifier, copiedEntry.identifier);
+    copiedEntries.push(copiedEntry);
+  };
+
+  const orderedEntries = normalizedEntries
+    .map((entry) => ({
+      entry,
+      orderIndex: orderMap.get(entry.identifier),
+    }))
+    .filter((item) => item.orderIndex !== undefined)
+    .sort((a, b) => b.orderIndex - a.orderIndex);
+
+  for (const { entry, orderIndex } of orderedEntries) {
+    appendCopiedEntry(entry, orderIndex);
+  }
+
+  for (const entry of normalizedEntries) {
+    if (orderMap.get(entry.identifier) !== undefined) continue;
+    appendCopiedEntry(entry);
+  }
+
+  await apiInfo.presetManager.savePreset(presetName, presetData);
+
+  if (copiedIdentifiersByGroup.size > 0) {
+    const orderedIdentifiers = characterPromptOrder.order
+      .map((item) => String(item?.identifier ?? '').trim())
+      .filter(Boolean);
+
+    for (const [targetGroupId, copiedIdentifiers] of copiedIdentifiersByGroup.entries()) {
+      await reassignPresetGroupingMembers(presetName, copiedIdentifiers, orderedIdentifiers, {
+        targetGroupId,
+      });
+    }
+  }
+
+  if (refreshDisplay) {
+    loadAndDisplayEntries(apiInfo);
+  }
+
+  return copiedEntries;
+}
+
 async function simpleCopyEntries(side, apiInfo) {
   const $ = getJQuery();
   const adapter = getActiveTransferAdapter();
@@ -128,8 +237,8 @@ async function simpleCopyEntries(side, apiInfo) {
     try {
       await copyWorldbookEntries(side, apiInfo);
     } catch (error) {
-      console.error('复制失败:', error);
-      alert('复制失败: ' + error.message);
+      console.error('\u590d\u5236\u5931\u8d25:', error);
+      alert('\u590d\u5236\u5931\u8d25: ' + error.message);
     }
     return;
   }
@@ -138,75 +247,22 @@ async function simpleCopyEntries(side, apiInfo) {
   const presetName = getPresetNameForSide(side);
 
   if (selectedEntries.length === 0) {
-    alert('请选择要复制的条目');
+    alert('\u8bf7\u9009\u62e9\u8981\u590d\u5236\u7684\u6761\u76ee');
     return;
   }
 
   if (!presetName) {
-    alert('无法确定目标预设');
+    alert('\u65e0\u6cd5\u786e\u5b9a\u76ee\u6807\u9884\u8bbe');
     return;
   }
 
   try {
-    const presetData = getPresetDataFromManager(apiInfo, presetName);
-    if (!presetData.prompts) presetData.prompts = [];
+    await duplicatePresetEntries(apiInfo, presetName, selectedEntries);
 
-    const characterPromptOrder = getOrCreateDummyCharacterPromptOrder(presetData);
-    const orderMap = new Map(characterPromptOrder.order.map((o, i) => [o.identifier, i]));
-
-    // 为每个选中的条目创建副本并插入到原条目下方
-    // 按照order中的位置倒序处理，避免索引偏移问题
-    const sortedEntries = selectedEntries
-      .map(entry => ({
-        entry,
-        orderIndex: orderMap.get(entry.identifier),
-      }))
-      .filter(item => item.orderIndex !== undefined)
-      .sort((a, b) => b.orderIndex - a.orderIndex); // 倒序排列
-
-    // 处理有order位置的条目
-    for (const { entry, orderIndex } of sortedEntries) {
-      const copyEntry = assignNewStitchMeta({
-        ...entry,
-        identifier: generateIdentifier(),
-        name: entry.name + '副本',
-      });
-
-      // 添加到prompts数组
-      presetData.prompts.push(copyEntry);
-
-      // 插入到原条目下方
-      characterPromptOrder.order.splice(orderIndex + 1, 0, {
-        identifier: copyEntry.identifier,
-        enabled: true,
-      });
-    }
-
-    // 处理没有order位置的条目（添加到末尾）
-    for (const entry of selectedEntries) {
-      if (orderMap.get(entry.identifier) === undefined) {
-        const copyEntry = assignNewStitchMeta({
-          ...entry,
-          identifier: generateIdentifier(),
-          name: entry.name + '副本',
-        });
-
-        presetData.prompts.push(copyEntry);
-        characterPromptOrder.order.push({
-          identifier: copyEntry.identifier,
-          enabled: true,
-        });
-      }
-    }
-
-    await apiInfo.presetManager.savePreset(presetName, presetData);
-    console.log(`成功复制 ${selectedEntries.length} 个条目`);
-
-    // 刷新界面
-    loadAndDisplayEntries(apiInfo);
+    console.log(`\u6210\u529f\u590d\u5236 ${selectedEntries.length} \u4e2a\u6761\u76ee`);
   } catch (error) {
-    console.error('复制失败:', error);
-    alert('复制失败: ' + error.message);
+    console.error('\u590d\u5236\u5931\u8d25:', error);
+    alert('\u590d\u5236\u5931\u8d25: ' + error.message);
   }
 }
 
@@ -246,7 +302,7 @@ function startMoveMode(side, apiInfo) {
 }
 
 // 内部共享的移动逻辑，与 UI 模式解耦
-async function applyMoveToPosition(apiInfo, presetName, selectedEntries, targetIdentifier, targetIndex) {
+async function applyMoveToPosition(apiInfo, presetName, selectedEntries, targetIdentifier, targetIndex, options = {}) {
   const presetData = getPresetDataFromManager(apiInfo, presetName);
   if (!presetData.prompts) presetData.prompts = [];
 
@@ -277,6 +333,15 @@ async function applyMoveToPosition(apiInfo, presetName, selectedEntries, targetI
   characterPromptOrder.order.splice(insertIndex, 0, ...newOrderEntries);
 
   await apiInfo.presetManager.savePreset(presetName, presetData);
+  await reassignPresetGroupingMembers(
+    presetName,
+    selectedEntries.map(entry => entry?.identifier),
+    characterPromptOrder.order.map(entry => String(entry?.identifier ?? '').trim()).filter(Boolean),
+    {
+      targetIdentifier: targetIndex === 'top' || targetIndex === 'bottom' ? null : targetIdentifier,
+      targetGroupId: String(options?.targetGroupId ?? '').trim(),
+    },
+  );
   console.log(
     `成功移动 ${selectedEntries.length} 个条目到${
       targetIndex === 'top' ? '顶部' : targetIndex === 'bottom' ? '底部' : '指定位置'
@@ -288,7 +353,7 @@ async function applyMoveToPosition(apiInfo, presetName, selectedEntries, targetI
 }
 
 // 供“移动模式”（点击选位置）使用，保留 moveMode / UI 状态处理
-async function executeMoveToPosition(apiInfo, side, targetIdentifier, targetIndex) {
+async function executeMoveToPosition(apiInfo, side, targetIdentifier, targetIndex, options = {}) {
   const $ = getJQuery();
   let selectedEntries;
   let presetName;
@@ -303,7 +368,7 @@ async function executeMoveToPosition(apiInfo, side, targetIdentifier, targetInde
   }
 
   try {
-    await applyMoveToPosition(apiInfo, presetName, selectedEntries, targetIdentifier, targetIndex);
+    await applyMoveToPosition(apiInfo, presetName, selectedEntries, targetIdentifier, targetIndex, options);
   } catch (error) {
     console.error('移动失败:', error);
     alert('移动失败: ' + error.message);
@@ -322,6 +387,7 @@ async function executeMoveToPositionWithEntries(
   selectedEntries,
   targetIdentifier,
   targetIndex,
+  options = {},
 ) {
   try {
     if (!presetName) {
@@ -333,7 +399,7 @@ async function executeMoveToPositionWithEntries(
       return;
     }
 
-    await applyMoveToPosition(apiInfo, presetName, selectedEntries, targetIdentifier, targetIndex);
+    await applyMoveToPosition(apiInfo, presetName, selectedEntries, targetIdentifier, targetIndex, options);
   } catch (error) {
     console.error('移动失败:', error);
     if (window.toastr) {
@@ -347,6 +413,7 @@ async function executeMoveToPositionWithEntries(
 export {
   generateCopyName,
   generateIdentifier,
+  duplicatePresetEntries,
   simpleCopyEntries,
   startMoveMode,
   executeMoveToPosition,

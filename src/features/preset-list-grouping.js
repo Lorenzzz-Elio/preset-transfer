@@ -534,9 +534,9 @@ export function initPresetListGrouping(selectSelector) {
   // 初始化 Select2（不带搜索功能）
   if (!$select.data('select2')) {
     $select.select2({
-      width: 'resolve', // 使用元素原有的宽度，而不是强制 100%
+      width: '100%',
       minimumResultsForSearch: Infinity, // 禁用搜索
-      dropdownAutoWidth: true,
+      dropdownAutoWidth: false,
       dropdownCssClass: 'pt-preset-list-dropdown',
     });
   }

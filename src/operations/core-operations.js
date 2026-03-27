@@ -7,6 +7,7 @@ async function performInsertNewEntry(
     insertPosition,
     autoEnable,
     displayMode = 'default',
+    options = {},
 ) {
     const engine = getTransferEngine();
     await engine.insertEntry(apiInfo, {
@@ -15,6 +16,7 @@ async function performInsertNewEntry(
         insertPosition,
         autoEnable,
         displayMode,
+        ...options,
     });
 }
 
@@ -26,6 +28,7 @@ async function performTransfer(
     insertPosition,
     autoEnable,
     displayMode = 'default',
+    options = {},
 ) {
     const engine = getTransferEngine();
     await engine.transfer(apiInfo, {
@@ -35,6 +38,7 @@ async function performTransfer(
         insertPosition,
         autoEnable,
         displayMode,
+        ...options,
     });
 }
 

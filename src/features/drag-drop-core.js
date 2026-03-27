@@ -170,6 +170,8 @@ async function commitDrag() {
       targetIndex = null;
     }
 
+    const targetGroupId = String(getJQuery()(target.referenceElement).closest('.pt-transfer-group-container').attr('data-group-id') ?? '').trim();
+
     await executeMoveToPositionWithEntries(
       apiInfo,
       fromSide,
@@ -177,6 +179,7 @@ async function commitDrag() {
       dragEntries,
       targetIdentifier,
       targetIndex,
+      { targetGroupId },
     );
 
     return true;
@@ -210,6 +213,8 @@ async function commitDrag() {
     fromSide,
     toSide,
     selectedEntries: dragEntries,
+    targetGroupId: String($(target.referenceElement).closest('.pt-transfer-group-container').attr('data-group-id') ?? '').trim(),
+    targetIdentifier: String($(target.referenceElement).data('identifier') ?? '').trim(),
   };
 
   await executeTransferToPosition(apiInfo, fromSide, toSide, positionArg);

@@ -17,7 +17,11 @@ import {
   isFavoritesSupported,
   toggleFavoriteEntry,
 } from '../features/favorite-entries.js';
-import { applyGroupDisplayToRenderedEntries } from './entry-group-display.js';
+import {
+  applyGroupDisplayToRenderedEntries,
+  rememberTransferPanelState,
+  restoreTransferPanelScrollState,
+} from './entry-group-display.js';
 
 async function commitWorldbookPickTarget(side) {
   const $ = getJQuery();
@@ -236,6 +240,11 @@ function displayEntries(entries, side, options = {}) {
   const favoriteIds = supportsFavorites && containerName ? getFavoriteIdsForContainerSync(adapter.id, containerName) : null;
   const isFavoritesSide = side === 'favorites';
   const favoriteIdsByContainer = options.favoriteIdsByContainer instanceof Map ? options.favoriteIdsByContainer : null;
+  const shouldPreserveTransferViewport = !!containerName && adapter?.id === 'preset' && !isFavoritesSide;
+
+  if (shouldPreserveTransferViewport) {
+    rememberTransferPanelState(entriesList, side, containerName);
+  }
 
   const resolveEntryContainer = (entry) => {
     if (isFavoritesSide) return String(entry?.ptFavoriteContainer ?? '').trim();
@@ -346,6 +355,14 @@ function displayEntries(entries, side, options = {}) {
        </div>
    </div>`;
 
+  const applyPresetEntryGrouping = () => {
+    if (!shouldPreserveTransferViewport) return;
+    setTimeout(() => {
+      applyGroupDisplayToRenderedEntries(entriesList, entries, side, containerName);
+      restoreTransferPanelScrollState(entriesList, side, containerName);
+    }, 100);
+  };
+
   if (entries.length > 260) {
     const topHtml = renderPositionItem('top', '📍 插入到顶部');
     const bottomHtml = renderPositionItem('bottom', '📍 插入到底部');
@@ -412,7 +429,12 @@ function displayEntries(entries, side, options = {}) {
         syncFavoriteButtons(worldbookFavoriteIds);
       }
       startIndex = endIndex;
-      if (startIndex < entries.length) requestAnimationFrame(renderChunk);
+      if (startIndex < entries.length) {
+        requestAnimationFrame(renderChunk);
+        return;
+      }
+
+      applyPresetEntryGrouping();
     };
 
     renderChunk();
@@ -603,6 +625,7 @@ function displayEntries(entries, side, options = {}) {
           const index = parseInt($item.data('index'));
           const identifier = $item.data('identifier');
           const adapter = getActiveTransferAdapter();
+          const targetGroupId = String($item.closest('.pt-transfer-group-container').attr('data-group-id') ?? '').trim();
 
           let realIndex = index;
           if (adapter?.id !== 'worldbook') {
@@ -612,6 +635,9 @@ function displayEntries(entries, side, options = {}) {
             realIndex = fullList.findIndex(entry => entry.identifier === identifier);
             if (realIndex < 0) realIndex = index;
           }
+
+          window.transferMode.targetGroupId = targetGroupId;
+          window.transferMode.targetIdentifier = String(identifier ?? '').trim();
 
           executeTransferToPosition(
             window.transferMode.apiInfo,
@@ -626,9 +652,12 @@ function displayEntries(entries, side, options = {}) {
         if (window.newEntryMode && window.newEntryMode.side === itemSide) {
           const index = parseInt($item.data('index'));
           const identifier = $item.data('identifier');
+          const targetGroupId = String($item.closest('.pt-transfer-group-container').attr('data-group-id') ?? '').trim();
           const targetPreset = itemSide === 'single' ? window.singlePresetName : $(`#${itemSide}-preset`).val();
           const fullList = getTargetPromptsList(targetPreset, 'include_disabled');
           const realIndex = fullList.findIndex(entry => entry.identifier === identifier);
+          window.newEntryMode.targetGroupId = targetGroupId;
+          window.newEntryMode.targetIdentifier = String(identifier ?? '').trim();
           executeNewEntryAtPosition(window.newEntryMode.apiInfo, itemSide, realIndex >= 0 ? realIndex : index);
           return;
         }
@@ -637,7 +666,8 @@ function displayEntries(entries, side, options = {}) {
         if (window.moveMode && window.moveMode.side === itemSide) {
           const index = parseInt($item.data('index'));
           const identifier = $item.data('identifier');
-          executeMoveToPosition(window.moveMode.apiInfo, itemSide, identifier, index);
+          const targetGroupId = String($item.closest('.pt-transfer-group-container').attr('data-group-id') ?? '').trim();
+          executeMoveToPosition(window.moveMode.apiInfo, itemSide, identifier, index, { targetGroupId });
           return;
         }
 
@@ -680,6 +710,7 @@ function displayEntries(entries, side, options = {}) {
       // 计算“真实索引”（包含被隐藏的禁用项）
       const $entryItem = $btn.closest('.entry-item');
       const identifier = $entryItem.data('identifier');
+      const targetGroupId = String($entryItem.closest('.pt-transfer-group-container').attr('data-group-id') ?? '').trim();
       const fullList = getTargetPromptsList(presetName, 'include_disabled');
       const realIndex = identifier ? fullList.findIndex(e => e.identifier === identifier) : entryIndex;
 
@@ -705,6 +736,11 @@ function displayEntries(entries, side, options = {}) {
         defaultEntry,
         `after-${realIndex >= 0 ? realIndex : entryIndex}`,
         autoEnable,
+        'default',
+        {
+          targetGroupId,
+          targetIdentifier: String(identifier ?? '').trim(),
+        },
       )
         .then(() => {
           if (window.toastr) {
@@ -737,11 +773,7 @@ function displayEntries(entries, side, options = {}) {
   }
 
   // 应用分组显示（如果有分组配置）
-  if (containerName && adapter?.id === 'preset' && !isFavoritesSide) {
-    setTimeout(() => {
-      applyGroupDisplayToRenderedEntries(entriesList, entries, side, containerName);
-    }, 100);
-  }
+  applyPresetEntryGrouping();
 }
 
 // 统一获取当前侧已选中的条目（优先按 identifier 对应，保证顺序稳定）

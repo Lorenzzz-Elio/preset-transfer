@@ -101,9 +101,9 @@ export function addToggleAllButtonToGroupHeader($groupHeader, groupItems, onTogg
   });
 
   // 将按钮插入到编辑按钮之前
-  const $editBtn = $groupHeader.find('.pt-entry-group-edit-btn');
-  if ($editBtn.length) {
-    $editBtn.before($toggleBtn);
+  const $actionBtn = $groupHeader.find('.pt-entry-group-more-btn, .pt-entry-group-edit-btn').first();
+  if ($actionBtn.length) {
+    $actionBtn.before($toggleBtn);
   } else {
     $groupHeader.append($toggleBtn);
   }

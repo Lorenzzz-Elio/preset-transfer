@@ -185,9 +185,14 @@ async function startTransferMode(apiInfo, fromSide, toSide) {
     const fromPreset = sourceContainer;
     const displayMode = $(`#${toSide}-display-mode`).val();
     const autoEnable = $('#auto-enable-entry').prop('checked');
+    const targetGroupId = String(window.transferMode?.targetGroupId ?? '').trim();
+    const targetIdentifier = String(window.transferMode?.targetIdentifier ?? '').trim();
 
     try {
-      await performTransfer(apiInfo, fromPreset, toPreset, transferableEntries, null, autoEnable, displayMode);
+      await performTransfer(apiInfo, fromPreset, toPreset, transferableEntries, null, autoEnable, displayMode, {
+        targetGroupId,
+        targetIdentifier,
+      });
 
       if ($('#auto-close-modal').prop('checked')) {
         $('#preset-transfer-modal').remove();
@@ -259,6 +264,8 @@ async function executeTransferToPosition(apiInfo, fromSide, toSide, targetPositi
   const $ = getJQuery();
   const selectedEntries = window.transferMode.selectedEntries;
   const sourceContainer = window.transferMode?.sourceContainer;
+  const targetGroupId = String(window.transferMode?.targetGroupId ?? '').trim();
+  const targetIdentifier = String(window.transferMode?.targetIdentifier ?? '').trim();
 
   let toPreset;
   let displayMode;
@@ -302,7 +309,10 @@ async function executeTransferToPosition(apiInfo, fromSide, toSide, targetPositi
       const errors = [];
       for (const [source, entries] of entriesBySource) {
         try {
-          await performTransfer(apiInfo, source, toPreset, entries, insertPosition, autoEnable, displayMode);
+          await performTransfer(apiInfo, source, toPreset, entries, insertPosition, autoEnable, displayMode, {
+            targetGroupId,
+            targetIdentifier,
+          });
         } catch (error) {
           errors.push({ source, error });
         }
@@ -320,7 +330,10 @@ async function executeTransferToPosition(apiInfo, fromSide, toSide, targetPositi
       if (!fromPreset) {
         throw new Error('请选择源预设');
       }
-      await performTransfer(apiInfo, fromPreset, toPreset, selectedEntries, insertPosition, autoEnable, displayMode);
+      await performTransfer(apiInfo, fromPreset, toPreset, selectedEntries, insertPosition, autoEnable, displayMode, {
+        targetGroupId,
+        targetIdentifier,
+      });
     }
 
     // 转移成功
@@ -380,12 +393,16 @@ function executeNewEntryAtPosition(apiInfo, side, targetPosition) {
   };
 
   // 重置新建模式
+  const insertContext = {
+    targetGroupId: String(window.newEntryMode?.targetGroupId ?? '').trim(),
+    targetIdentifier: String(window.newEntryMode?.targetIdentifier ?? '').trim(),
+  };
   window.newEntryMode = null;
   $('.new-entry-target').removeClass('new-entry-target');
 
   // 打开编辑模态框
   const autoEnable = $('#auto-enable-entry').prop('checked');
-  createEditEntryModal(apiInfo, presetName, defaultEntry, insertPosition, autoEnable, side, null, displayMode);
+  createEditEntryModal(apiInfo, presetName, defaultEntry, insertPosition, autoEnable, side, null, displayMode, false, insertContext);
 }
 
 // HTML转义函数

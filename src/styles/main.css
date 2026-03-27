@@ -111,7 +111,8 @@
 }
 
 .pt-entry-grouping-root .pt-entry-group-edit-btn,
-.pt-entry-grouping-root .pt-entry-group-clear-btn {
+.pt-entry-grouping-root .pt-entry-group-clear-btn,
+.pt-entry-grouping-root .pt-entry-group-more-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -124,12 +125,67 @@
 .pt-entry-grouping-root .pt-entry-group-edit-btn i,
 .pt-entry-grouping-root .pt-entry-group-edit-btn span,
 .pt-entry-grouping-root .pt-entry-group-clear-btn i,
-.pt-entry-grouping-root .pt-entry-group-clear-btn span {
+.pt-entry-grouping-root .pt-entry-group-clear-btn span,
+.pt-entry-grouping-root .pt-entry-group-more-btn svg,
+.pt-entry-grouping-root .pt-entry-group-more-btn span {
   pointer-events: none;
 }
 
 .pt-entry-grouping-root .pt-entry-group-clear-btn {
   color: inherit;
+}
+
+.pt-entry-grouping-root .pt-entry-group-more-btn svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+
+/* Native Prompt Manager entry actions */
+.prompt_manager_prompt_controls .pt-entry-more-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.prompt_manager_prompt_controls .pt-entry-more-btn:hover,
+.prompt_manager_prompt_controls .pt-entry-more-btn:focus-visible,
+.prompt_manager_prompt_controls .pt-entry-more-btn.is-open {
+  opacity: 1;
+}
+
+.pt-entry-more-menu {
+  position: fixed;
+  z-index: 10004;
+  display: flex;
+  flex-direction: column;
+  min-width: max-content;
+  padding: calc(var(--pt-entry-more-padding) / 3);
+  border-radius: var(--pt-entry-more-radius);
+  background: var(--pt-entry-more-bg);
+  border: 1px solid var(--pt-entry-more-border);
+  box-shadow: 0 0 0 1px var(--pt-entry-more-border);
+  color: var(--pt-entry-more-text);
+}
+
+.pt-entry-more-menu .pt-entry-more-action {
+  width: 100%;
+  padding: calc(var(--pt-entry-more-padding) / 2) var(--pt-entry-more-padding);
+  border: 0;
+  border-radius: var(--pt-entry-more-radius);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font-size: var(--pt-entry-more-font-size);
+}
+
+.pt-entry-more-menu .pt-entry-more-action:hover,
+.pt-entry-more-menu .pt-entry-more-action:focus-visible {
+  background: var(--pt-entry-more-hover-bg);
 }
 
 /* Worldbook grouping (World Info dropdowns) */

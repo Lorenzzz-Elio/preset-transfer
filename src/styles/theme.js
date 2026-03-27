@@ -79,6 +79,8 @@ function updateModalTheme() {
       editModalData.side,
       null,
       editModalData.displayMode,
+      false,
+      editModalData.insertContext || null,
     );
   }
 
