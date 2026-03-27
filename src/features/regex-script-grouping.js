@@ -3,6 +3,13 @@ import { getPresetTransferSettingsNode, trySaveSillyTavernSettings } from '../co
 const STORAGE_KEY = 'preset-transfer-regex-script-groupings-v2';
 const EXTENSION_SETTINGS_KEY = 'regexScriptGroupings';
 const VERSION = 2;
+const DEFAULT_SCOPE = 'global';
+const VALID_SCOPES = new Set(['global', 'scoped', 'preset']);
+
+function normalizeScope(scope) {
+  const value = String(scope ?? DEFAULT_SCOPE).trim().toLowerCase();
+  return VALID_SCOPES.has(value) ? value : DEFAULT_SCOPE;
+}
 const DEFAULT_GROUP_NAME = '分组';
 
 function createGroupId() {
@@ -24,6 +31,7 @@ function normalizeGroupForStore(entry) {
   const id = typeof entry.id === 'string' && entry.id ? entry.id : createGroupId();
   const nameRaw = String(entry.name ?? entry.groupName ?? DEFAULT_GROUP_NAME);
   const name = nameRaw.trim() || DEFAULT_GROUP_NAME;
+  const scope = normalizeScope(entry.scope);
   const memberIds = Array.isArray(entry.memberIds)
     ? entry.memberIds.map(String).filter(Boolean)
     : Array.isArray(entry.members)
@@ -33,6 +41,7 @@ function normalizeGroupForStore(entry) {
 
   return {
     id,
+    scope,
     name,
     memberIds,
     collapsed: Object.prototype.hasOwnProperty.call(entry, 'collapsed') ? !!entry.collapsed : true,
@@ -92,18 +101,22 @@ function getResolvedMemberIdsFromStore(group, orderedIds) {
   return orderedIds.filter((id) => memberSet.has(String(id)));
 }
 
-function getStoreGroupsNormalized() {
+function getStoreGroupsNormalized(scope = null) {
   const raw = loadRawStore();
   const groups = Array.isArray(raw?.groups) ? raw.groups : Array.isArray(raw) ? raw : [];
-  return groups.map(normalizeGroupForStore).filter(Boolean);
+  const normalized = groups.map(normalizeGroupForStore).filter(Boolean);
+  if (scope == null) return normalized;
+  const resolvedScope = normalizeScope(scope);
+  return normalized.filter((g) => g.scope === resolvedScope);
 }
 
 function writeGroups(groups) {
   saveRawStore({ version: VERSION, groups: groups.map(normalizeGroupForStore).filter(Boolean) });
 }
 
-export function getAllRegexScriptGroupings(orderedIds) {
-  const groups = getStoreGroupsNormalized();
+export function getAllRegexScriptGroupings(orderedIds, options = {}) {
+  const scope = options && Object.prototype.hasOwnProperty.call(options, 'scope') ? options.scope : null;
+  const groups = getStoreGroupsNormalized(scope);
   return groups.map((g) => {
     const members = getResolvedMemberIdsFromStore(g, orderedIds);
     const unresolved = !members || members.length === 0;
@@ -112,9 +125,9 @@ export function getAllRegexScriptGroupings(orderedIds) {
   });
 }
 
-export function getRegexScriptGroupingGroupedIdSet(orderedIds) {
+export function getRegexScriptGroupingGroupedIdSet(orderedIds, options = {}) {
   const out = new Set();
-  const groups = getAllRegexScriptGroupings(orderedIds);
+  const groups = getAllRegexScriptGroupings(orderedIds, options);
   for (const g of groups) {
     if (g.unresolved) continue;
     for (const id of Array.isArray(g.memberIds) ? g.memberIds : []) {
@@ -124,22 +137,24 @@ export function getRegexScriptGroupingGroupedIdSet(orderedIds) {
   return out;
 }
 
-export async function addRegexScriptGrouping(startId, endId, groupName, orderedIds) {
+export async function addRegexScriptGrouping(startId, endId, groupName, orderedIds, options = {}) {
   try {
     if (typeof startId !== 'string' || typeof endId !== 'string') return false;
     const name = String(groupName ?? DEFAULT_GROUP_NAME).trim() || DEFAULT_GROUP_NAME;
+    const scope = normalizeScope(options?.scope);
 
     const groups = getStoreGroupsNormalized();
     const range = resolveRange(orderedIds, startId, endId);
     if (!range) return false;
 
-    const grouped = getRegexScriptGroupingGroupedIdSet(orderedIds);
+    const grouped = getRegexScriptGroupingGroupedIdSet(orderedIds, { scope });
     const selectedMemberIds = orderedIds.slice(range.start, range.end + 1).map(String).filter(Boolean);
     const hasOverlap = selectedMemberIds.some((id) => grouped.has(id));
     if (hasOverlap) return false;
 
     groups.push({
       id: createGroupId(),
+      scope,
       name,
       memberIds: selectedMemberIds,
       collapsed: true,
@@ -152,15 +167,17 @@ export async function addRegexScriptGrouping(startId, endId, groupName, orderedI
   }
 }
 
-export async function addRegexScriptGroupingFromMembers(memberIds, groupName, { collapsed = true } = {}) {
+export async function addRegexScriptGroupingFromMembers(memberIds, groupName, { collapsed = true, scope = DEFAULT_SCOPE } = {}) {
   try {
     const name = String(groupName ?? DEFAULT_GROUP_NAME).trim() || DEFAULT_GROUP_NAME;
+    const normalizedScope = normalizeScope(scope);
     const ids = Array.isArray(memberIds) ? memberIds.map(String).filter(Boolean) : [];
     if (ids.length === 0) return false;
 
     const groups = getStoreGroupsNormalized();
     const existingMembers = new Set();
     for (const g of groups) {
+      if (g.scope !== normalizedScope) continue;
       for (const id of Array.isArray(g.memberIds) ? g.memberIds : []) existingMembers.add(String(id));
     }
     const hasOverlap = ids.some((id) => existingMembers.has(String(id)));
@@ -168,6 +185,7 @@ export async function addRegexScriptGroupingFromMembers(memberIds, groupName, { 
 
     groups.push({
       id: createGroupId(),
+      scope: normalizedScope,
       name,
       memberIds: ids,
       collapsed: !!collapsed,
@@ -190,6 +208,7 @@ export async function updateRegexScriptGrouping(groupId, patch = {}) {
     if (idx === -1) return false;
 
     const next = { ...groups[idx] };
+    if (Object.prototype.hasOwnProperty.call(patch, 'scope')) next.scope = normalizeScope(patch.scope);
     if (typeof patch.name === 'string') next.name = patch.name.trim() || DEFAULT_GROUP_NAME;
     if (Array.isArray(patch.memberIds)) next.memberIds = patch.memberIds.map(String).filter(Boolean);
     if (typeof patch.collapsed === 'boolean') next.collapsed = patch.collapsed;

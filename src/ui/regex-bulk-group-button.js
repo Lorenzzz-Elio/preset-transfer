@@ -3,6 +3,11 @@ import { CommonStyles } from '../styles/common-styles.js';
 import { regexGroupIcon } from './icons.js';
 
 const BULK_GROUP_BUTTON_ID = 'pt_bulk_group_regex';
+const REGEX_SCOPE_SELECTORS = [
+  ['global', '#saved_regex_scripts'],
+  ['scoped', '#saved_scoped_scripts'],
+  ['preset', '#saved_preset_scripts'],
+];
 
 function findBulkOperationsContainer() {
   const $ = getJQuery();
@@ -45,6 +50,25 @@ export function getSelectedGlobalRegexIds() {
     .toArray()
     .map((el) => String(el?.id ?? ''))
     .filter(Boolean);
+}
+
+export function getSelectedRegexIdsByScope() {
+  const $ = getJQuery();
+  return REGEX_SCOPE_SELECTORS
+    .map(([scope, selector]) => {
+      const $list = $(selector);
+      if (!$list.length) return { scope, ids: [] };
+
+      const ids = $list
+        .find('.regex_bulk_checkbox:checked')
+        .closest('.regex-script-label')
+        .toArray()
+        .map((el) => String(el?.id ?? ''))
+        .filter(Boolean);
+
+      return { scope, ids };
+    })
+    .filter((entry) => entry.ids.length > 0);
 }
 
 export function clearRegexBulkSelection() {

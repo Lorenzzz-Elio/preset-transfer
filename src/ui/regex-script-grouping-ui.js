@@ -1,7 +1,6 @@
-// Native Regex scripts grouping (global scripts list) - UI logic
+// Native Regex scripts grouping (global / scoped / preset scripts lists) - UI logic
 
-import { PT } from '../core/api-compat.js';
-import { debounce, ensureViewportCssVars, escapeAttr, getJQuery, getParentWindow } from '../core/utils.js';
+import { debounce, escapeAttr, getJQuery, getParentWindow, getSillyTavernContext } from '../core/utils.js';
 import { CommonStyles } from '../styles/common-styles.js';
 import {
   addRegexScriptGroupingFromMembers,
@@ -15,38 +14,79 @@ import {
   bindRegexBulkGroupButton,
   clearRegexBulkSelection,
   ensureRegexBulkGroupButtonInjected,
-  getSelectedGlobalRegexIds,
+  getSelectedRegexIdsByScope,
   removeRegexBulkGroupButton,
   unbindRegexBulkGroupButton,
 } from './regex-bulk-group-button.js';
+import { getScriptsByType, saveScriptsByType, SCRIPT_TYPES } from '../../../../regex/engine.js';
 
 const HEADER_CLASS = 'pt-regex-group-header';
 const REGEX_GROUP_BUNDLE_TYPE = 'preset_transfer_regex_group_bundle';
 const REGEX_GROUP_BUNDLE_FILE_PREFIX = 'pt-regex-group-';
+const REGEX_SCOPE_CONFIGS = Object.freeze([
+  { scope: 'global', label: '全局正则', selector: '#saved_regex_scripts', scriptType: SCRIPT_TYPES.GLOBAL },
+  { scope: 'scoped', label: '局部正则', selector: '#saved_scoped_scripts', scriptType: SCRIPT_TYPES.SCOPED },
+  { scope: 'preset', label: '预设正则', selector: '#saved_preset_scripts', scriptType: SCRIPT_TYPES.PRESET },
+]);
 
 let uiEnabled = false;
 let domObserver = null;
-let listObserver = null;
+let listObservers = new Map();
 let themeObserver = null;
-let observedListNode = null;
 let applyQueued = false;
 let isApplying = false;
-let lastAppliedSignature = null;
+let lastAppliedSignatureByScope = new Map();
 let lastThemeSignature = null;
 let isSorting = false;
 let applyAfterSort = false;
 let toggleReapplyBound = false;
 
-function findRegexListContainer() {
-  const $ = getJQuery();
-  return $('#saved_regex_scripts');
+function normalizeRegexScope(scope) {
+  const value = String(scope ?? 'global').trim().toLowerCase();
+  return REGEX_SCOPE_CONFIGS.find((entry) => entry.scope === value)?.scope ?? 'global';
 }
 
-function findRegexPanelContainer() {
+function getRegexScopeConfig(scope) {
+  const resolvedScope = normalizeRegexScope(scope);
+  return REGEX_SCOPE_CONFIGS.find((entry) => entry.scope === resolvedScope) ?? REGEX_SCOPE_CONFIGS[0];
+}
+
+function findRegexListContainer(scope = 'global') {
   const $ = getJQuery();
-  const panel = $('#regex_container');
-  if (panel.length) return panel;
-  return $('#extensions_settings, #extensions_settings2').first();
+  return $(getRegexScopeConfig(scope).selector).first();
+}
+
+function getRegexListContainers() {
+  return REGEX_SCOPE_CONFIGS
+    .map((config) => ({ ...config, $list: findRegexListContainer(config.scope) }))
+    .filter((entry) => entry.$list.length);
+}
+
+function getScopeScriptType(scope) {
+  return getRegexScopeConfig(scope).scriptType;
+}
+
+function getRegexScriptsByScope(scope) {
+  return getScriptsByType(getScopeScriptType(scope)) || [];
+}
+
+async function saveRegexScriptsByScope(scope, scripts) {
+  await saveScriptsByType(scripts, getScopeScriptType(scope));
+  try {
+    const context = getSillyTavernContext();
+    context?.saveSettingsDebounced?.();
+    void context?.reloadCurrentChat?.();
+  } catch {
+    /* ignore */
+  }
+}
+
+async function updateRegexScriptsByScope(scope, updater) {
+  const current = getRegexScriptsByScope(scope);
+  const next = (typeof updater === 'function' ? await updater(current) : current) ?? current;
+  const finalList = Array.isArray(next) ? next : current;
+  await saveRegexScriptsByScope(scope, finalList);
+  return finalList;
 }
 
 function escapeCssId(value) {
@@ -119,12 +159,12 @@ function applyThemeVars($list) {
   $list[0].style.setProperty('--pt-text', vars.textColor);
 }
 
-function createGroupHeader(group, count, collapsed, { anyDisabled = false } = {}) {
+function createGroupHeader(group, count, collapsed, scope, { anyDisabled = false } = {}) {
   const name = group?.name || '分组';
   const toggleIcon = collapsed ? 'fa-chevron-right' : 'fa-chevron-down';
   const checkedAttr = anyDisabled ? 'checked' : '';
   return $(`
-    <div class="${HEADER_CLASS} flex-container flexnowrap" data-pt-group-id="${escapeAttr(group.id)}" style="
+    <div class="${HEADER_CLASS} flex-container flexnowrap" data-pt-group-id="${escapeAttr(group.id)}" data-pt-group-scope="${escapeAttr(scope)}" style="
       align-items: center;
       gap: 8px;
       padding: 6px 8px;
@@ -168,20 +208,33 @@ function computeSignature(orderedIds, groupings) {
   return `${listKey}\u001c${groupingKey}`;
 }
 
-function pauseListObserver() {
-  try {
-    listObserver?.disconnect?.();
-  } catch {
-    /* ignore */
+function pauseListObserver(scope = null) {
+  const entries = scope == null
+    ? Array.from(listObservers.entries())
+    : [[normalizeRegexScope(scope), listObservers.get(normalizeRegexScope(scope))]];
+
+  for (const [, observer] of entries) {
+    try {
+      observer?.disconnect?.();
+    } catch {
+      /* ignore */
+    }
   }
 }
 
-function resumeListObserver() {
-  if (!listObserver || !observedListNode) return;
-  try {
-    listObserver.observe(observedListNode, { childList: true });
-  } catch {
-    /* ignore */
+function resumeListObserver(scope = null) {
+  const entries = scope == null
+    ? getRegexListContainers()
+    : [{ scope: normalizeRegexScope(scope), $list: findRegexListContainer(scope) }];
+
+  for (const entry of entries) {
+    const observer = listObservers.get(entry.scope);
+    if (!observer || !entry.$list.length) continue;
+    try {
+      observer.observe(entry.$list[0], { childList: true });
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -229,8 +282,7 @@ function setupThemeObserver() {
       if (!next || next === lastThemeSignature) return;
       lastThemeSignature = next;
 
-      const $list = findRegexListContainer();
-      if ($list.length) {
+      for (const { $list } of getRegexListContainers()) {
         ensureRegexGroupingStyles();
         applyThemeVars($list);
       }
@@ -265,8 +317,8 @@ function teardownThemeObserver() {
   lastThemeSignature = null;
 }
 
-function buildGroupingMaps(orderedIds) {
-  const groupings = getAllRegexScriptGroupings(orderedIds);
+function buildGroupingMaps(scope, orderedIds) {
+  const groupings = getAllRegexScriptGroupings(orderedIds, { scope });
   const membersByGroupId = new Map();
   const idToGroupId = new Map();
 
@@ -311,16 +363,16 @@ function getNeighborGroupIds($item) {
   return { prevGroupId, nextGroupId };
 }
 
-function updateGroupingAfterRegexMove($list, movedId) {
+function updateGroupingAfterRegexMove(scope, $list, movedId) {
   const $ = getJQuery();
   const id = String(movedId ?? '');
   if (!id) return;
 
-  const $root = $list?.length ? $list : findRegexListContainer();
+  const $root = $list?.length ? $list : findRegexListContainer(scope);
   if (!$root.length) return;
 
   const orderedIds = getOrderedIds($root);
-  const { membersByGroupId, idToGroupId } = buildGroupingMaps(orderedIds);
+  const { membersByGroupId, idToGroupId } = buildGroupingMaps(scope, orderedIds);
   const oldGroupId = idToGroupId.get(id) ?? null;
 
   const $item = $root.children(`#${escapeCssId(id)}`).first();
@@ -350,7 +402,7 @@ function updateGroupingAfterRegexMove($list, movedId) {
   void setRegexScriptGroupingMembersBulk(patches);
 }
 
-function patchRegexSortableForGrouping($list) {
+function patchRegexSortableForGrouping(scope, $list) {
   try {
     if (!$list?.length) return;
     if (typeof $list.sortable !== 'function') return;
@@ -383,7 +435,7 @@ function patchRegexSortableForGrouping($list) {
           if (el?.classList?.contains?.(HEADER_CLASS)) {
             const groupId = String($item.data('pt-group-id') ?? '');
             const orderedIds = getOrderedIds($list);
-            const memberIds = getGroupMemberIds(groupId, orderedIds);
+            const memberIds = getGroupMemberIds(scope, groupId, orderedIds);
 
             const memberEls = memberIds
               .map((id) => $list.children(`#${escapeCssId(id)}`).first()[0])
@@ -530,7 +582,7 @@ function patchRegexSortableForGrouping($list) {
             $item?.removeData?.('__ptGroupDragMembers');
           } else if (el?.classList?.contains?.('regex-script-label')) {
             const movedId = String($item.attr('id') ?? '');
-            updateGroupingAfterRegexMove($list, movedId);
+            updateGroupingAfterRegexMove(scope, $list, movedId);
           }
         } catch {
           /* ignore */
@@ -560,34 +612,36 @@ function patchRegexSortableForGrouping($list) {
   }
 }
 
-function applyGroupingToList() {
+function applyGroupingToList(scope) {
   if (!uiEnabled) return;
-  if (isApplying) return;
   if (isSorting) return;
+
   const $ = getJQuery();
-  const $list = findRegexListContainer();
+  const resolvedScope = normalizeRegexScope(scope);
+  const $list = findRegexListContainer(resolvedScope);
   if (!$list.length) return;
 
-  isApplying = true;
+  const orderedIds = getOrderedIds($list);
+  const groupings = getAllRegexScriptGroupings(orderedIds, { scope: resolvedScope });
+  const signature = computeSignature(orderedIds, groupings);
+
+  ensureRegexGroupingStyles();
+  applyThemeVars($list);
+  patchRegexSortableForGrouping(resolvedScope, $list);
+
+  const expectedGroupCount = groupings.filter((g) => !g.unresolved && Array.isArray(g.memberIds) && g.memberIds.length > 0).length;
+  const currentHeaderCount = $list.children(`.${HEADER_CLASS}`).length;
+
+  if (
+    signature === lastAppliedSignatureByScope.get(resolvedScope)
+    && (expectedGroupCount === 0 || currentHeaderCount >= expectedGroupCount)
+  ) {
+    updateExistingGroupHeaderCounts(resolvedScope, $list, groupings);
+    return;
+  }
+
+  pauseListObserver(resolvedScope);
   try {
-    const orderedIds = getOrderedIds($list);
-    const groupings = getAllRegexScriptGroupings(orderedIds);
-    const signature = computeSignature(orderedIds, groupings);
-
-    ensureRegexGroupingStyles();
-    applyThemeVars($list);
-
-    patchRegexSortableForGrouping($list);
-
-    const expectedGroupCount = groupings.filter((g) => !g.unresolved && Array.isArray(g.memberIds) && g.memberIds.length > 0).length;
-    const currentHeaderCount = $list.children(`.${HEADER_CLASS}`).length;
-
-    if (signature === lastAppliedSignature && (expectedGroupCount === 0 || currentHeaderCount >= expectedGroupCount)) {
-      updateExistingGroupHeaderCounts($list, groupings);
-      return;
-    }
-
-    pauseListObserver();
     cleanupGroupingUi($list);
     applyThemeVars($list);
 
@@ -602,7 +656,7 @@ function applyGroupingToList() {
       if (!$first.length) continue;
 
       const collapsed = !!g.collapsed;
-      const $header = createGroupHeader(g, String(memberIds.length), collapsed);
+      const $header = createGroupHeader(g, String(memberIds.length), collapsed, resolvedScope);
       $first.before($header);
 
       let enabledCount = 0;
@@ -639,16 +693,15 @@ function applyGroupingToList() {
       }
     }
 
-    lastAppliedSignature = signature;
+    lastAppliedSignatureByScope.set(resolvedScope, signature);
   } finally {
-    resumeListObserver();
-    isApplying = false;
+    resumeListObserver(resolvedScope);
   }
 }
 
-function updateExistingGroupHeaderCounts($list, groupings) {
+function updateExistingGroupHeaderCounts(scope, $list, groupings) {
   const $ = getJQuery();
-  const $root = $list?.length ? $list : findRegexListContainer();
+  const $root = $list?.length ? $list : findRegexListContainer(scope);
   if (!$root.length) return;
 
   const headersById = new Map();
@@ -712,104 +765,39 @@ function queueApplyGrouping() {
   applyQueued = true;
   Promise.resolve().then(() => {
     applyQueued = false;
-    applyGroupingToList();
+    applyGroupingToAllLists();
     installRegexGroupImportInterceptor();
   });
 }
 
+function applyGroupingToAllLists() {
+  if (!uiEnabled) return;
+  if (isApplying) return;
+  isApplying = true;
+  try {
+    for (const config of REGEX_SCOPE_CONFIGS) {
+      applyGroupingToList(config.scope);
+    }
+  } finally {
+    isApplying = false;
+  }
+}
+
 function showInputDialog(title, defaultValue, callback) {
-  const $ = getJQuery();
-  const vars = CommonStyles.getVars();
-  ensureViewportCssVars();
-
-  const dialog = $(`
-    <div class="pt-regex-grouping-input-dialog" style="
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; height: calc(var(--pt-vh, 1vh) * 100);
-      background: rgba(0,0,0,0.5); z-index: 10005;
-      display: flex; align-items: center; justify-content: center;
-      padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);">
-      <div style="
-        background: ${vars.bgColor}; padding: 20px; border-radius: 12px;
-        min-width: min(320px, 90vw); box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-        <div style="font-weight: 600; margin-bottom: 12px; white-space: nowrap;">${title}</div>
-        <input type="text" class="dialog-input" value="${String(defaultValue ?? '').replace(/\"/g, '&quot;')}" style="
-          width: 100%; padding: 8px; border: 1px solid ${vars.borderColor};
-          border-radius: 6px; background: ${vars.inputBg}; color: ${vars.textColor};
-          margin-bottom: 12px;">
-        <div style="display: flex; flex-direction: row; gap: 8px; justify-content: flex-end;">
-          <button class="dialog-cancel menu_button" style="padding: 6px 16px; white-space: nowrap;">取消</button>
-          <button class="dialog-confirm menu_button" style="padding: 6px 16px; white-space: nowrap;">确定</button>
-        </div>
-      </div>
-    </div>
-  `);
-
-  const panelContainer = findRegexPanelContainer();
-  (panelContainer.length ? panelContainer : $('body')).append(dialog);
-
-  dialog.on('pointerdown mousedown click', (e) => e.stopPropagation());
-  dialog.children().first().on('pointerdown mousedown click', (e) => e.stopPropagation());
-  dialog.find('.dialog-input').focus().select();
-
-  const closeDialog = (shouldCallback) => {
-    const value = String(dialog.find('.dialog-input').val() ?? '');
-    dialog.remove();
-    if (shouldCallback) callback(value);
-  };
-
-  dialog.find('.dialog-confirm').on('click', () => closeDialog(true));
-  dialog.find('.dialog-cancel').on('click', () => closeDialog(false));
-  dialog.find('.dialog-input').on('keypress', (e) => {
-    if (e.key === 'Enter') closeDialog(true);
-  });
+  const value = globalThis.prompt?.(title, String(defaultValue ?? ''));
+  if (value == null) return;
+  callback(String(value));
 }
 
 function showConfirmDialog(title, body, callback, options = {}) {
-  const $ = getJQuery();
-  const vars = CommonStyles.getVars();
-  ensureViewportCssVars();
-
-  const okText = String(options?.okText ?? '确定');
-  const cancelText = String(options?.cancelText ?? '取消');
-
-  const dialog = $(`
-    <div class="pt-regex-grouping-confirm-dialog" style="
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; height: calc(var(--pt-vh, 1vh) * 100);
-      background: rgba(0,0,0,0.5); z-index: 10005;
-      display: flex; align-items: center; justify-content: center;
-      padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);">
-      <div style="
-        background: ${vars.bgColor}; padding: 20px; border-radius: 12px;
-        min-width: min(360px, 90vw); box-shadow: 0 4px 20px rgba(0,0,0,0.3); color: ${vars.textColor};">
-        <div style="font-weight: 700; margin-bottom: 10px;">${title}</div>
-        <div style="opacity: .9; margin-bottom: 14px;">${body}</div>
-        <div style="display: flex; flex-direction: row; gap: 8px; justify-content: flex-end;">
-          <button class="dialog-cancel menu_button" style="padding: 6px 16px; white-space: nowrap;">${cancelText}</button>
-          <button class="dialog-confirm menu_button" style="padding: 6px 16px; white-space: nowrap;">${okText}</button>
-        </div>
-      </div>
-    </div>
-  `);
-
-  const panelContainer = findRegexPanelContainer();
-  (panelContainer.length ? panelContainer : $('body')).append(dialog);
-
-  dialog.on('pointerdown mousedown click', (e) => e.stopPropagation());
-  dialog.children().first().on('pointerdown mousedown click', (e) => e.stopPropagation());
-
-  const closeDialog = (value) => {
-    dialog.remove();
-    callback(!!value);
-  };
-
-  dialog.find('.dialog-confirm').on('click', () => closeDialog(true));
-  dialog.find('.dialog-cancel').on('click', () => closeDialog(false));
+  const ok = globalThis.confirm?.(`${title}\n\n${body}`) ?? false;
+  callback(!!ok);
 }
 
-function getGroupMemberIds(groupId, orderedIds) {
+function getGroupMemberIds(scope, groupId, orderedIds) {
   const id = String(groupId ?? '');
   if (!id) return [];
-  const groupings = getAllRegexScriptGroupings(orderedIds);
+  const groupings = getAllRegexScriptGroupings(orderedIds, { scope });
   const g = groupings.find((x) => x?.id === id && !x?.unresolved);
   if (!g) return [];
 
@@ -876,6 +864,7 @@ async function importRegexGroupBundleFile(file) {
     return false;
   }
 
+  const scope = normalizeRegexScope(bundle?.group?.scope ?? bundle?.metadata?.groupScope ?? 'global');
   const groupNameRaw = String(bundle?.group?.name ?? bundle?.metadata?.groupName ?? '分组');
   const groupName = groupNameRaw.trim() || '分组';
   const collapsed = !!bundle?.group?.collapsed;
@@ -893,7 +882,7 @@ async function importRegexGroupBundleFile(file) {
   });
 
   try {
-    await PT.API.updateTavernRegexesWith((existing) => {
+    await updateRegexScriptsByScope(scope, (existing) => {
       const list = Array.isArray(existing) ? existing : [];
       return [...list, ...importedRegexes];
     });
@@ -908,13 +897,14 @@ async function importRegexGroupBundleFile(file) {
       ? memberIdsRaw.map((id) => idMap.get(String(id)) || '').filter(Boolean)
       : importedRegexes.map((r) => String(r?.id ?? '')).filter(Boolean);
   if (mappedMemberIds.length > 0) {
-    const ok = await addRegexScriptGroupingFromMembers(mappedMemberIds, groupName, { collapsed });
+    const ok = await addRegexScriptGroupingFromMembers(mappedMemberIds, groupName, { collapsed, scope });
     if (!ok) {
       if (window.toastr) toastr.warning('正则已导入，但创建分组失败（可能与已有分组冲突）');
       return true;
     }
   }
 
+  queueApplyGrouping();
   if (window.toastr) toastr.success('正则组已导入');
   return true;
 }
@@ -969,11 +959,31 @@ function isMemberSelectionContiguous(memberIds, orderedIds) {
   return indices[indices.length - 1] - indices[0] + 1 === indices.length;
 }
 
-async function moveSelectedRegexScriptsTogether(memberIds) {
+function syncRegexListDomOrder(scope, orderedIds) {
+  const $list = findRegexListContainer(scope);
+  if (!$list.length || !Array.isArray(orderedIds) || orderedIds.length === 0) return;
+
+  pauseListObserver(scope);
+  try {
+    const rows = orderedIds
+      .map((id) => $list.children(`#${escapeCssId(id)}`).first())
+      .filter(($row) => $row.length)
+      .map(($row) => $row[0]);
+
+    if (rows.length) {
+      $list.append(rows);
+    }
+  } finally {
+    resumeListObserver(scope);
+  }
+}
+
+async function moveSelectedRegexScriptsTogether(scope, memberIds) {
   const selectedSet = new Set(memberIds.map(String));
   if (selectedSet.size === 0) return;
 
-  await PT.API.updateTavernRegexesWith((regexes) => {
+  const nextOrder = [];
+  await updateRegexScriptsByScope(scope, (regexes) => {
     const list = Array.isArray(regexes) ? regexes : [];
     if (list.length === 0) return list;
 
@@ -996,22 +1006,33 @@ async function moveSelectedRegexScriptsTogether(memberIds) {
 
     if (selected.length === 0) return list;
     const insertAt = firstSelectedIndex < 0 ? 0 : Math.min(firstSelectedIndex, others.length);
-    return [...others.slice(0, insertAt), ...selected, ...others.slice(insertAt)];
+    const reordered = [...others.slice(0, insertAt), ...selected, ...others.slice(insertAt)];
+    nextOrder.push(...reordered.map((item) => String(item?.id ?? '')).filter(Boolean));
+    return reordered;
   });
+
+  if (nextOrder.length > 0) {
+    syncRegexListDomOrder(scope, nextOrder);
+  }
 }
 
 async function handleBulkGroupButtonClick() {
-  const $list = findRegexListContainer();
-  if (!$list.length) return;
-
-  const memberIds = getSelectedGlobalRegexIds();
-  if (memberIds.length === 0) {
+  const selections = getSelectedRegexIdsByScope();
+  if (selections.length === 0) {
     if (window.toastr) toastr.warning('请先在 Bulk Edit 中勾选要分组的正则');
     return;
   }
+  if (selections.length > 1) {
+    if (window.toastr) toastr.warning('一次只能对同一类正则脚本分组，请只保留一个列表中的勾选项');
+    return;
+  }
+
+  const { scope, ids: memberIds } = selections[0];
+  const $list = findRegexListContainer(scope);
+  if (!$list.length) return;
 
   const orderedIds = getOrderedIds($list);
-  const grouped = getRegexScriptGroupingGroupedIdSet(orderedIds);
+  const grouped = getRegexScriptGroupingGroupedIdSet(orderedIds, { scope });
   const hasOverlap = memberIds.some((id) => grouped.has(String(id)));
   if (hasOverlap) {
     if (window.toastr) toastr.warning('选中的正则包含已分组项，请先取消分组后再创建新分组');
@@ -1026,7 +1047,7 @@ async function handleBulkGroupButtonClick() {
     }
 
     const createGroup = async () => {
-      const ok = await addRegexScriptGroupingFromMembers(memberIds, groupName, { collapsed: true });
+      const ok = await addRegexScriptGroupingFromMembers(memberIds, groupName, { collapsed: true, scope });
       if (!ok) {
         if (window.toastr) toastr.error('创建分组失败：所选正则可能与已有分组冲突');
         return false;
@@ -1049,29 +1070,30 @@ async function handleBulkGroupButtonClick() {
     }
 
     try {
-      await moveSelectedRegexScriptsTogether(memberIds);
+      await moveSelectedRegexScriptsTogether(scope, memberIds);
     } catch (e) {
       console.warn('[RegexGrouping] move selected scripts failed:', e);
       if (window.toastr) toastr.error('移动所选正则失败');
       return;
     }
-    await createGroup();
 
+    await createGroup();
   });
 }
 
-async function exportGroupScripts(groupId) {
+async function exportGroupScripts(scope, groupId) {
   const $ = getJQuery();
-  const $list = findRegexListContainer();
+  const resolvedScope = normalizeRegexScope(scope);
+  const $list = findRegexListContainer(resolvedScope);
   if (!$list.length) return;
 
   const orderedIds = getOrderedIds($list);
-  const groupings = getAllRegexScriptGroupings(orderedIds);
+  const groupings = getAllRegexScriptGroupings(orderedIds, { scope: resolvedScope });
   const g = groupings.find((x) => x?.id === groupId && !x?.unresolved && Array.isArray(x?.memberIds));
   if (!g?.memberIds?.length) return;
 
   const ids = g.memberIds.map(String).filter(Boolean);
-  const all = PT.API.getTavernRegexes({ scope: 'global', enable_state: 'all' }) || [];
+  const all = getRegexScriptsByScope(resolvedScope) || [];
   const byId = new Map(all.map((r) => [String(r?.id ?? ''), r]));
   const scripts = ids.map((id) => byId.get(id)).filter(Boolean);
   if (scripts.length === 0) return;
@@ -1088,10 +1110,12 @@ async function exportGroupScripts(groupId) {
     metadata: {
       exportTime: new Date().toISOString(),
       groupName: String(g?.name ?? ''),
+      groupScope: resolvedScope,
       regexCount: scripts.length,
     },
     group: {
       name: String(g?.name ?? ''),
+      scope: resolvedScope,
       collapsed: !!g?.collapsed,
     },
     grouping: {
@@ -1119,28 +1143,18 @@ async function exportGroupScripts(groupId) {
 
 function installHeaderEvents() {
   const $ = getJQuery();
-  const $list = findRegexListContainer();
-  if (!$list.length) return;
-
-  $list.off('click.pt-regex-group-header');
-
-  const setGroupDisabled = async (groupId, disabled) => {
+  const setGroupDisabled = async (scope, $list, groupId, disabled) => {
     const orderedIds = getOrderedIds($list);
-    const memberIds = getGroupMemberIds(groupId, orderedIds);
+    const memberIds = getGroupMemberIds(scope, groupId, orderedIds);
     if (memberIds.length === 0) return;
 
     const memberSet = new Set(memberIds.map(String));
+    const current = getRegexScriptsByScope(scope) || [];
+    const needsChange = current.some((r) => memberSet.has(String(r?.id ?? '')) && !!r?.disabled !== disabled);
+    if (!needsChange) return;
 
     try {
-      const current = PT.API.getTavernRegexes({ scope: 'global', enable_state: 'all' }) || [];
-      const needsChange = current.some((r) => memberSet.has(String(r?.id ?? '')) && !!r?.disabled !== disabled);
-      if (!needsChange) return;
-    } catch {
-      /* ignore */
-    }
-
-    try {
-      await PT.API.updateTavernRegexesWith((regexes) => {
+      await updateRegexScriptsByScope(scope, (regexes) => {
         const list = Array.isArray(regexes) ? regexes : [];
         for (const r of list) {
           if (!memberSet.has(String(r?.id ?? ''))) continue;
@@ -1151,146 +1165,166 @@ function installHeaderEvents() {
       });
     } catch (err) {
       console.warn('[RegexGrouping] set group enable failed:', err);
+      return;
+    }
+
+    for (const id of memberIds) {
+      const $row = $list.children(`#${escapeCssId(id)}`).first();
+      if (!$row.length) continue;
+      try {
+        $row.find('.disable_regex').first().prop('checked', disabled);
+      } catch {
+        /* ignore */
+      }
     }
   };
 
-  $list.on(
-    'click.pt-regex-group-header',
-    `.${HEADER_CLASS} .pt-regex-group-toggle, .${HEADER_CLASS} .pt-regex-group-name, .${HEADER_CLASS} .pt-regex-group-count`,
-    async function (e) {
+  for (const config of REGEX_SCOPE_CONFIGS) {
+    const $list = findRegexListContainer(config.scope);
+    if (!$list.length) continue;
+
+    $list.off('click.pt-regex-group-header');
+
+    $list.on(
+      'click.pt-regex-group-header',
+      `.${HEADER_CLASS} .pt-regex-group-toggle, .${HEADER_CLASS} .pt-regex-group-name, .${HEADER_CLASS} .pt-regex-group-count`,
+      async function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const $header = $(this).closest(`.${HEADER_CLASS}`);
+        const groupId = String($header.data('pt-group-id') ?? '');
+        if (!groupId) return;
+        const orderedIds = getOrderedIds($list);
+        const groupings = getAllRegexScriptGroupings(orderedIds, { scope: config.scope });
+        const g = groupings.find((x) => x?.id === groupId);
+        const nextCollapsed = !(g?.collapsed ?? false);
+        await updateRegexScriptGrouping(groupId, { collapsed: nextCollapsed });
+        queueApplyGrouping();
+      },
+    );
+
+    $list.on(
+      'click.pt-regex-group-header',
+      `.${HEADER_CLASS} .pt-regex-group-enable-toggle .regex-toggle-on`,
+      async function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const $header = $(this).closest(`.${HEADER_CLASS}`);
+        const groupId = String($header.data('pt-group-id') ?? '');
+        if (!groupId) return;
+
+        await setGroupDisabled(config.scope, $list, groupId, true);
+        try {
+          $header.find('.pt-regex-group-disable').prop('checked', true);
+        } catch {
+          /* ignore */
+        }
+        queueApplyGrouping();
+        setTimeout(queueApplyGrouping, 120);
+      },
+    );
+
+    $list.on(
+      'click.pt-regex-group-header',
+      `.${HEADER_CLASS} .pt-regex-group-enable-toggle .regex-toggle-off`,
+      async function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const $header = $(this).closest(`.${HEADER_CLASS}`);
+        const groupId = String($header.data('pt-group-id') ?? '');
+        if (!groupId) return;
+
+        await setGroupDisabled(config.scope, $list, groupId, false);
+        try {
+          $header.find('.pt-regex-group-disable').prop('checked', false);
+        } catch {
+          /* ignore */
+        }
+        queueApplyGrouping();
+        setTimeout(queueApplyGrouping, 120);
+      },
+    );
+
+    $list.on('click.pt-regex-group-header', `.${HEADER_CLASS} .pt-regex-group-rename`, async function (e) {
       e.preventDefault();
       e.stopPropagation();
       const $header = $(this).closest(`.${HEADER_CLASS}`);
       const groupId = String($header.data('pt-group-id') ?? '');
       if (!groupId) return;
+
       const orderedIds = getOrderedIds($list);
-      const groupings = getAllRegexScriptGroupings(orderedIds);
+      const groupings = getAllRegexScriptGroupings(orderedIds, { scope: config.scope });
       const g = groupings.find((x) => x?.id === groupId);
-      const nextCollapsed = !(g?.collapsed ?? false);
-      await updateRegexScriptGrouping(groupId, { collapsed: nextCollapsed });
-      queueApplyGrouping();
-    },
-  );
-
-  $list.on(
-    'click.pt-regex-group-header',
-    `.${HEADER_CLASS} .pt-regex-group-enable-toggle .regex-toggle-on`,
-    async function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      const $header = $(this).closest(`.${HEADER_CLASS}`);
-      const groupId = String($header.data('pt-group-id') ?? '');
-      if (!groupId) return;
-
-      await setGroupDisabled(groupId, true);
-      try {
-        $header.find('.pt-regex-group-disable').prop('checked', true);
-      } catch {
-        /* ignore */
-      }
-      queueApplyGrouping();
-      setTimeout(queueApplyGrouping, 120);
-    },
-  );
-
-  $list.on(
-    'click.pt-regex-group-header',
-    `.${HEADER_CLASS} .pt-regex-group-enable-toggle .regex-toggle-off`,
-    async function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      const $header = $(this).closest(`.${HEADER_CLASS}`);
-      const groupId = String($header.data('pt-group-id') ?? '');
-      if (!groupId) return;
-
-      await setGroupDisabled(groupId, false);
-      try {
-        $header.find('.pt-regex-group-disable').prop('checked', false);
-      } catch {
-        /* ignore */
-      }
-      queueApplyGrouping();
-      setTimeout(queueApplyGrouping, 120);
-    },
-  );
-
-  $list.on('click.pt-regex-group-header', `.${HEADER_CLASS} .pt-regex-group-rename`, async function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    const $header = $(this).closest(`.${HEADER_CLASS}`);
-    const groupId = String($header.data('pt-group-id') ?? '');
-    if (!groupId) return;
-
-    const orderedIds = getOrderedIds($list);
-    const groupings = getAllRegexScriptGroupings(orderedIds);
-    const g = groupings.find((x) => x?.id === groupId);
-    showInputDialog('重命名分组', g?.name || '分组', async (newName) => {
-      await updateRegexScriptGrouping(groupId, { name: newName });
-      queueApplyGrouping();
+      showInputDialog('重命名分组', g?.name || '分组', async (newName) => {
+        const trimmed = String(newName ?? '').trim();
+        if (!trimmed) return;
+        await updateRegexScriptGrouping(groupId, { name: trimmed });
+        queueApplyGrouping();
+      });
     });
-  });
 
-  $list.on('click.pt-regex-group-header', `.${HEADER_CLASS} .pt-regex-group-delete`, async function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    const $header = $(this).closest(`.${HEADER_CLASS}`);
-    const groupId = String($header.data('pt-group-id') ?? '');
-    if (!groupId) return;
-    const name = String($header.find('.pt-regex-group-name').text() ?? '分组');
-    showConfirmDialog('删除分组', `确定要删除分组“${name}”并删除组内所有正则吗？`, async (ok) => {
-      if (!ok) return;
+    $list.on('click.pt-regex-group-header', `.${HEADER_CLASS} .pt-regex-group-delete`, async function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const $header = $(this).closest(`.${HEADER_CLASS}`);
+      const groupId = String($header.data('pt-group-id') ?? '');
+      if (!groupId) return;
+      const name = String($header.find('.pt-regex-group-name').text() ?? '分组');
+      showConfirmDialog('删除分组', `确定要删除分组“${name}”并删除组内所有正则吗？`, async (ok) => {
+        if (!ok) return;
 
-      const orderedIds = getOrderedIds($list);
-      const memberIds = getGroupMemberIds(groupId, orderedIds);
-      const memberSet = new Set(memberIds.map(String));
+        const orderedIds = getOrderedIds($list);
+        const memberIds = getGroupMemberIds(config.scope, groupId, orderedIds);
+        const memberSet = new Set(memberIds.map(String));
 
-      try {
-        await PT.API.updateTavernRegexesWith((regexes) => {
-          const list = Array.isArray(regexes) ? regexes : [];
-          return list.filter((r) => !memberSet.has(String(r?.id ?? '')));
-        });
-      } catch (err) {
-        console.warn('[RegexGrouping] delete group scripts failed:', err);
-      }
+        try {
+          await updateRegexScriptsByScope(config.scope, (regexes) => {
+            const list = Array.isArray(regexes) ? regexes : [];
+            return list.filter((r) => !memberSet.has(String(r?.id ?? '')));
+          });
+        } catch (err) {
+          console.warn('[RegexGrouping] delete group scripts failed:', err);
+        }
+
+        pauseListObserver(config.scope);
+        try {
+          for (const id of memberIds) {
+            $list.children(`#${escapeCssId(id)}`).remove();
+          }
+        } finally {
+          resumeListObserver(config.scope);
+        }
+
+        await removeRegexScriptGrouping(groupId);
+        queueApplyGrouping();
+        if (window.toastr) toastr.success('已删除分组及其所有正则');
+      }, { okText: '删除' });
+    });
+
+    $list.on('click.pt-regex-group-header', `.${HEADER_CLASS} .pt-regex-group-ungroup`, async function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const $header = $(this).closest(`.${HEADER_CLASS}`);
+      const groupId = String($header.data('pt-group-id') ?? '');
+      if (!groupId) return;
 
       await removeRegexScriptGrouping(groupId);
       queueApplyGrouping();
-      if (window.toastr) toastr.success('已删除分组及其所有正则');
-    }, { okText: '删除' });
-  });
+      if (window.toastr) toastr.info('已取消分组');
+    });
 
-  $list.on('click.pt-regex-group-header', `.${HEADER_CLASS} .pt-regex-group-ungroup`, async function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    const $header = $(this).closest(`.${HEADER_CLASS}`);
-    const groupId = String($header.data('pt-group-id') ?? '');
-    if (!groupId) return;
-
-    await removeRegexScriptGrouping(groupId);
-    queueApplyGrouping();
-    if (window.toastr) toastr.info('已取消分组');
-  });
-
-  $list.on('click.pt-regex-group-header', `.${HEADER_CLASS} .pt-regex-group-export`, async function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    const $header = $(this).closest(`.${HEADER_CLASS}`);
-    const groupId = String($header.data('pt-group-id') ?? '');
-    if (!groupId) return;
-    await exportGroupScripts(groupId);
-  });
+    $list.on('click.pt-regex-group-header', `.${HEADER_CLASS} .pt-regex-group-export`, async function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const $header = $(this).closest(`.${HEADER_CLASS}`);
+      const groupId = String($header.data('pt-group-id') ?? '');
+      if (!groupId) return;
+      await exportGroupScripts(config.scope, groupId);
+    });
+  }
 }
 
 function setupListObserver() {
-  const $list = findRegexListContainer();
-  if (!$list.length) return;
-
-  if (listObserver) {
-    try { listObserver.disconnect(); } catch { /* ignore */ }
-    listObserver = null;
-    observedListNode = null;
-  }
-
   const parentWindow = getParentWindow();
   const ParentObserver = parentWindow && parentWindow !== window ? parentWindow.MutationObserver : null;
   const Observer = ParentObserver || window.MutationObserver;
@@ -1302,22 +1336,58 @@ function setupListObserver() {
     return el.classList?.contains?.('regex-script-label') || el.classList?.contains?.(HEADER_CLASS);
   };
 
-  listObserver = new Observer((mutations) => {
-    if (!uiEnabled) return;
-    if (!Array.isArray(mutations) || mutations.length === 0) return;
+  const activeScopes = new Set();
 
-    const relevant = mutations.some((m) => {
-      if (m.type !== 'childList') return false;
-      return Array.from(m.addedNodes).some(nodeIsRelevant) || Array.from(m.removedNodes).some(nodeIsRelevant);
+  for (const config of REGEX_SCOPE_CONFIGS) {
+    const $list = findRegexListContainer(config.scope);
+    const existing = listObservers.get(config.scope);
+    if (!$list.length) {
+      try {
+        existing?.disconnect?.();
+      } catch {
+        /* ignore */
+      }
+      listObservers.delete(config.scope);
+      continue;
+    }
+
+    activeScopes.add(config.scope);
+    if (existing?.__ptObservedNode === $list[0]) continue;
+    if (existing) {
+      try {
+        existing.disconnect();
+      } catch {
+        /* ignore */
+      }
+    }
+
+    const observer = new Observer((mutations) => {
+      if (!uiEnabled) return;
+      if (!Array.isArray(mutations) || mutations.length === 0) return;
+
+      const relevant = mutations.some((m) => {
+        if (m.type !== 'childList') return false;
+        return Array.from(m.addedNodes).some(nodeIsRelevant) || Array.from(m.removedNodes).some(nodeIsRelevant);
+      });
+      if (!relevant) return;
+
+      queueApplyGrouping();
     });
-    if (!relevant) return;
 
-    // Run regroup in the same render cycle (MutationObserver callbacks happen before paint),
-    // matching the no-flicker behavior of the preset entry grouping UI.
-    queueApplyGrouping();
-  });
-  observedListNode = $list[0];
-  listObserver.observe(observedListNode, { childList: true });
+    observer.__ptObservedNode = $list[0];
+    observer.observe($list[0], { childList: true });
+    listObservers.set(config.scope, observer);
+  }
+
+  for (const [scope, observer] of Array.from(listObservers.entries())) {
+    if (activeScopes.has(scope)) continue;
+    try {
+      observer?.disconnect?.();
+    } catch {
+      /* ignore */
+    }
+    listObservers.delete(scope);
+  }
 }
 
 function setupToggleReapplyListener() {
@@ -1357,9 +1427,6 @@ function setupDomObserver() {
   domObserver = new Observer(
     debounce(() => {
       if (!uiEnabled) return;
-      const $list = findRegexListContainer();
-      if (!$list.length) return;
-      if (observedListNode === $list[0]) return;
       setupListObserver();
       ensureRegexBulkGroupButtonInjected();
       installHeaderEvents();
@@ -1377,14 +1444,10 @@ export function initRegexScriptGroupingUi() {
   setupToggleReapplyListener();
   bindRegexBulkGroupButton(handleBulkGroupButtonClick);
   ensureRegexBulkGroupButtonInjected();
-
-  const $list = findRegexListContainer();
-  if ($list.length) {
-    setupListObserver();
-    installHeaderEvents();
-    applyGroupingToList();
-    installRegexGroupImportInterceptor();
-  }
+  setupListObserver();
+  installHeaderEvents();
+  applyGroupingToAllLists();
+  installRegexGroupImportInterceptor();
 }
 
 export function destroyRegexScriptGroupingUi() {
@@ -1406,8 +1469,9 @@ export function destroyRegexScriptGroupingUi() {
     /* ignore */
   }
   try {
-    const $list = findRegexListContainer();
-    if ($list.length) {
+    for (const config of REGEX_SCOPE_CONFIGS) {
+      const $list = findRegexListContainer(config.scope);
+      if (!$list.length) continue;
       $list.off('click.pt-regex-group-header');
       cleanupGroupingUi($list);
     }
@@ -1416,12 +1480,13 @@ export function destroyRegexScriptGroupingUi() {
   }
 
   try {
-    if (listObserver) listObserver.disconnect();
+    for (const observer of listObservers.values()) {
+      observer?.disconnect?.();
+    }
   } catch {
     /* ignore */
   }
-  listObserver = null;
-  observedListNode = null;
+  listObservers = new Map();
 
   try {
     if (domObserver) domObserver.disconnect();
@@ -1430,5 +1495,5 @@ export function destroyRegexScriptGroupingUi() {
   }
   domObserver = null;
 
-  lastAppliedSignature = null;
+  lastAppliedSignatureByScope = new Map();
 }
