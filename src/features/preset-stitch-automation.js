@@ -11,6 +11,7 @@ import {
   getStitchPatchSnapshotForBase,
   hasAnyStitchMeta,
   recordStitchPatchSnapshot,
+  syncStitchPatchSnapshot,
 } from './preset-stitch-state.js';
 import { showPresetGitUpdateModal } from '../ui/preset-git-update-modal.js';
 import { getPresetGitSource, setPresetGitSource } from './preset-stitch-settings.js';
@@ -77,12 +78,14 @@ function shouldSkipAutoMigrateForPresetName(presetName) {
 
 async function getUsableSnapshotPatchForPresetName(presetName) {
   const info = extractPresetVersionInfo(presetName);
-  if (!info?.normalizedBase || !info?.version) return null;
+  if (!info?.normalizedBase) return null;
 
   const patch = await getStitchPatchSnapshotForBase(info.normalizedBase);
   if (patch && countPatchStitches(patch) > 0) {
     return { base: info.normalizedBase, patch };
   }
+
+  if (!info?.version) return null;
 
   // Base name may change across versions (e.g., adding/removing "Beta").
   // Fall back to fuzzy matching against snapshot metadata.
@@ -108,7 +111,7 @@ function ensurePresetManagerSavePresetWrapped(presetManager) {
     const result = await original.apply(this, args);
     try {
       const [presetName, presetData] = args;
-      recordStitchPatchSnapshot(presetName, presetData);
+      await syncStitchPatchSnapshot(presetName, presetData);
     } catch {
       /* ignore */
     }
@@ -116,6 +119,36 @@ function ensurePresetManagerSavePresetWrapped(presetManager) {
   };
 
   return true;
+}
+
+function ensureKnownPresetManagersSavePresetWrapped() {
+  const context = getSillyTavernContext();
+  if (!context?.getPresetManager) return false;
+
+  const presetManagerKeys = [
+    'openai',
+    'instruct',
+    'context',
+    'sysprompt',
+    'textgenerationwebui',
+    'reasoning',
+    'kobold',
+    'novel',
+  ];
+
+  let wrappedAny = false;
+  for (const key of presetManagerKeys) {
+    try {
+      const manager = context.getPresetManager(key);
+      if (manager && ensurePresetManagerSavePresetWrapped(manager)) {
+        wrappedAny = true;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return wrappedAny;
 }
 
 function getApiInfoForPresetManager(presetManagerKey) {
@@ -518,6 +551,8 @@ function refreshKnownPresets(apiInfo) {
 }
 
 async function pollPresetList() {
+  ensureKnownPresetManagersSavePresetWrapped();
+
   const settings = loadAutomationSettings();
   const wantImport = settings.presetAutoMigrateOnImportEnabled === true;
   if (!wantImport) return;
@@ -732,6 +767,8 @@ function initPresetStitchAutomation() {
     ensurePresetManagerSavePresetWrapped(apiInfo.presetManager);
   }
 
+  ensureKnownPresetManagersSavePresetWrapped();
+
   // Mark the currently loaded preset as "known" so import auto-migrate won't treat it as a new import on startup.
   try {
     const currentName = PT.API.getLoadedPresetName?.() ?? null;
@@ -768,4 +805,11 @@ function initPresetStitchAutomation() {
   return true;
 }
 
-export { initPresetStitchAutomation, migrateStitches, maybeAutoUpdateFromGit, maybeAutoMigrateOnImport };
+export {
+  initPresetStitchAutomation,
+  migrateStitches,
+  maybeAutoUpdateFromGit,
+  maybeAutoMigrateOnImport,
+  ensurePresetManagerSavePresetWrapped,
+  ensureKnownPresetManagersSavePresetWrapped,
+};

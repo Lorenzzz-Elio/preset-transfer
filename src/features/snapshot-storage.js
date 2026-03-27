@@ -1,9 +1,20 @@
-// IndexedDB 存储方案，替代 localStorage
+import { getParentWindow } from '../core/utils.js';
+
 const DB_NAME = 'PresetTransferSnapshots';
 const DB_VERSION = 1;
 const STORE_NAME = 'snapshots';
+const SNAPSHOT_CHANGE_EVENT = 'preset-transfer:snapshots-changed';
 
 let dbInstance = null;
+
+function emitSnapshotChange(detail = {}) {
+  try {
+    const target = getParentWindow?.() ?? window;
+    target.dispatchEvent(new CustomEvent(SNAPSHOT_CHANGE_EVENT, { detail }));
+  } catch {
+    /* ignore */
+  }
+}
 
 function openDB() {
   return new Promise((resolve, reject) => {
@@ -20,7 +31,7 @@ function openDB() {
       resolve(dbInstance);
     };
 
-    request.onupgradeneeded = (event) => {
+    request.onupgradeneeded = event => {
       const db = event.target.result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         const store = db.createObjectStore(STORE_NAME, { keyPath: 'normalizedBase' });
@@ -30,16 +41,17 @@ function openDB() {
   });
 }
 
-export async function saveSnapshot(normalizedBase, state) {
+export async function putSnapshot(snapshot) {
   try {
+    const normalizedBase = String(snapshot?.normalizedBase ?? '').trim();
+    if (!normalizedBase) {
+      throw new Error('Snapshot normalizedBase is required.');
+    }
+
     const db = await openDB();
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
-
-    const data = {
-      normalizedBase,
-      ...state,
-    };
+    const data = { ...snapshot, normalizedBase };
 
     await new Promise((resolve, reject) => {
       const request = store.put(data);
@@ -47,26 +59,37 @@ export async function saveSnapshot(normalizedBase, state) {
       request.onerror = () => reject(request.error);
     });
 
+    emitSnapshotChange({ type: 'put', normalizedBase });
     return true;
   } catch (error) {
-    console.error('[PresetTransfer] IndexedDB 保存失败:', error);
+    console.error('[PresetTransfer] IndexedDB save failed:', error);
     return false;
   }
 }
 
+export async function saveSnapshot(normalizedBase, state) {
+  return putSnapshot({
+    ...(state && typeof state === 'object' ? state : {}),
+    normalizedBase: String(normalizedBase ?? '').trim(),
+  });
+}
+
 export async function loadSnapshot(normalizedBase) {
   try {
+    const key = String(normalizedBase ?? '').trim();
+    if (!key) return null;
+
     const db = await openDB();
     const tx = db.transaction(STORE_NAME, 'readonly');
     const store = tx.objectStore(STORE_NAME);
 
     return await new Promise((resolve, reject) => {
-      const request = store.get(normalizedBase);
+      const request = store.get(key);
       request.onsuccess = () => resolve(request.result || null);
       request.onerror = () => reject(request.error);
     });
   } catch (error) {
-    console.error('[PresetTransfer] IndexedDB 读取失败:', error);
+    console.error('[PresetTransfer] IndexedDB load failed:', error);
     return null;
   }
 }
@@ -83,26 +106,30 @@ export async function getAllSnapshots() {
       request.onerror = () => reject(request.error);
     });
   } catch (error) {
-    console.error('[PresetTransfer] IndexedDB 读取全部失败:', error);
+    console.error('[PresetTransfer] IndexedDB getAll failed:', error);
     return [];
   }
 }
 
 export async function deleteSnapshot(normalizedBase) {
   try {
+    const key = String(normalizedBase ?? '').trim();
+    if (!key) return false;
+
     const db = await openDB();
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
 
     await new Promise((resolve, reject) => {
-      const request = store.delete(normalizedBase);
+      const request = store.delete(key);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });
 
+    emitSnapshotChange({ type: 'delete', normalizedBase: key });
     return true;
   } catch (error) {
-    console.error('[PresetTransfer] IndexedDB 删除失败:', error);
+    console.error('[PresetTransfer] IndexedDB delete failed:', error);
     return false;
   }
 }
@@ -119,9 +146,10 @@ export async function clearAllSnapshots() {
       request.onerror = () => reject(request.error);
     });
 
+    emitSnapshotChange({ type: 'clear' });
     return true;
   } catch (error) {
-    console.error('[PresetTransfer] IndexedDB 清空失败:', error);
+    console.error('[PresetTransfer] IndexedDB clear failed:', error);
     return false;
   }
 }
@@ -153,7 +181,9 @@ export async function getSnapshotStats() {
       snapshots: stats,
     };
   } catch (error) {
-    console.error('[PresetTransfer] 获取统计失败:', error);
+    console.error('[PresetTransfer] Failed to get snapshot stats:', error);
     return { count: 0, totalSizeKB: '0', snapshots: [] };
   }
 }
+
+export { SNAPSHOT_CHANGE_EVENT };

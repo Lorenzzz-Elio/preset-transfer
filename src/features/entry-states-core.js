@@ -2,6 +2,8 @@
 
 import { PT } from '../core/api-compat.js';
 import { getPresetDataFromManager, getOrderedPromptEntries } from '../preset/preset-manager.js';
+import { syncStitchPatchSnapshot } from './preset-stitch-state.js';
+import { ensurePresetManagerSavePresetWrapped } from './preset-stitch-automation.js';
 
 // 条目状态管理开关
 let entryStatesSaveWorldBindings =
@@ -68,10 +70,13 @@ export function hookPresetSaveToProtectExtensions() {
           settings.extensions = {};
         }
 
-        if (existingExtensions.entryStates) {
+        const hasEntryStatesInSettings = Object.prototype.hasOwnProperty.call(settings.extensions, 'entryStates');
+        const hasEntryGroupingInSettings = Object.prototype.hasOwnProperty.call(settings.extensions, 'entryGrouping');
+
+        if (!hasEntryStatesInSettings && existingExtensions.entryStates) {
           settings.extensions.entryStates = existingExtensions.entryStates;
         }
-        if (existingExtensions.entryGrouping) {
+        if (!hasEntryGroupingInSettings && existingExtensions.entryGrouping) {
           settings.extensions.entryGrouping = existingExtensions.entryGrouping;
         }
         const hasRegexBindingsInSettings = Object.prototype.hasOwnProperty.call(settings.extensions, 'regexBindings');
@@ -82,13 +87,23 @@ export function hookPresetSaveToProtectExtensions() {
         const result = await originalSavePreset.call(this, name, settings, options);
 
         try {
+          await syncStitchPatchSnapshot(name, settings);
+        } catch {
+          /* ignore */
+        }
+
+        try {
           const presetObj = this.getCompletionPresetByName?.(name);
           if (presetObj) {
             if (!presetObj.extensions) presetObj.extensions = {};
-            if (existingExtensions.entryStates) {
+            if (hasEntryStatesInSettings) {
+              presetObj.extensions.entryStates = settings.extensions.entryStates;
+            } else if (existingExtensions.entryStates) {
               presetObj.extensions.entryStates = existingExtensions.entryStates;
             }
-            if (existingExtensions.entryGrouping) {
+            if (hasEntryGroupingInSettings) {
+              presetObj.extensions.entryGrouping = settings.extensions.entryGrouping;
+            } else if (existingExtensions.entryGrouping) {
               presetObj.extensions.entryGrouping = existingExtensions.entryGrouping;
             }
             if (Object.prototype.hasOwnProperty.call(settings.extensions, 'regexBindings')) {
@@ -145,6 +160,7 @@ export function unhookPresetSaveToProtectExtensions() {
     if (pm && typeof pm.savePreset === 'function') {
       try {
         pm.savePreset = originalSavePreset;
+        ensurePresetManagerSavePresetWrapped(pm);
       } catch {
         /* ignore */
       }

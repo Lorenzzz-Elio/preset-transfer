@@ -6,6 +6,21 @@ import * as SnapshotStorage from './snapshot-storage.js';
 
 const STITCH_STATE_SCHEMA_VERSION = 1;
 
+function normalizeSnapshotPatch(patch) {
+  if (!patch || typeof patch !== 'object') return null;
+
+  return {
+    ...patch,
+    runs: (Array.isArray(patch.runs) ? patch.runs : [])
+      .map(run => ({
+        ...run,
+        stitches: Array.isArray(run?.stitches) ? run.stitches : [],
+      }))
+      .filter(run => run.stitches.length > 0),
+    uninserted: [],
+  };
+}
+
 function countPatchStitches(patch) {
   if (!patch || typeof patch !== 'object') return 0;
   const runs = Array.isArray(patch.runs) ? patch.runs : [];
@@ -24,7 +39,14 @@ async function getStitchStateByBase(normalizedBase) {
   if (!key) return null;
 
   const state = await SnapshotStorage.loadSnapshot(key);
-  return state && typeof state === 'object' ? state : null;
+  if (!state || typeof state !== 'object') return null;
+
+  const patch = normalizeSnapshotPatch(state.patch);
+  return {
+    ...state,
+    patch,
+    stitchCount: countPatchStitches(patch),
+  };
 }
 
 async function setStitchStateByBase(normalizedBase, state) {
@@ -56,11 +78,13 @@ async function recordStitchPatchSnapshot(presetName, presetData, options = {}) {
   if (!presetData || typeof presetData !== 'object') return null;
 
   const info = extractPresetVersionInfo(name);
-  if (!info?.normalizedBase || !info?.version) return null;
+  if (!info?.normalizedBase) return null;
 
   if (!force && !hasAnyStitchMeta(presetData)) return null;
 
-  const patch = extractStitchPatch(presetData, { compressForSnapshot: true });
+  const patch = normalizeSnapshotPatch(
+    extractStitchPatch(presetData, { compressForSnapshot: true, includeUninserted: false }),
+  );
   const stitchCount = countPatchStitches(patch);
   if (stitchCount === 0) return null;
 
@@ -68,13 +92,67 @@ async function recordStitchPatchSnapshot(presetName, presetData, options = {}) {
     schema: STITCH_STATE_SCHEMA_VERSION,
     updatedAt: now,
     presetName: name,
-    version: String(info.version),
+    version: info?.version ? String(info.version) : '',
     patch,
     stitchCount,
   };
 
   await setStitchStateByBase(info.normalizedBase, state);
   return state;
+}
+
+async function syncStitchPatchSnapshot(presetName, presetData, options = {}) {
+  const { now = Date.now(), force = false, deleteIfEmpty = true } = options;
+
+  const settings = loadTransferSettings();
+  if (settings.presetStitchSnapshotEnabled === false) return { status: 'disabled' };
+
+  const name = String(presetName ?? '').trim();
+  if (!name) return { status: 'missing_name' };
+  if (!presetData || typeof presetData !== 'object') return { status: 'missing_data' };
+
+  const info = extractPresetVersionInfo(name);
+  if (!info?.normalizedBase) return { status: 'missing_base' };
+
+  if (!force && !hasAnyStitchMeta(presetData)) {
+    if (deleteIfEmpty) {
+      await SnapshotStorage.deleteSnapshot(info.normalizedBase);
+      return { status: 'deleted_empty_meta', normalizedBase: info.normalizedBase };
+    }
+
+    return { status: 'skipped_empty_meta', normalizedBase: info.normalizedBase };
+  }
+
+  const patch = normalizeSnapshotPatch(
+    extractStitchPatch(presetData, { compressForSnapshot: true, includeUninserted: false }),
+  );
+  const stitchCount = countPatchStitches(patch);
+
+  if (stitchCount === 0) {
+    if (deleteIfEmpty) {
+      await SnapshotStorage.deleteSnapshot(info.normalizedBase);
+      return { status: 'deleted_empty_patch', normalizedBase: info.normalizedBase };
+    }
+
+    return { status: 'skipped_empty_patch', normalizedBase: info.normalizedBase };
+  }
+
+  const state = {
+    schema: STITCH_STATE_SCHEMA_VERSION,
+    updatedAt: now,
+    presetName: name,
+    version: info?.version ? String(info.version) : '',
+    patch,
+    stitchCount,
+  };
+
+  await setStitchStateByBase(info.normalizedBase, state);
+  return {
+    status: 'saved',
+    normalizedBase: info.normalizedBase,
+    stitchCount,
+    state,
+  };
 }
 
 export {
@@ -86,6 +164,8 @@ export {
   getStitchPatchSnapshotForBase,
   findBestStitchPatchSnapshotForPresetName,
   recordStitchPatchSnapshot,
+  syncStitchPatchSnapshot,
+  normalizeSnapshotPatch,
 };
 
 async function findBestStitchPatchSnapshotForPresetName(presetName, options = {}) {
@@ -95,7 +175,7 @@ async function findBestStitchPatchSnapshotForPresetName(presetName, options = {}
   if (!targetName) return null;
 
   const targetInfo = extractPresetVersionInfo(targetName);
-  if (!targetInfo?.version) return null;
+  if (!targetInfo?.normalizedBase) return null;
 
   let snapshots = [];
   try {
@@ -110,7 +190,7 @@ async function findBestStitchPatchSnapshotForPresetName(presetName, options = {}
     const candidateName = String(snap?.presetName ?? '').trim();
     if (!candidateName) continue;
 
-    const patch = snap?.patch;
+    const patch = normalizeSnapshotPatch(snap?.patch);
     if (!patch || typeof patch !== 'object') continue;
 
     if (countPatchStitches(patch) === 0) continue;
