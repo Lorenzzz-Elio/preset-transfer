@@ -138,19 +138,29 @@ function renderNativeEntryStatesContent(presetName) {
           </div>
         </div>`;
     };
+    const UNGROUPED_GROUP_KEY = '__ungrouped__';
     const getGroupName = name => {
       const m = (name || '').match(/^(【[^】]+】|[^-\[\]_.:：]+[-\[\]_.:：])/);
-      let g = m ? m[1].replace(/[-\[\]_.:：]$/, '').replace(/^【|】$/g, '') : '未分组';
-      g = (g || '未分组').replace(/['"\\]/g, '').trim();
-      return g.length ? g : '未分组';
+      let g = m ? m[1].replace(/[-\[\]_.:：]$/, '').replace(/^【|】$/g, '') : '';
+      g = (g || '').replace(/['"\\]/g, '').trim();
+      return g.length ? g : UNGROUPED_GROUP_KEY;
     };
     const groups = new Map();
+    const ungroupedVersions = [];
     statesConfig.versions.forEach(v => {
       const g = getGroupName(v.name || '');
+      if (g === UNGROUPED_GROUP_KEY) {
+        ungroupedVersions.push(v);
+        return;
+      }
+
       if (!groups.has(g)) groups.set(g, []);
       groups.get(g).push(v);
     });
     html += '<div id="es-groups">';
+    ungroupedVersions.forEach(v => {
+      html += renderVersionItem(v);
+    });
     for (const [gname, list] of groups.entries()) {
       html += `
           <div class="es-group" data-group="${escapeHtml(gname)}">

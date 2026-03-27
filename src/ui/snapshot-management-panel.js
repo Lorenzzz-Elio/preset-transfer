@@ -13,6 +13,8 @@ import * as SnapshotStorage from '../features/snapshot-storage.js';
 
 const SNAPSHOT_EDIT_MODAL_ID = 'pt-snapshot-edit-modal';
 const SNAPSHOT_REFRESH_DELAY_MS = 120;
+const SNAPSHOT_BUNDLE_TYPE = 'preset_transfer_snapshot_bundle';
+const SNAPSHOT_BUNDLE_VERSION = 1;
 
 let snapshotListCache = [];
 let refreshTimer = null;
@@ -34,6 +36,83 @@ function showToast(level, message) {
 
 function formatBytes(bytes) {
   return `${(bytes / 1024).toFixed(2)} KB`;
+}
+
+function sanitizeFileNameSegment(value, fallback = 'snapshot') {
+  const sanitized = String(value ?? '')
+    .trim()
+    .replace(/[\s.<>:"/\\|?*\x00-\x1F\x7F]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 80);
+  return sanitized || fallback;
+}
+
+function downloadTextFile(content, fileName, mimeType = 'application/json') {
+  if (typeof download === 'function') {
+    download(content, fileName, mimeType);
+    return;
+  }
+
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
+}
+
+function readFileAsText(file) {
+  return new Promise((resolve, reject) => {
+    try {
+      const reader = new FileReader();
+      reader.onload = event => resolve(String(event?.target?.result ?? ''));
+      reader.onerror = error => reject(error);
+      reader.readAsText(file);
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+function pickImportFile(accept = '.json,application/json') {
+  return new Promise(resolve => {
+    const input = document.createElement('input');
+    let settled = false;
+
+    const finish = file => {
+      if (settled) return;
+      settled = true;
+      window.removeEventListener('focus', handleWindowFocus, true);
+      input.remove();
+      resolve(file ?? null);
+    };
+
+    const handleWindowFocus = () => {
+      setTimeout(() => {
+        if (!settled) {
+          finish(input.files?.[0] ?? null);
+        }
+      }, 300);
+    };
+
+    input.type = 'file';
+    input.accept = accept;
+    input.style.display = 'none';
+    input.addEventListener(
+      'change',
+      () => {
+        finish(input.files?.[0] ?? null);
+      },
+      { once: true },
+    );
+
+    document.body.appendChild(input);
+    window.addEventListener('focus', handleWindowFocus, true);
+    input.click();
+  });
 }
 
 function formatDate(timestamp) {
@@ -209,6 +288,196 @@ function mergeSnapshotStates(targetState, sourceState, options = {}) {
     patch,
     stitchCount: countPatchStitches(patch),
   };
+}
+
+function normalizeImportedSnapshot(snapshot, fallbackUpdatedAt = Date.now()) {
+  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) return null;
+
+  const normalizedBase = String(snapshot?.normalizedBase ?? '').trim();
+  if (!normalizedBase) return null;
+
+  const patch = normalizeSnapshotPatch(snapshot.patch);
+  const stitchCount = countPatchStitches(patch);
+  if (!patch || stitchCount === 0) return null;
+
+  return {
+    ...cloneDeep(snapshot),
+    schema: Number.isFinite(snapshot?.schema) ? snapshot.schema : STITCH_STATE_SCHEMA_VERSION,
+    normalizedBase,
+    presetName: String(snapshot?.presetName ?? '').trim() || normalizedBase,
+    version: String(snapshot?.version ?? '').trim(),
+    updatedAt: Number.isFinite(snapshot?.updatedAt) ? snapshot.updatedAt : fallbackUpdatedAt,
+    patch,
+    stitchCount,
+  };
+}
+
+function consolidateSnapshotStates(snapshots) {
+  const mergedByBase = new Map();
+
+  snapshots.forEach((snapshot, index) => {
+    const normalizedSnapshot = normalizeImportedSnapshot(snapshot, Date.now() + index);
+    if (!normalizedSnapshot) return;
+
+    const normalizedBase = normalizedSnapshot.normalizedBase;
+    const existingSnapshot = mergedByBase.get(normalizedBase);
+
+    if (!existingSnapshot) {
+      mergedByBase.set(normalizedBase, normalizedSnapshot);
+      return;
+    }
+
+    const mergedSnapshot = mergeSnapshotStates(existingSnapshot, normalizedSnapshot, {
+      presetName: normalizedSnapshot.presetName || existingSnapshot.presetName,
+      version: normalizedSnapshot.version || existingSnapshot.version,
+      updatedAt: Math.max(
+        Number(existingSnapshot?.updatedAt) || 0,
+        Number(normalizedSnapshot?.updatedAt) || Date.now(),
+      ),
+    });
+
+    mergedByBase.set(normalizedBase, {
+      ...mergedSnapshot,
+      normalizedBase,
+    });
+  });
+
+  return mergedByBase;
+}
+
+function parseImportedSnapshotBundle(bundleData) {
+  if (Array.isArray(bundleData)) {
+    return bundleData;
+  }
+
+  if (!bundleData || typeof bundleData !== 'object') {
+    throw new Error('快照文件格式无效。');
+  }
+
+  if (Array.isArray(bundleData.snapshots)) {
+    const bundleType = String(bundleData.type ?? '').trim();
+    if (bundleType && bundleType !== SNAPSHOT_BUNDLE_TYPE) {
+      throw new Error('这不是 Preset Transfer 的快照导出文件。');
+    }
+    return bundleData.snapshots;
+  }
+
+  throw new Error('快照文件中未找到可导入的数据。');
+}
+
+async function handleExportSnapshots() {
+  try {
+    const snapshots = await loadSnapshotList();
+    if (!snapshots.length) {
+      showToast('info', '当前没有可导出的快照。');
+      return;
+    }
+
+    const normalizedSnapshots = Array.from(consolidateSnapshotStates(snapshots).values());
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+    const fileName = `preset-transfer-snapshots-${sanitizeFileNameSegment(timestamp, 'export')}.json`;
+    const bundleData = {
+      type: SNAPSHOT_BUNDLE_TYPE,
+      version: SNAPSHOT_BUNDLE_VERSION,
+      metadata: {
+        exportTime: new Date().toISOString(),
+        snapshotCount: normalizedSnapshots.length,
+      },
+      snapshots: normalizedSnapshots,
+    };
+
+    downloadTextFile(JSON.stringify(bundleData, null, 2), fileName);
+    showToast('success', `已导出 ${normalizedSnapshots.length} 个快照。`);
+  } catch (error) {
+    console.error('[PresetTransfer] Failed to export snapshots:', error);
+    showToast('error', error.message || '导出快照失败。');
+  }
+}
+
+async function handleImportSnapshots() {
+  try {
+    const file = await pickImportFile();
+    if (!file) return;
+
+    const fileText = await readFileAsText(file);
+    const bundleData = JSON.parse(fileText);
+    const importedSnapshots = parseImportedSnapshotBundle(bundleData);
+    const importedByBase = consolidateSnapshotStates(importedSnapshots);
+
+    if (importedByBase.size === 0) {
+      throw new Error('导入文件中没有有效快照。');
+    }
+
+    const localSnapshots = await SnapshotStorage.getAllSnapshots();
+    const localByBase = consolidateSnapshotStates(localSnapshots);
+    const mergeCount = Array.from(importedByBase.keys()).filter(base => localByBase.has(base)).length;
+    const addCount = importedByBase.size - mergeCount;
+
+    const confirmed = confirm(
+      `将导入 ${importedByBase.size} 个快照。\n\n` +
+        `新增快照：${addCount} 个\n` +
+        `合并现有：${mergeCount} 个\n\n` +
+        '同名快照会自动合并，导入文件中的同名条目会覆盖本地条目。\n\n是否继续？',
+    );
+    if (!confirmed) return;
+
+    let successCount = 0;
+    let failedCount = 0;
+
+    for (const [normalizedBase, importedSnapshot] of importedByBase.entries()) {
+      const existingSnapshot = localByBase.get(normalizedBase);
+      const nextSnapshot = existingSnapshot
+        ? {
+            ...mergeSnapshotStates(existingSnapshot, importedSnapshot, {
+              presetName: importedSnapshot.presetName || existingSnapshot.presetName,
+              version: importedSnapshot.version || existingSnapshot.version,
+              updatedAt: Math.max(
+                Number(existingSnapshot?.updatedAt) || 0,
+                Number(importedSnapshot?.updatedAt) || Date.now(),
+              ),
+            }),
+            normalizedBase,
+          }
+        : importedSnapshot;
+
+      const saved = await SnapshotStorage.putSnapshot(nextSnapshot);
+      if (saved) {
+        successCount += 1;
+      } else {
+        failedCount += 1;
+      }
+    }
+
+    await refreshSnapshotList();
+
+    if (failedCount > 0) {
+      showToast('warning', `快照导入完成：成功 ${successCount} 个，失败 ${failedCount} 个。`);
+      return;
+    }
+
+    showToast('success', `快照导入完成：新增 ${addCount} 个，合并 ${mergeCount} 个。`);
+  } catch (error) {
+    console.error('[PresetTransfer] Failed to import snapshots:', error);
+    showToast('error', error.message || '导入快照失败。');
+  }
+}
+
+async function handleSnapshotTransferAction() {
+  const choice = String(prompt('请选择快照操作：\n1. 导出快照\n2. 导入快照\n\n请输入 1 或 2') ?? '').trim();
+
+  if (!choice) return;
+
+  if (choice === '1') {
+    await handleExportSnapshots();
+    return;
+  }
+
+  if (choice === '2') {
+    await handleImportSnapshots();
+    return;
+  }
+
+  showToast('info', '已取消：请输入 1 或 2。');
 }
 
 async function loadSnapshotList() {
@@ -600,10 +869,10 @@ async function openSnapshotEditor(normalizedBase) {
 function bindSnapshotPanelEvents() {
   const $ = getJQuery();
 
-  $('#pt-snapshot-refresh')
+  $('#pt-snapshot-transfer')
     .off('click')
     .on('click', async () => {
-      await refreshSnapshotList();
+      await handleSnapshotTransferAction();
     });
 
   $('#pt-snapshot-save-current')
@@ -662,12 +931,71 @@ function bindSnapshotRefreshSources() {
   });
 }
 
+function ensureSnapshotToolbarButtonsV2() {
+  const $ = getJQuery();
+  const $toolbar = $('.pt-snapshot-toolbar');
+  if (!$toolbar.length) return;
+
+  const $transferButton = $('#pt-snapshot-transfer');
+  if ($transferButton.length) {
+    $exportButton.html('<i class="fa fa-download"></i> 导出快照');
+  }
+
+  if (!$('#pt-snapshot-import').length) {
+    const $importButton = $('<button id="pt-snapshot-import" class="menu_button" type="button"></button>');
+    $importButton.html('<i class="fa fa-upload"></i> 导入快照');
+
+    if ($exportButton.length) {
+      $importButton.insertAfter($exportButton);
+    } else {
+      $toolbar.prepend($importButton);
+    }
+  }
+}
+
+function createSnapshotManagementPanelV2() {
+  return `
+    <div class="pt-snapshot-panel">
+      <div class="pt-snapshot-toolbar">
+        <button id="pt-snapshot-export" class="menu_button">
+          <i class="fa fa-download"></i> 导出快照
+        </button>
+        <button id="pt-snapshot-import" class="menu_button" type="button">
+          <i class="fa fa-upload"></i> 导入快照
+        </button>
+        <button id="pt-snapshot-save-current" class="menu_button">
+          <i class="fa fa-save"></i> 保存预设快照
+        </button>
+      </div>
+      <div id="pt-snapshot-list" class="pt-snapshot-list">
+        <div class="pt-snapshot-loading">
+          <i class="fa fa-spinner fa-spin"></i> 加载中...
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function ensureSnapshotToolbarButtons() {
+  const $ = getJQuery();
+  const $toolbar = $('.pt-snapshot-toolbar');
+  if (!$toolbar.length) return;
+
+  const $transferButton = $('#pt-snapshot-transfer');
+  if ($transferButton.length) {
+    $transferButton.html('<i class="fa fa-exchange"></i> 导出/导入快照');
+  }
+
+  $('#pt-snapshot-import').remove();
+  $('#pt-snapshot-export').remove();
+}
+
 function createSnapshotManagementPanel() {
   return `
     <div class="pt-snapshot-panel">
       <div class="pt-snapshot-toolbar">
-        <button id="pt-snapshot-refresh" class="menu_button">
-          <i class="fa fa-refresh"></i> 刷新
+        <button id="pt-snapshot-transfer" class="menu_button" type="button">
+          <i class="fa fa-exchange"></i> 导出/导入快照
         </button>
         <button id="pt-snapshot-save-current" class="menu_button">
           <i class="fa fa-save"></i> 保存预设快照
@@ -683,6 +1011,7 @@ function createSnapshotManagementPanel() {
 }
 
 async function initSnapshotManagementPanel() {
+  ensureSnapshotToolbarButtons();
   bindSnapshotPanelEvents();
   bindSnapshotRefreshSources();
   await refreshSnapshotList();
