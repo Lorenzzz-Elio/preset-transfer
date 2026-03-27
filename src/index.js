@@ -23,6 +23,7 @@ import * as PresetManager from './preset/preset-manager.js';
 
 // 功能模块
 import * as AIAssistant from './features/ai-assistant.js';
+import * as EntryBeautify from './features/entry-beautify.js';
 import * as DragDropCore from './features/drag-drop-core.js';
 import * as EntryStates from './features/entry-states.js';
 import * as EntryGrouping from './features/entry-grouping.js';
@@ -42,8 +43,10 @@ import * as BatchEditor from './ui/batch-editor.js';
 import * as CompareModal from './ui/compare-modal.js';
 import * as DragDropUI from './ui/drag-drop-ui.js';
 import * as EditModal from './ui/edit-modal.js';
+import * as EntryBeautifyModal from './ui/entry-beautify-modal.js';
 import * as EntryGroupingUI from './ui/entry-grouping-ui.js';
 import * as MainUI from './ui/main-ui.js';
+import * as NativeEntryMoreBtn from './ui/native-entry-more-btn.js';
 import * as NativePanel from './ui/native-panel.js';
 import * as QuickPreview from './ui/quick-preview.js';
 import * as RegexUI from './ui/regex-ui.js';
@@ -101,6 +104,9 @@ registerPresetTransferNamespace({
   WorldbookCommon,
   WorldbookCommonIntegration,
   AIAssistant,
+  EntryBeautify,
+  EntryBeautifyModal,
+  NativeEntryMoreBtn,
   MainUI,
   RegexUI,
   NativePanel,

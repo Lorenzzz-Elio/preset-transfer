@@ -1,20 +1,15 @@
-import { debounce, getCurrentApiInfo, getJQuery, getParentWindow } from '../core/utils.js';
+import { escapeAttr, getCurrentApiInfo, getJQuery, getParentWindow } from '../core/utils.js';
 import { PT } from '../core/api-compat.js';
 import { duplicatePresetEntries } from '../operations/copy-move.js';
 import { CommonStyles } from '../styles/common-styles.js';
 
-const ENTRY_SELECTOR = 'li[data-pm-identifier]';
-const LIST_SELECTOR = '#completion_prompt_manager_list, [id$="prompt_manager_list"]';
-const CONTROLS_SELECTOR = '.prompt_manager_prompt_controls';
-const EDIT_BUTTON_SELECTOR = '.prompt-manager-edit-action';
 const MORE_BUTTON_SELECTOR = '.pt-entry-more-btn';
 const MENU_SELECTOR = '.pt-entry-more-menu';
 const EVENT_NAMESPACE = '.pt-entry-more-btn';
 
-let observer = null;
 let eventsBound = false;
 let promptManagerPatched = false;
-const pendingScanRoots = new Set();
+let nativeEntryMoreEnabled = false;
 
 function getParentDocument() {
   return getParentWindow().document;
@@ -39,6 +34,15 @@ function closeEntryMoreMenu() {
   $(MORE_BUTTON_SELECTOR).removeClass('is-open');
 }
 
+function stopEvent(event) {
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+function stopEventPropagation(event) {
+  event.stopPropagation();
+}
+
 function findPanelContainer(target) {
   const $ = getJQuery();
   const $target = $(target);
@@ -53,120 +57,31 @@ function resolveCurrentPresetName() {
   }
 }
 
-function getPromptManagerLists() {
-  const parentDocument = getParentDocument();
-  return Array.from(parentDocument.querySelectorAll(LIST_SELECTOR)).filter((list) => {
-    return list instanceof HTMLElement && list.closest('#completion_prompt_manager');
-  });
+function isSupportedPromptManagerInstance(instance) {
+  return (
+    nativeEntryMoreEnabled &&
+    instance?.configuration?.prefix === 'completion_' &&
+    instance?.configuration?.containerIdentifier === 'completion_prompt_manager'
+  );
 }
 
-function scanEntryMoreButtonsInRoots(roots) {
-  const $ = getJQuery();
-  const normalizedRoots = Array.isArray(roots) ? roots.filter(Boolean) : getPromptManagerLists();
-
-  for (const root of normalizedRoots) {
-    const $root = $(root);
-    if ($root.is(ENTRY_SELECTOR)) {
-      injectMoreButton($root);
-      continue;
-    }
-
-    $root.find(ENTRY_SELECTOR).each(function () {
-      injectMoreButton($(this));
-    });
-  }
-}
-
-function injectMoreButton($entry) {
-  const $ = getJQuery();
-  if (!$entry?.length || $entry.find(MORE_BUTTON_SELECTOR).length) return;
-
-  const identifier = String($entry.attr('data-pm-identifier') ?? '').trim();
-  if (!identifier) return;
-
-  const $editButton = $entry.find(EDIT_BUTTON_SELECTOR).first();
-  const $controls = $entry.find(CONTROLS_SELECTOR).first();
-  if (!$editButton.length || !$controls.length) return;
-
+function createMoreButtonHtml(identifier) {
   const vars = CommonStyles.getVars();
 
-  const $button = $(`
+  return `
     <span
       class="pt-entry-more-btn fa-solid fa-ellipsis fa-xs"
       role="button"
       tabindex="0"
-      title="更多操作"
-      aria-label="更多操作"
+      title="\u66f4\u591a\u64cd\u4f5c"
+      aria-label="\u66f4\u591a\u64cd\u4f5c"
       style="
         margin-inline-start: calc(${vars.gap} / 3);
         font-size: ${vars.fontSizeSmall};
       "
-      data-pt-identifier="${identifier}">
+      data-pt-identifier="${escapeAttr(identifier)}">
     </span>
-  `);
-
-  $editButton.after($button);
-}
-
-function scanEntryMoreButtons() {
-  scanEntryMoreButtonsInRoots(getPromptManagerLists());
-}
-
-function queueEntryMoreButtonScan(roots) {
-  if (Array.isArray(roots)) {
-    for (const root of roots) {
-      if (root instanceof HTMLElement) {
-        pendingScanRoots.add(root);
-      }
-    }
-  }
-
-  debouncedFlushEntryMoreButtonScan();
-}
-
-const debouncedFlushEntryMoreButtonScan = debounce(() => {
-  const roots = Array.from(pendingScanRoots);
-  pendingScanRoots.clear();
-
-  if (roots.length) {
-    scanEntryMoreButtonsInRoots(roots);
-    return;
-  }
-
-  scanEntryMoreButtons();
-}, 32);
-
-function collectScanRootsFromNode(node, roots) {
-  if (!(node instanceof HTMLElement)) return;
-  if (!node.closest('#completion_prompt_manager')) return;
-  if (node.matches?.(MORE_BUTTON_SELECTOR) || node.matches?.(MENU_SELECTOR)) return;
-
-  if (node.matches?.(ENTRY_SELECTOR) || node.matches?.(LIST_SELECTOR)) {
-    roots.add(node);
-    return;
-  }
-
-  const entryRoot = node.closest(ENTRY_SELECTOR);
-  if (entryRoot instanceof HTMLElement) {
-    roots.add(entryRoot);
-    return;
-  }
-
-  if (node.querySelector?.(ENTRY_SELECTOR)) {
-    roots.add(node);
-  }
-}
-
-function collectScanRootsFromMutations(mutations) {
-  const roots = new Set();
-
-  for (const mutation of mutations) {
-    for (const node of mutation.addedNodes ?? []) {
-      collectScanRootsFromNode(node, roots);
-    }
-  }
-
-  return Array.from(roots);
+  `;
 }
 
 function positionEntryMoreMenu(menuElement, buttonElement) {
@@ -190,49 +105,17 @@ async function refreshNativePromptManager() {
   } catch (error) {
     console.warn('[EntryMoreBtn] Failed to refresh Prompt Manager:', error);
   }
-
-  queueEntryMoreButtonScan();
-}
-
-async function ensurePromptManagerPatched() {
-  if (promptManagerPatched) return;
-
-  const mod = await import('/scripts/PromptManager.js');
-  const prototype = mod?.PromptManager?.prototype;
-  if (!prototype || prototype.__ptEntryMorePatched) {
-    promptManagerPatched = true;
-    return;
-  }
-
-  const originalRenderPromptManagerListItems = prototype.renderPromptManagerListItems;
-  prototype.renderPromptManagerListItems = async function (...args) {
-    const result = await originalRenderPromptManagerListItems.apply(this, args);
-
-    try {
-      const listElement = this?.listElement;
-      if (listElement instanceof HTMLElement) {
-        queueEntryMoreButtonScan([listElement]);
-      }
-    } catch (error) {
-      console.warn('[EntryMoreBtn] Failed to inject buttons during PromptManager render:', error);
-    }
-
-    return result;
-  };
-
-  prototype.__ptEntryMorePatched = true;
-  promptManagerPatched = true;
 }
 
 async function handleDuplicateEntry(identifier) {
   const apiInfo = getCurrentApiInfo();
   if (!apiInfo) {
-    throw new Error('无法访问当前预设管理器。');
+    throw new Error('\u65e0\u6cd5\u8bbf\u95ee\u5f53\u524d\u9884\u8bbe\u7ba1\u7406\u5668\u3002');
   }
 
   const presetName = resolveCurrentPresetName();
   if (!presetName) {
-    throw new Error('无法确定当前激活的预设。');
+    throw new Error('\u65e0\u6cd5\u786e\u5b9a\u5f53\u524d\u6fc0\u6d3b\u7684\u9884\u8bbe\u3002');
   }
 
   const { getPresetDataFromManager } = await import('../preset/preset-manager.js');
@@ -240,18 +123,18 @@ async function handleDuplicateEntry(identifier) {
   const entry = presetData?.prompts?.find((prompt) => prompt?.identifier === identifier);
 
   if (!entry) {
-    throw new Error('找不到对应的条目。');
+    throw new Error('\u627e\u4e0d\u5230\u9009\u4e2d\u7684\u6761\u76ee\u3002');
   }
 
   await duplicatePresetEntries(apiInfo, presetName, [entry], { refreshDisplay: false });
   await refreshNativePromptManager();
-  notify('success', `已复制条目：${entry.name ?? identifier}`);
+  notify('success', `\u5df2\u590d\u5236\u6761\u76ee\uff1a${entry.name ?? identifier}`);
 }
 
 async function handleBeautifyEntry(identifier) {
   const apiInfo = getCurrentApiInfo();
   if (!apiInfo) {
-    throw new Error('无法访问当前预设管理器。');
+    throw new Error('\u65e0\u6cd5\u8bbf\u95ee\u5f53\u524d\u9884\u8bbe\u7ba1\u7406\u5668\u3002');
   }
 
   const { openBeautifyModal } = await import('./entry-beautify-modal.js');
@@ -273,7 +156,7 @@ function showEntryMoreMenu(buttonElement, identifier) {
   const menu = $(`
     <div
       class="pt-entry-more-menu"
-      data-pt-identifier="${identifier}"
+      data-pt-identifier="${escapeAttr(identifier)}"
       style="
         --pt-entry-more-bg: ${vars.bgColor};
         --pt-entry-more-border: ${vars.borderColor};
@@ -284,21 +167,18 @@ function showEntryMoreMenu(buttonElement, identifier) {
         --pt-entry-more-font-size: ${vars.fontSizeSmall};
       ">
       <button type="button" class="pt-entry-more-action" data-pt-action="duplicate">
-        复制条目
+        \u590d\u5236\u6761\u76ee
       </button>
       <button type="button" class="pt-entry-more-action" data-pt-action="beautify">
-        美化正则
+        \u7f8e\u5316\u6b63\u5219
       </button>
     </div>
   `);
 
-  menu.on('pointerdown mousedown click', (event) => {
-    event.stopPropagation();
-  });
+  menu.on('pointerdown mousedown click', stopEventPropagation);
 
   menu.on('click', '.pt-entry-more-action', async (event) => {
-    event.preventDefault();
-    event.stopPropagation();
+    stopEvent(event);
 
     const action = String(event.currentTarget.dataset.ptAction ?? '').trim();
     closeEntryMoreMenu();
@@ -314,7 +194,7 @@ function showEntryMoreMenu(buttonElement, identifier) {
       }
     } catch (error) {
       console.error(`[EntryMoreBtn] Failed to run "${action}" action:`, error);
-      notify('error', `操作失败：${error.message}`);
+      notify('error', `\u64cd\u4f5c\u5931\u8d25\uff1a${error.message}`);
     }
   });
 
@@ -324,6 +204,31 @@ function showEntryMoreMenu(buttonElement, identifier) {
   $(buttonElement).addClass('is-open');
 }
 
+function handleMoreButtonClick(event) {
+  stopEvent(event);
+
+  const buttonElement = event.currentTarget;
+  const identifier = String(buttonElement.getAttribute('data-pt-identifier') ?? '').trim();
+  if (!identifier) return;
+
+  showEntryMoreMenu(buttonElement, identifier);
+}
+
+function handleMoreButtonKeydown(event) {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  stopEvent(event);
+  handleMoreButtonClick(event);
+}
+
+function bindEntryMoreButtonEvents(promptManagerList) {
+  Array.from(promptManagerList.querySelectorAll(MORE_BUTTON_SELECTOR)).forEach((el) => {
+    el.addEventListener('pointerdown', stopEventPropagation);
+    el.addEventListener('mousedown', stopEventPropagation);
+    el.addEventListener('click', handleMoreButtonClick);
+    el.addEventListener('keydown', handleMoreButtonKeydown);
+  });
+}
+
 function bindDocumentEvents() {
   if (eventsBound) return;
 
@@ -331,40 +236,6 @@ function bindDocumentEvents() {
   const parentDocument = getParentDocument();
   const parentWindow = getParentWindow();
   const $document = $(parentDocument);
-
-  $document
-    .off(`pointerdown${EVENT_NAMESPACE}`, MORE_BUTTON_SELECTOR)
-    .on(`pointerdown${EVENT_NAMESPACE}`, MORE_BUTTON_SELECTOR, (event) => {
-      event.stopPropagation();
-    });
-
-  $document
-    .off(`mousedown${EVENT_NAMESPACE}`, MORE_BUTTON_SELECTOR)
-    .on(`mousedown${EVENT_NAMESPACE}`, MORE_BUTTON_SELECTOR, (event) => {
-      event.stopPropagation();
-    });
-
-  $document
-    .off(`click${EVENT_NAMESPACE}`, MORE_BUTTON_SELECTOR)
-    .on(`click${EVENT_NAMESPACE}`, MORE_BUTTON_SELECTOR, (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      const buttonElement = event.currentTarget;
-      const identifier = String(buttonElement.getAttribute('data-pt-identifier') ?? '').trim();
-      if (!identifier) return;
-
-      showEntryMoreMenu(buttonElement, identifier);
-    });
-
-  $document
-    .off(`keydown${EVENT_NAMESPACE}`, MORE_BUTTON_SELECTOR)
-    .on(`keydown${EVENT_NAMESPACE}`, MORE_BUTTON_SELECTOR, (event) => {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      event.preventDefault();
-      event.stopPropagation();
-      event.currentTarget.click();
-    });
 
   $document
     .off(`mousedown${EVENT_NAMESPACE}`)
@@ -388,29 +259,189 @@ function bindDocumentEvents() {
   eventsBound = true;
 }
 
-function initNativeEntryMoreBtns() {
-  const parentDocument = getParentDocument();
-  const target = parentDocument.querySelector('#completion_prompt_manager') ?? parentDocument.body;
-  if (!target) return;
+async function ensurePromptManagerPatched() {
+  if (promptManagerPatched) return;
 
-  void ensurePromptManagerPatched();
-  bindDocumentEvents();
-  queueEntryMoreButtonScan();
+  const [{ PromptManager, INJECTION_POSITION }, { renderTemplateAsync }, { escapeHtml }] = await Promise.all([
+    import('/scripts/PromptManager.js'),
+    import('/scripts/templates.js'),
+    import('/scripts/utils.js'),
+  ]);
 
-  if (observer) {
-    observer.disconnect();
+  const prototype = PromptManager?.prototype;
+  if (!prototype) return;
+
+  if (prototype.__ptEntryMorePatched) {
+    promptManagerPatched = true;
+    return;
   }
 
-  observer = new MutationObserver((mutations) => {
-    const roots = collectScanRootsFromMutations(mutations);
-    if (roots.length) {
-      queueEntryMoreButtonScan(roots);
-    }
-  });
+  const originalRenderPromptManagerListItems = prototype.renderPromptManagerListItems;
 
-  observer.observe(target, {
-    childList: true,
-    subtree: true,
+  prototype.renderPromptManagerListItems = async function (...args) {
+    if (!isSupportedPromptManagerInstance(this)) {
+      return originalRenderPromptManagerListItems.apply(this, args);
+    }
+
+    if (!this.serviceSettings.prompts) return;
+
+    closeEntryMoreMenu();
+
+    const promptManagerList = this.listElement;
+    promptManagerList.innerHTML = '';
+
+    const { prefix } = this.configuration;
+    let listItemHtml = await renderTemplateAsync('promptManagerListHeader', { prefix });
+
+    this.getPromptsForCharacter(this.activeCharacter).forEach((prompt) => {
+      if (!prompt) return;
+
+      const listEntry = this.getPromptOrderEntry(this.activeCharacter, prompt.identifier);
+      const enabledClass = listEntry.enabled ? '' : `${prefix}prompt_manager_prompt_disabled`;
+      const draggableClass = `${prefix}prompt_manager_prompt_draggable`;
+      const markerClass = prompt.marker ? `${prefix}prompt_manager_marker` : '';
+      const tokens = this.tokenHandler?.getCounts()[prompt.identifier] ?? 0;
+
+      let warningClass = '';
+      let warningTitle = '';
+
+      const tokenBudget = this.serviceSettings.openai_max_context - this.serviceSettings.openai_max_tokens;
+      if (this.tokenUsage > tokenBudget * 0.8 && prompt.identifier === 'chatHistory') {
+        const warningThreshold = this.configuration.warningTokenThreshold;
+        const dangerThreshold = this.configuration.dangerTokenThreshold;
+
+        if (tokens <= dangerThreshold) {
+          warningClass = 'fa-solid tooltip fa-triangle-exclamation text_danger';
+          warningTitle = 'Very little of your chat history is being sent, consider deactivating some other prompts.';
+        } else if (tokens <= warningThreshold) {
+          warningClass = 'fa-solid tooltip fa-triangle-exclamation text_warning';
+          warningTitle = 'Only a few messages worth chat history are being sent.';
+        }
+      }
+
+      const calculatedTokens = tokens ? tokens : '-';
+
+      let detachSpanHtml = '';
+      if (this.isPromptDeletionAllowed(prompt)) {
+        detachSpanHtml = `
+          <span title="Remove" class="prompt-manager-detach-action caution fa-solid fa-chain-broken fa-xs"></span>
+        `;
+      } else {
+        detachSpanHtml = '<span class="fa-solid"></span>';
+      }
+
+      let editSpanHtml = '';
+      let moreSpanHtml = '';
+      if (this.isPromptEditAllowed(prompt)) {
+        editSpanHtml = `
+          <span title="Edit" class="prompt-manager-edit-action fa-solid fa-pencil fa-xs"></span>
+        `;
+        moreSpanHtml = createMoreButtonHtml(prompt.identifier);
+      } else {
+        editSpanHtml = '<span class="fa-solid"></span>';
+        moreSpanHtml = '<span class="fa-solid"></span>';
+      }
+
+      let toggleSpanHtml = '';
+      if (this.isPromptToggleAllowed(prompt)) {
+        toggleSpanHtml = `
+          <span class="prompt-manager-toggle-action ${listEntry.enabled ? 'fa-solid fa-toggle-on' : 'fa-solid fa-toggle-off'}"></span>
+        `;
+      } else {
+        toggleSpanHtml = '<span class="fa-solid"></span>';
+      }
+
+      const encodedName = escapeHtml(prompt.name);
+      const isMarkerPrompt = prompt.marker && prompt.injection_position !== INJECTION_POSITION.ABSOLUTE;
+      const isSystemPrompt =
+        !prompt.marker &&
+        prompt.system_prompt &&
+        prompt.injection_position !== INJECTION_POSITION.ABSOLUTE &&
+        !prompt.forbid_overrides;
+      const isImportantPrompt =
+        !prompt.marker &&
+        prompt.system_prompt &&
+        prompt.injection_position !== INJECTION_POSITION.ABSOLUTE &&
+        prompt.forbid_overrides;
+      const isUserPrompt =
+        !prompt.marker &&
+        !prompt.system_prompt &&
+        prompt.injection_position !== INJECTION_POSITION.ABSOLUTE;
+      const isInjectionPrompt = prompt.injection_position === INJECTION_POSITION.ABSOLUTE;
+      const isOverriddenPrompt =
+        Array.isArray(this.overriddenPrompts) && this.overriddenPrompts.includes(prompt.identifier);
+      const importantClass = isImportantPrompt ? `${prefix}prompt_manager_important` : '';
+      const iconLookup = prompt.role === 'system' && (prompt.marker || prompt.system_prompt) ? '' : prompt.role;
+
+      const promptRoles = {
+        assistant: { roleIcon: 'fa-robot', roleTitle: 'Prompt will be sent as Assistant' },
+        user: { roleIcon: 'fa-user', roleTitle: 'Prompt will be sent as User' },
+      };
+      const roleIcon = promptRoles[iconLookup]?.roleIcon || '';
+      const roleTitle = promptRoles[iconLookup]?.roleTitle || '';
+
+      listItemHtml += `
+        <li class="${prefix}prompt_manager_prompt ${draggableClass} ${enabledClass} ${markerClass} ${importantClass}" data-pm-identifier="${escapeHtml(prompt.identifier)}">
+          <span class="drag-handle">☰</span>
+          <span class="${prefix}prompt_manager_prompt_name" data-pm-name="${encodedName}">
+            ${isMarkerPrompt ? '<span class="fa-fw fa-solid fa-thumb-tack" title="Marker"></span>' : ''}
+            ${isSystemPrompt ? '<span class="fa-fw fa-solid fa-square-poll-horizontal" title="Global Prompt"></span>' : ''}
+            ${isImportantPrompt ? '<span class="fa-fw fa-solid fa-star" title="Important Prompt"></span>' : ''}
+            ${isUserPrompt ? '<span class="fa-fw fa-solid fa-asterisk" title="Preset Prompt"></span>' : ''}
+            ${isInjectionPrompt ? '<span class="fa-fw fa-solid fa-syringe" title="In-Chat Injection"></span>' : ''}
+            ${this.isPromptInspectionAllowed(prompt) ? `<a title="${encodedName}" class="prompt-manager-inspect-action">${encodedName}</a>` : `<span title="${encodedName}">${encodedName}</span>`}
+            ${roleIcon ? `<span data-role="${escapeHtml(prompt.role)}" class="fa-xs fa-solid ${roleIcon}" title="${roleTitle}"></span>` : ''}
+            ${isInjectionPrompt ? `<small class="prompt-manager-injection-depth">@ ${escapeHtml(prompt.injection_depth.toString())}</small>` : ''}
+            ${isOverriddenPrompt ? '<small class="fa-solid fa-address-card prompt-manager-overridden" title="Pulled from a character card"></small>' : ''}
+          </span>
+          <span>
+            <span class="prompt_manager_prompt_controls">
+              ${detachSpanHtml}
+              ${editSpanHtml}
+              ${moreSpanHtml}
+              ${toggleSpanHtml}
+            </span>
+          </span>
+          <span class="prompt_manager_prompt_tokens" data-pm-tokens="${calculatedTokens}"><span class="${warningClass}" title="${warningTitle}"> </span>${calculatedTokens}</span>
+        </li>
+      `;
+    });
+
+    promptManagerList.insertAdjacentHTML('beforeend', listItemHtml);
+
+    Array.from(promptManagerList.getElementsByClassName('prompt-manager-detach-action')).forEach((el) => {
+      el.addEventListener('click', this.handleDetach);
+    });
+
+    Array.from(promptManagerList.getElementsByClassName('prompt-manager-inspect-action')).forEach((el) => {
+      el.addEventListener('click', this.handleInspect);
+    });
+
+    Array.from(promptManagerList.getElementsByClassName('prompt-manager-edit-action')).forEach((el) => {
+      el.addEventListener('click', this.handleEdit);
+    });
+
+    Array.from(promptManagerList.querySelectorAll('.prompt-manager-toggle-action')).forEach((el) => {
+      el.addEventListener('click', this.handleToggle);
+    });
+
+    bindEntryMoreButtonEvents(promptManagerList);
+  };
+
+  prototype.__ptEntryMorePatched = true;
+  promptManagerPatched = true;
+}
+
+function initNativeEntryMoreBtns() {
+  const shouldRefresh = !nativeEntryMoreEnabled || !promptManagerPatched;
+  nativeEntryMoreEnabled = true;
+
+  bindDocumentEvents();
+
+  void ensurePromptManagerPatched().then(() => {
+    if (shouldRefresh && nativeEntryMoreEnabled) {
+      return refreshNativePromptManager();
+    }
   });
 }
 
@@ -419,10 +450,7 @@ function destroyNativeEntryMoreBtns() {
   const parentDocument = getParentDocument();
   const parentWindow = getParentWindow();
 
-  if (observer) {
-    observer.disconnect();
-    observer = null;
-  }
+  nativeEntryMoreEnabled = false;
 
   if (eventsBound) {
     $(parentDocument).off(EVENT_NAMESPACE);
@@ -431,8 +459,8 @@ function destroyNativeEntryMoreBtns() {
   }
 
   closeEntryMoreMenu();
-  pendingScanRoots.clear();
   $(MORE_BUTTON_SELECTOR).remove();
+  void refreshNativePromptManager();
 }
 
 export {

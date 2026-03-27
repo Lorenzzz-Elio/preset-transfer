@@ -18,6 +18,15 @@ function stripCodeFence(text) {
   return fenced?.[1]?.trim() ?? raw;
 }
 
+function escapePreviewHtml(text) {
+  return String(text ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function ensureBodyWrapper(text) {
   const normalized = stripCodeFence(text);
   const hasBodyStart = /<body(?:\s[^>]*)?>/i.test(normalized);
@@ -32,6 +41,52 @@ function ensureBodyWrapper(text) {
 
 export function normalizeBeautifyReplaceString(value) {
   return `\`\`\`html\n${ensureBodyWrapper(value)}\n\`\`\``;
+}
+
+function serializeScriptForPrompt(script) {
+  if (!script || typeof script !== 'object') return null;
+
+  return {
+    scriptName: String(script.scriptName ?? ''),
+    findRegex: String(script.findRegex ?? ''),
+    replaceString: normalizeBeautifyReplaceString(script.replaceString ?? ''),
+    placement: Array.isArray(script.placement) ? script.placement : [2],
+    disabled: Boolean(script.disabled ?? false),
+    markdownOnly: Boolean(script.markdownOnly ?? true),
+    promptOnly: Boolean(script.promptOnly ?? false),
+  };
+}
+
+function buildGenerationObjective({ generationMode, hasExistingScript, hasRevisionPrompt }) {
+  if (generationMode === 'variant') {
+    return '你需要在满足同一条目需求的前提下，生成一版与当前脚本在视觉结构、布局风格、或匹配策略上明显不同的新方案。';
+  }
+
+  if (hasExistingScript || hasRevisionPrompt) {
+    return '你需要基于提供的当前脚本和修改意见，输出一份完整的改进版脚本。不要只返回差异，也不要省略未修改字段。';
+  }
+
+  return '你需要根据提供的预设条目内容，生成一个全新的美化正则脚本。';
+}
+
+function parseBeautifyJson(result) {
+  const candidates = [];
+  const fenced = result.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (fenced?.[1]) candidates.push(fenced[1]);
+  candidates.push(result);
+
+  for (const candidate of candidates) {
+    const jsonMatch = candidate.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) continue;
+
+    try {
+      return JSON.parse(jsonMatch[0]);
+    } catch {
+      /* continue */
+    }
+  }
+
+  return null;
 }
 
 export async function getRegexScriptsByType(scriptType) {
@@ -79,28 +134,52 @@ export async function saveBeautifyRegexScript(scriptData, scriptType) {
   await refreshRegexExtensionUi();
 }
 
-export async function generateBeautifyRegex({ entryName, entryContent, referenceScript, userPrompt }) {
+export async function generateBeautifyRegex({
+  entryName,
+  entryContent,
+  referenceScript,
+  userPrompt,
+  existingScript = null,
+  revisionPrompt = '',
+  generationMode = 'create',
+}) {
   const context = getSillyTavernContext();
   if (typeof context?.generateRaw !== 'function') {
     throw new Error('无法访问 SillyTavern 的 generateRaw API');
   }
 
+  const normalizedReferenceScript = serializeScriptForPrompt(referenceScript);
+  const includeExistingScript = generationMode !== 'variant';
+  const normalizedExistingScript = includeExistingScript ? serializeScriptForPrompt(existingScript) : null;
+  const normalizedRevisionPrompt = String(revisionPrompt ?? '').trim();
+  const normalizedUserPrompt = String(userPrompt ?? '').trim();
+
   const referenceSection = referenceScript
     ? `\n\n【参考正则风格】\n以下是一个已有的美化正则脚本，请参考其 replaceString 中的 HTML/CSS 风格来生成新的美化：\n\`\`\`json\n${JSON.stringify(
-        {
-          scriptName: referenceScript.scriptName,
-          findRegex: referenceScript.findRegex,
-          replaceString: referenceScript.replaceString,
-        },
+        normalizedReferenceScript,
         null,
         2,
       )}\n\`\`\``
     : '';
 
-  const userSection = userPrompt ? `\n\n【用户需求】\n${userPrompt}` : '';
+  const userSection = normalizedUserPrompt ? `\n\n【用户需求】\n${normalizedUserPrompt}` : '';
+  const existingScriptSection = normalizedExistingScript
+    ? `\n\n【当前脚本】\n以下是当前正在编辑的版本。若是“继续修改”，请基于它输出完整新版本；若是“重新生成一版”，可参考但不要只做微调。\n\`\`\`json\n${JSON.stringify(
+        normalizedExistingScript,
+        null,
+        2,
+      )}\n\`\`\``
+    : '';
+  const revisionSection = normalizedRevisionPrompt ? `\n\n【修改意见】\n${normalizedRevisionPrompt}` : '';
+
+  const objective = buildGenerationObjective({
+    generationMode,
+    hasExistingScript: Boolean(normalizedExistingScript),
+    hasRevisionPrompt: Boolean(normalizedRevisionPrompt),
+  });
 
   const systemPrompt = `你是一个 SillyTavern 正则脚本专家，专门负责生成用于美化 AI 输出的正则替换脚本。
-你需要根据提供的【预设条目内容】，生成一个正则脚本，使 AI 按照该条目格式输出的内容能够被美化渲染。
+${objective}
 输出必须是一个 JSON 对象，包含以下字段：
 - scriptName: string
 - findRegex: string
@@ -115,10 +194,12 @@ replaceString 必须满足以下要求：
 - 代码块内部必须同时包含 <body> 和 </body> 标签
 - 如果需要 CSS/JS，请放在 <body> 内的 <style> / <script> 中
 - 不要输出 body 标签之外的额外内容
+- 如果提供了当前脚本，你可以修改任何字段，但最终必须返回完整可用的新脚本
+- 如果是重新生成变体，不要只改颜色或几个字，尽量让布局结构或样式语言有明显区别
 
 只输出 JSON 对象，不要输出解释。`;
 
-  const userMessage = `【预设条目名称】\n${entryName}\n\n【预设条目内容】\n${entryContent}${referenceSection}${userSection}`;
+  const userMessage = `【预设条目名称】\n${entryName}\n\n【预设条目内容】\n${entryContent}${referenceSection}${userSection}${existingScriptSection}${revisionSection}`;
 
   const resultRaw = await context.generateRaw({
     prompt: [
@@ -130,23 +211,7 @@ replaceString 必须满足以下要求：
 
   const parsedReasoning = context.parseReasoningFromString?.(resultRaw, { strict: false });
   const result = parsedReasoning?.content ?? resultRaw;
-
-  const candidates = [];
-  const fenced = result.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  if (fenced?.[1]) candidates.push(fenced[1]);
-  candidates.push(result);
-
-  let parsed = null;
-  for (const candidate of candidates) {
-    const jsonMatch = candidate.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) continue;
-    try {
-      parsed = JSON.parse(jsonMatch[0]);
-      break;
-    } catch {
-      /* continue */
-    }
-  }
+  const parsed = parseBeautifyJson(result);
 
   if (!parsed) {
     throw new Error(`AI 返回的不是有效 JSON。原始返回：${result}`);
@@ -179,4 +244,73 @@ export function previewRegexReplace(findRegex, replaceString, sampleText) {
   } catch {
     return sampleText;
   }
+}
+
+export function buildBeautifyPreviewDocument(value) {
+  const normalized = stripCodeFence(value).trim();
+  const hasBodyStart = /<body(?:\s[^>]*)?>/i.test(normalized);
+  const hasBodyEnd = /<\/body>/i.test(normalized);
+
+  if (!normalized) {
+    return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html, body { margin: 0; min-height: 100%; }
+      body {
+        padding: 12px;
+        box-sizing: border-box;
+        font-family: system-ui, sans-serif;
+        color: #d7d7d7;
+        background: transparent;
+      }
+    </style>
+  </head>
+  <body>暂无可渲染内容。</body>
+</html>`;
+  }
+
+  if (hasBodyStart && hasBodyEnd) {
+    return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html, body { margin: 0; min-height: 100%; background: transparent; }
+      body {
+        padding: 12px;
+        box-sizing: border-box;
+      }
+      *, *::before, *::after {
+        box-sizing: border-box;
+        max-width: 100%;
+      }
+    </style>
+  </head>
+  ${normalized}
+</html>`;
+  }
+
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html, body { margin: 0; min-height: 100%; background: transparent; }
+      body {
+        padding: 12px;
+        box-sizing: border-box;
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        color: #d7d7d7;
+      }
+      pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+    </style>
+  </head>
+  <body><pre>${escapePreviewHtml(normalized)}</pre></body>
+</html>`;
 }
