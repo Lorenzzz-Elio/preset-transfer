@@ -66,8 +66,6 @@ function isSupportedPromptManagerInstance(instance) {
 }
 
 function createMoreButtonHtml(identifier) {
-  const vars = CommonStyles.getVars();
-
   return `
     <span
       class="pt-entry-more-btn fa-solid fa-ellipsis fa-xs"
@@ -75,10 +73,6 @@ function createMoreButtonHtml(identifier) {
       tabindex="0"
       title="\u66f4\u591a\u64cd\u4f5c"
       aria-label="\u66f4\u591a\u64cd\u4f5c"
-      style="
-        margin-inline-start: calc(${vars.gap} / 3);
-        font-size: ${vars.fontSizeSmall};
-      "
       data-pt-identifier="${escapeAttr(identifier)}">
     </span>
   `;
@@ -158,13 +152,14 @@ function showEntryMoreMenu(buttonElement, identifier) {
       class="pt-entry-more-menu"
       data-pt-identifier="${escapeAttr(identifier)}"
       style="
+        --pt-font-size: ${vars.fontSize};
         --pt-entry-more-bg: ${vars.bgColor};
         --pt-entry-more-border: ${vars.borderColor};
         --pt-entry-more-text: ${vars.textColor};
         --pt-entry-more-hover-bg: ${vars.sectionBg};
         --pt-entry-more-radius: ${vars.borderRadiusSmall};
-        --pt-entry-more-padding: ${vars.paddingSmall};
-        --pt-entry-more-font-size: ${vars.fontSizeSmall};
+        --pt-entry-more-padding-y: calc(var(--pt-font-size) * 0.5);
+        --pt-entry-more-padding-x: calc(var(--pt-font-size) * 0.625);
       ">
       <button type="button" class="pt-entry-more-action" data-pt-action="duplicate">
         \u590d\u5236\u6761\u76ee

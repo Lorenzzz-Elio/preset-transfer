@@ -1,4 +1,4 @@
-import { getJQuery, escapeAttr, escapeHtml, getParentWindow } from '../core/utils.js';
+import { ensureViewportCssVars, getDeviceInfo, getJQuery, escapeAttr, escapeHtml, getParentWindow } from '../core/utils.js';
 import { CommonStyles } from '../styles/common-styles.js';
 import { PT } from '../core/api-compat.js';
 import { closeIcon } from './icons.js';
@@ -340,6 +340,7 @@ async function handleGenerateClick(mode) {
 export async function openBeautifyModal(identifier, apiInfo) {
   const $ = getJQuery();
   if ($(`#${MODAL_ID}`).length) return;
+  ensureViewportCssVars();
 
   let entry = null;
   try {
@@ -361,10 +362,33 @@ export async function openBeautifyModal(identifier, apiInfo) {
   }
 
   const vars = CommonStyles.getVars();
+  const { isMobile } = getDeviceInfo();
   const entryName = entry?.name ?? identifier;
   const entryContent = entry?.content ?? '';
-  const contentStyles = CommonStyles.getModalContentStyles({ maxWidth: vars.maxWidthLarge });
-  const fieldFontSize = vars.fontSizeMedium;
+  const rootFontSize = 'var(--pt-font-size)';
+  const labelFontSize = 'calc(var(--pt-font-size) * 0.8125)';
+  const fieldFontSize = 'calc(var(--pt-font-size) * 0.875)';
+  const helpFontSize = 'calc(var(--pt-font-size) * 0.75)';
+  const titleFontSize = 'calc(var(--pt-font-size) * 1.125)';
+  const closeButtonSize = 'calc(var(--pt-font-size) * 2.25)';
+  const closeIconSize = 'calc(var(--pt-font-size) * 1.125)';
+  const overlayStyles = `
+    ${CommonStyles.getModalBaseStyles()}
+    --pt-font-size: ${vars.fontSize};
+    align-items: ${isMobile ? 'flex-start' : 'center'};
+    ${isMobile ? 'padding-top: calc(20px + env(safe-area-inset-top));' : ''}
+  `;
+  const contentStyles = `
+    ${CommonStyles.getModalContentStyles({
+      maxWidth: vars.maxWidthLarge,
+      maxHeight: isMobile ? '90vh' : '85vh',
+    })}
+    max-height: ${isMobile ? '90dvh' : '85dvh'};
+    max-height: ${isMobile ? 'calc(var(--pt-vh, 1vh) * 90)' : 'calc(var(--pt-vh, 1vh) * 85)'};
+    padding-bottom: calc(${vars.padding} + env(safe-area-inset-bottom));
+    font-size: ${rootFontSize};
+    ${isMobile ? '-webkit-overflow-scrolling: touch;' : ''}
+  `;
   const fieldLineHeight = '1.45';
 
   const session = ensureSession({
@@ -390,7 +414,7 @@ export async function openBeautifyModal(identifier, apiInfo) {
     .join('');
 
   const modal = $(`
-    <div id="${MODAL_ID}" data-pt-identifier="${escapeAttr(String(identifier))}" style="${CommonStyles.getModalBaseStyles()}">
+    <div id="${MODAL_ID}" data-pt-identifier="${escapeAttr(String(identifier))}" style="${overlayStyles}">
       <div style="${contentStyles}">
         <div style="display:flex; align-items:center; gap:${vars.gap}; margin-bottom:${vars.margin};">
           <span style="flex:1; font-size:${vars.fontSizeLarge}; font-weight:600;">制作美化正则</span>
@@ -403,14 +427,14 @@ export async function openBeautifyModal(identifier, apiInfo) {
               display:inline-flex;
               align-items:center;
               justify-content:center;
-              width:36px;
-              height:36px;
+              width:${closeButtonSize};
+              height:${closeButtonSize};
               padding:0;
               border-radius:${vars.buttonRadius};
               flex:0 0 auto;
             "
             title="关闭">
-            ${closeIcon(18)}
+            ${closeIcon(closeIconSize)}
           </button>
         </div>
 
@@ -484,7 +508,7 @@ export async function openBeautifyModal(identifier, apiInfo) {
               id="pt-beautify-generate"
               class="menu_button"
               type="button"
-              style="flex:1; min-width:180px; padding:${vars.buttonPadding}; border-radius:${vars.buttonRadius};">
+              style="flex:1; min-width:180px; padding:${vars.buttonPadding}; border-radius:${vars.buttonRadius}; font-size:${fieldFontSize}; line-height:1.3;">
               <span id="pt-beautify-generate-text">AI 生成正则</span>
             </button>
           </div>
@@ -492,8 +516,9 @@ export async function openBeautifyModal(identifier, apiInfo) {
           <div
             id="pt-beautify-status"
             style="
-              font-size:${vars.fontSizeSmall};
+              font-size:${labelFontSize};
               color:${vars.tipColor};
+              line-height:1.45;
               margin-top:calc(${vars.gap} / -3);
             "></div>
 
@@ -502,7 +527,7 @@ export async function openBeautifyModal(identifier, apiInfo) {
             style="display:none; flex-direction:column; gap:${vars.gap}; margin-top:calc(${vars.gap} / 2);">
             <section style="display:flex; flex-direction:column; gap:calc(${vars.gap} / 2);">
               <label for="pt-beautify-script-name" style="font-size:${vars.fontSizeSmall}; color:${vars.tipColor};">脚本名称</label>
-              <input id="pt-beautify-script-name" class="text_pole" type="text" style="width:100%;" />
+              <input id="pt-beautify-script-name" class="text_pole" type="text" style="width:100%; font-size:${fieldFontSize}; line-height:${fieldLineHeight};" />
             </section>
 
             <section style="display:flex; flex-direction:column; gap:calc(${vars.gap} / 2);">
@@ -511,7 +536,7 @@ export async function openBeautifyModal(identifier, apiInfo) {
                 id="pt-beautify-find-regex"
                 class="text_pole"
                 type="text"
-                style="width:100%; font-family:monospace;" />
+                style="width:100%; font-family:monospace; font-size:${fieldFontSize}; line-height:${fieldLineHeight};" />
             </section>
 
             <section style="display:flex; flex-direction:column; gap:calc(${vars.gap} / 2);">
@@ -520,8 +545,8 @@ export async function openBeautifyModal(identifier, apiInfo) {
                 id="pt-beautify-replace-string"
                 class="text_pole"
                 rows="10"
-                style="width:100%; resize:vertical; font-family:monospace;"></textarea>
-              <div style="font-size:${vars.fontSizeSmall}; color:${vars.tipColor};">
+                style="width:100%; resize:vertical; font-family:monospace; font-size:${fieldFontSize}; line-height:${fieldLineHeight};"></textarea>
+              <div style="font-size:${helpFontSize}; color:${vars.tipColor}; line-height:1.45;">
                 保存时会自动规范为带 <code>\`\`\`html</code> 代码块且包含 <code>&lt;body&gt;</code> 与 <code>&lt;/body&gt;</code>。
               </div>
             </section>
@@ -545,14 +570,14 @@ export async function openBeautifyModal(identifier, apiInfo) {
                   id="pt-beautify-revise"
                   class="menu_button"
                   type="button"
-                  style="flex:1; min-width:180px; padding:${vars.buttonPaddingSmall}; border-radius:${vars.buttonRadius};">
+                  style="flex:1; min-width:180px; padding:${vars.buttonPaddingSmall}; border-radius:${vars.buttonRadius}; font-size:${fieldFontSize}; line-height:1.3;">
                   按修改意见继续生成
                 </button>
                 <button
                   id="pt-beautify-regenerate"
                   class="menu_button"
                   type="button"
-                  style="flex:1; min-width:180px; padding:${vars.buttonPaddingSmall}; border-radius:${vars.buttonRadius};">
+                  style="flex:1; min-width:180px; padding:${vars.buttonPaddingSmall}; border-radius:${vars.buttonRadius}; font-size:${fieldFontSize}; line-height:1.3;">
                   重新生成一版
                 </button>
               </div>
@@ -565,7 +590,7 @@ export async function openBeautifyModal(identifier, apiInfo) {
                 class="text_pole"
                 rows="4"
                 placeholder="可选。输入示例文本后会先跑替换，再展示最终结果；留空则直接预览当前替换串。"
-                style="width:100%; resize:vertical;"></textarea>
+                style="width:100%; resize:vertical; font-size:${fieldFontSize}; line-height:${fieldLineHeight};"></textarea>
             </section>
 
             <section style="display:grid; grid-template-columns:minmax(0, 1fr); gap:${vars.gap};">
@@ -585,14 +610,14 @@ export async function openBeautifyModal(identifier, apiInfo) {
             </section>
 
             <div style="display:flex; gap:${vars.gap}; align-items:center; flex-wrap:wrap;">
-              <select id="pt-beautify-target-type" class="text_pole" style="flex:1; min-width:200px;">
+              <select id="pt-beautify-target-type" class="text_pole" style="flex:1; min-width:200px; font-size:${fieldFontSize}; line-height:${fieldLineHeight};">
                 ${targetOptions}
               </select>
               <button
                 id="pt-beautify-save"
                 class="menu_button"
                 type="button"
-                style="padding:${vars.buttonPaddingSmall}; border-radius:${vars.buttonRadius}; white-space:nowrap;">
+                style="padding:${vars.buttonPaddingSmall}; border-radius:${vars.buttonRadius}; white-space:nowrap; font-size:${fieldFontSize}; line-height:1.3;">
                 保存正则脚本
               </button>
             </div>
@@ -603,6 +628,48 @@ export async function openBeautifyModal(identifier, apiInfo) {
   `);
 
   $('body').append(modal);
+
+  const modalCard = modal.children().first();
+  modal.data('apiInfo', apiInfo);
+
+  modal.find('#pt-beautify-close').prev('span').css({
+    fontSize: titleFontSize,
+    lineHeight: '1.25',
+  });
+
+  const $entryNameSection = modal.find('section').eq(0);
+  const $entryContentSection = modal.find('section').eq(1);
+  $entryNameSection.children('div').first().css({
+    fontSize: labelFontSize,
+    lineHeight: '1.4',
+  });
+  $entryNameSection.children('div').eq(1).css({
+    fontSize: fieldFontSize,
+    lineHeight: fieldLineHeight,
+  });
+  $entryContentSection.children('div').first().css({
+    fontSize: labelFontSize,
+    lineHeight: '1.4',
+  });
+  $entryContentSection.children('div').eq(1).css({
+    fontSize: fieldFontSize,
+    lineHeight: fieldLineHeight,
+  });
+
+  modal.find('label[for^="pt-beautify-"]').css({
+    fontSize: labelFontSize,
+    lineHeight: '1.4',
+  });
+
+  modal.find('#pt-beautify-preview-render').prev('div').css({
+    fontSize: labelFontSize,
+    lineHeight: '1.4',
+  });
+
+  const stopModalPropagation = event => event.stopPropagation();
+
+  modal.on('pointerdown mousedown click', stopModalPropagation);
+  modalCard.on('pointerdown mousedown click', stopModalPropagation);
 
   modal.find('#pt-beautify-close').on('click', closeBeautifyModal);
   modal.on('click', (event) => {
@@ -620,7 +687,7 @@ export async function openBeautifyModal(identifier, apiInfo) {
     },
   );
 
-  modal.on('input', '#pt-beautify-ref-select, #pt-beautify-user-prompt, #pt-beautify-revision-prompt', () => {
+  modal.on('input', '#pt-beautify-script-name, #pt-beautify-ref-select, #pt-beautify-user-prompt, #pt-beautify-revision-prompt', () => {
     syncSessionFromModal(modal);
     updateModalState(modal);
   });

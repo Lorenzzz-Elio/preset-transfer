@@ -58,6 +58,16 @@ function updateModalTheme() {
     editModalData = editModal.data();
     editModal.remove();
   }
+
+  const beautifyModal = $('#pt-entry-beautify-modal');
+  let beautifyModalData = null;
+  if (beautifyModal.length) {
+    beautifyModalData = {
+      identifier: String(beautifyModal.attr('data-pt-identifier') ?? '').trim(),
+      apiInfo: beautifyModal.data('apiInfo') ?? getCurrentApiInfo(),
+    };
+    beautifyModal.remove();
+  }
   // --- End handle sub-modals ---
 
   // Remove old inline styles
@@ -91,6 +101,12 @@ function updateModalTheme() {
       compareModalData.rightPreset,
       compareModalData.commonEntries,
     );
+  }
+
+  if (beautifyModalData?.identifier && beautifyModalData.apiInfo) {
+    void import('../ui/entry-beautify-modal.js').then(({ openBeautifyModal }) => {
+      void openBeautifyModal(beautifyModalData.identifier, beautifyModalData.apiInfo);
+    });
   }
   // --- End recreate sub-modals ---
 

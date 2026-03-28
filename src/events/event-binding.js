@@ -283,6 +283,7 @@ function bindTransferEvents(apiInfo, modal) {
       '#preset-transfer-modal',
       '#edit-entry-modal',
       '#compare-modal',
+      '#pt-entry-beautify-modal',
       '#batch-delete-modal',
       '#batch-edit-modal',
       '#preview-modal',
@@ -290,11 +291,14 @@ function bindTransferEvents(apiInfo, modal) {
       '#confirm-dialog-modal',
       '#conflict-resolution-dialog',
       '#ai-loading-overlay',
+      '.pt-entry-more-btn',
+      '.pt-entry-more-menu',
     ];
 
     targets.forEach(selector => {
-      const el = $(selector)[0];
-      if (el) el.style.setProperty('--pt-font-size', size + 'px');
+      $(selector).each((_, el) => {
+        el.style.setProperty('--pt-font-size', size + 'px');
+      });
     });
 
     $('#font-size-display').text(size + 'px');
