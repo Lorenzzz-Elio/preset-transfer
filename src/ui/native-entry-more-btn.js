@@ -152,14 +152,14 @@ function showEntryMoreMenu(buttonElement, identifier) {
       class="pt-entry-more-menu"
       data-pt-identifier="${escapeAttr(identifier)}"
       style="
-        --pt-font-size: ${vars.fontSize};
+        --pt-theme-font-size: ${vars.themeFontSize};
         --pt-entry-more-bg: ${vars.bgColor};
         --pt-entry-more-border: ${vars.borderColor};
         --pt-entry-more-text: ${vars.textColor};
         --pt-entry-more-hover-bg: ${vars.sectionBg};
         --pt-entry-more-radius: ${vars.borderRadiusSmall};
-        --pt-entry-more-padding-y: calc(var(--pt-font-size) * 0.5);
-        --pt-entry-more-padding-x: calc(var(--pt-font-size) * 0.625);
+        --pt-entry-more-padding-y: calc(var(--pt-theme-font-size) * 0.5);
+        --pt-entry-more-padding-x: calc(var(--pt-theme-font-size) * 0.625);
       ">
       <button type="button" class="pt-entry-more-action" data-pt-action="duplicate">
         \u590d\u5236\u6761\u76ee

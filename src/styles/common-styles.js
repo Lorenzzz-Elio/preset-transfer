@@ -27,6 +27,7 @@ const CommonStyles = {
       // keep default
     }
     const fontSize = storedFontSize || String(baseFontSize);
+    const themeFontSize = String(baseFontSize);
 
     // Base "UI background" – approximate from SillyTavern blur tint or page background.
     let rawBg = getCssVar('--SmartThemeBlurTintColor', '');
@@ -104,6 +105,10 @@ const CommonStyles = {
       fontSizeSmall: `calc(${fontSize}px * 0.75)`,
       fontSizeMedium: `calc(${fontSize}px * 0.875)`,
       fontSizeLarge: `calc(${fontSize}px * 1.125)`,
+      themeFontSize: `${themeFontSize}px`,
+      themeFontSizeSmall: `calc(${themeFontSize}px * 0.75)`,
+      themeFontSizeMedium: `calc(${themeFontSize}px * 0.875)`,
+      themeFontSizeLarge: `calc(${themeFontSize}px * 1.125)`,
 
       // Spacing
       padding: isMobile ? '16px' : '24px',

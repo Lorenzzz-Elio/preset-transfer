@@ -391,6 +391,14 @@ function applyEntryGroupingThemeVars() {
   panelContainer[0].style.setProperty('--pt-text', vars.textColor);
   panelContainer[0].style.setProperty('--pt-tip', vars.tipColor);
   panelContainer[0].style.setProperty('--pt-danger', vars.dangerColor);
+  panelContainer[0].style.setProperty('--pt-theme-font-size', vars.themeFontSize);
+  panelContainer[0].style.setProperty('--pt-entry-more-bg', vars.bgColor);
+  panelContainer[0].style.setProperty('--pt-entry-more-border', vars.borderColor);
+  panelContainer[0].style.setProperty('--pt-entry-more-text', vars.textColor);
+  panelContainer[0].style.setProperty('--pt-entry-more-hover-bg', vars.sectionBg);
+  panelContainer[0].style.setProperty('--pt-entry-more-radius', vars.borderRadiusSmall);
+  panelContainer[0].style.setProperty('--pt-entry-more-padding-y', 'calc(var(--pt-theme-font-size) * 0.5)');
+  panelContainer[0].style.setProperty('--pt-entry-more-padding-x', 'calc(var(--pt-theme-font-size) * 0.625)');
 }
 
 // Detect list mutations that matter for grouping. Some SillyTavern renders remove/insert
@@ -947,33 +955,17 @@ function showPresetGroupHeaderMenu($groupHeader, { presetName, groupIndex, group
       position: fixed;
       left: ${rect.right}px;
       top: ${rect.bottom + 4}px;
-      min-width: 132px;
-      padding: 4px;
-      border-radius: 8px;
-      z-index: 10004;
-      background: ${vars.bgColor};
-      border: 1px solid ${vars.borderColor};
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      color: ${vars.textColor};">
-      <button type="button" class="pt-entry-group-more-action pt-entry-group-rename-action" style="
-        width: 100%;
-        padding: 8px 10px;
-        border: none;
-        border-radius: 6px;
-        background: transparent;
-        color: inherit;
-        text-align: left;
-        cursor: pointer;">\u91cd\u547d\u540d\u5206\u7ec4</button>
+      --pt-theme-font-size: ${vars.themeFontSize};
+      --pt-entry-more-bg: ${vars.bgColor};
+      --pt-entry-more-border: ${vars.borderColor};
+      --pt-entry-more-text: ${vars.textColor};
+      --pt-entry-more-hover-bg: ${vars.sectionBg};
+      --pt-entry-more-radius: ${vars.borderRadiusSmall};
+      --pt-entry-more-padding-y: calc(var(--pt-theme-font-size) * 0.5);
+      --pt-entry-more-padding-x: calc(var(--pt-theme-font-size) * 0.625);">
+      <button type="button" class="pt-entry-group-more-action pt-entry-group-rename-action">\u91cd\u547d\u540d\u5206\u7ec4</button>
       <button type="button" class="pt-entry-group-more-action pt-entry-group-delete-action" style="
-        width: 100%;
-        padding: 8px 10px;
-        border: none;
-        border-top: 1px solid ${vars.borderColor};
-        border-radius: 6px;
-        background: transparent;
-        color: inherit;
-        text-align: left;
-        cursor: pointer;">\u89e3\u9664\u5206\u7ec4</button>
+        border-top: 1px solid ${vars.borderColor};">\u89e3\u9664\u5206\u7ec4</button>
     </div>
   `);
 

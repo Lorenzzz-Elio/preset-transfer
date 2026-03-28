@@ -1,8 +1,9 @@
 import { PT } from '../core/api-compat.js';
 import { extractPresetVersionInfo } from '../core/preset-name-utils.js';
-import { escapeHtml, getCurrentApiInfo, getJQuery, getParentWindow } from '../core/utils.js';
+import { ensureViewportCssVars, escapeHtml, getCurrentApiInfo, getDeviceInfo, getJQuery, getParentWindow } from '../core/utils.js';
 import { getNameMatchKey } from '../preset/entry-match-utils.js';
 import { getPresetDataFromManager } from '../preset/preset-manager.js';
+import { CommonStyles } from '../styles/common-styles.js';
 import {
   STITCH_STATE_SCHEMA_VERSION,
   countPatchStitches,
@@ -783,50 +784,108 @@ async function handleSnapshotEditorSave(currentBase, originalSnapshot, workingSt
   closeSnapshotEditModal();
 }
 
+
 async function openSnapshotEditor(normalizedBase) {
   const snapshot = await SnapshotStorage.loadSnapshot(normalizedBase);
   if (!snapshot) {
-    showToast('error', '找不到对应的快照。');
+    showToast('error', '\u627e\u4e0d\u5230\u5bf9\u5e94\u7684\u5feb\u7167\u3002');
     return;
   }
 
   const $ = getJQuery();
+  ensureViewportCssVars();
   closeSnapshotEditModal();
 
   const workingState = {
     ...cloneDeep(snapshot),
     patch: normalizeSnapshotPatch(snapshot.patch),
   };
+  const vars = CommonStyles.getVars();
+  const { isMobile } = getDeviceInfo();
+  const titleFontSize = 'calc(var(--pt-font-size) * 1.125)';
+  const labelFontSize = 'calc(var(--pt-font-size) * 0.875)';
+  const metaFontSize = 'calc(var(--pt-font-size) * 0.8125)';
+  const overlayStyles = `
+    ${CommonStyles.getModalBaseStyles()}
+    --pt-font-size: ${vars.fontSize};
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    align-items: ${isMobile ? 'flex-start' : 'center'};
+    ${isMobile ? 'padding-top: calc(20px + env(safe-area-inset-top));' : ''}
+  `;
+  const cardStyles = `
+    ${CommonStyles.getModalContentStyles({
+      maxWidth: '720px',
+      maxHeight: isMobile ? '90vh' : '80vh',
+    })}
+    max-height: ${isMobile ? '90dvh' : '80dvh'};
+    max-height: ${isMobile ? 'calc(var(--pt-vh, 1vh) * 90)' : 'calc(var(--pt-vh, 1vh) * 80)'};
+    padding-bottom: calc(${vars.padding} + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: ${vars.gap};
+    overflow: hidden;
+    font-size: var(--pt-font-size);
+  `;
+  const actionButtonStyles = `
+    flex: ${isMobile ? '1 1 180px' : '0 0 auto'};
+    min-width: ${isMobile ? '0' : 'calc(var(--pt-font-size) * 4.5)'};
+    margin: 0;
+    white-space: nowrap;
+  `;
   const modalHtml = `
-    <div id="${SNAPSHOT_EDIT_MODAL_ID}" class="pt-snapshot-modal" tabindex="-1">
-      <div class="pt-snapshot-modal-card">
-        <div class="pt-snapshot-modal-header">
-          <div class="pt-snapshot-modal-heading">
-            <div class="pt-snapshot-modal-title">编辑快照</div>
-            <div class="pt-snapshot-modal-subtitle">
-              可修改快照归属预设名。若目标快照已存在，会自动合并，且当前快照的同名条目会覆盖目标快照。
+    <div id="${SNAPSHOT_EDIT_MODAL_ID}" class="pt-snapshot-modal" tabindex="-1" style="${overlayStyles}">
+      <div class="pt-snapshot-modal-card" style="${cardStyles}">
+        <div class="pt-snapshot-modal-header" style="display:flex; flex-direction:column; gap:calc(${vars.gap} / 2);">
+          <div class="pt-snapshot-modal-heading" style="display:flex; flex-direction:column; gap:calc(${vars.gap} / 2); min-width:0;">
+            <div class="pt-snapshot-modal-title" style="font-size:${titleFontSize}; font-weight:700;">\u7f16\u8f91\u5feb\u7167</div>
+            <div class="pt-snapshot-modal-subtitle" style="line-height:1.5; color:${vars.tipColor};">
+              \u53ef\u4fee\u6539\u5feb\u7167\u5f52\u5c5e\u9884\u8bbe\u540d\u3002\u82e5\u76ee\u6807\u5feb\u7167\u5df2\u5b58\u5728\uff0c\u4f1a\u81ea\u52a8\u5408\u5e76\uff0c\u4e14\u5f53\u524d\u5feb\u7167\u7684\u540c\u540d\u6761\u76ee\u4f1a\u8986\u76d6\u76ee\u6807\u5feb\u7167\u3002
             </div>
           </div>
         </div>
-        <div class="pt-snapshot-modal-body">
-          <label class="pt-snapshot-field">
-            <span class="pt-snapshot-field-label">快照预设名</span>
+        <div class="pt-snapshot-modal-body" style="display:flex; flex-direction:column; flex:1 1 auto; gap:${vars.gap}; min-height:0; overflow:hidden;">
+          <label class="pt-snapshot-field" style="display:flex; flex-direction:column; gap:calc(${vars.gap} / 2);">
+            <span class="pt-snapshot-field-label" style="font-size:${labelFontSize}; font-weight:600;">\u5feb\u7167\u9884\u8bbe\u540d</span>
             <input
               type="text"
               class="text_pole pt-snapshot-editor-name"
               value="${escapeHtml(snapshot.presetName || '')}"
-              placeholder="输入用于归并/迁移的预设名"
+              placeholder="\u8f93\u5165\u7528\u4e8e\u5f52\u5e76\u6216\u8fc1\u79fb\u7684\u9884\u8bbe\u540d"
+              style="width:100%;"
             />
           </label>
-          <div class="pt-snapshot-editor-summary">
+          <div
+            class="pt-snapshot-editor-summary"
+            style="
+              display:flex;
+              flex-wrap:wrap;
+              align-items:center;
+              justify-content:space-between;
+              gap:${vars.gap};
+              padding:${vars.paddingSmall};
+              border:1px solid ${vars.borderColor};
+              border-radius:${vars.borderRadiusSmall};
+              background:${vars.sectionBg};
+              font-size:${metaFontSize};
+            ">
             <span class="pt-snapshot-editor-count"></span>
             <span class="pt-snapshot-editor-base"></span>
           </div>
-          <div class="pt-snapshot-entry-list"></div>
+          <div class="pt-snapshot-entry-list" style="flex:1 1 auto; min-height:0; overflow-y:auto;"></div>
         </div>
-        <div class="pt-snapshot-modal-actions">
-          <button type="button" class="menu_button pt-snapshot-editor-cancel">取消</button>
-          <button type="button" class="menu_button pt-snapshot-editor-save">保存</button>
+        <div
+          class="pt-snapshot-modal-actions"
+          style="
+            display:flex;
+            flex-wrap:wrap;
+            justify-content:flex-end;
+            gap:${vars.gap};
+            padding-top:calc(${vars.gap} / 2);
+            border-top:1px solid ${vars.borderColor};
+          ">
+          <button type="button" class="menu_button pt-snapshot-editor-cancel" style="${actionButtonStyles}">\u53d6\u6d88</button>
+          <button type="button" class="menu_button pt-snapshot-editor-save" style="${actionButtonStyles}">\u4fdd\u5b58</button>
         </div>
       </div>
     </div>
