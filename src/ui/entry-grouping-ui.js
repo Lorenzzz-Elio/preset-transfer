@@ -40,7 +40,6 @@ let entryGroupingEnabled = true;
 let themeObserver = null;
 let settingsUpdatedUnsubscribe = null;
 let themeRefreshTimeouts = [];
-let lastUnresolvedGroupingWarningKey = null;
 let sortDragState = null;
 
 function computeGroupingSignature(presetName, orderedIdentifiers, groupings) {
@@ -58,24 +57,6 @@ function computeGroupingSignature(presetName, orderedIdentifiers, groupings) {
     .join('\u001d');
 
   return `${presetName}\u001c${listKey}\u001c${groupingKey}`;
-}
-
-function computeUnresolvedGroupingWarningKey(presetName, groupings) {
-  const unresolvedKey = groupings
-    .filter((g) => g?.unresolved)
-    .map((g, index) => [
-      g?.id ?? '',
-      g?.name ?? '',
-      g?.mode ?? '',
-      typeof g?.startIdentifier === 'string' ? g.startIdentifier : '',
-      typeof g?.endIdentifier === 'string' ? g.endIdentifier : '',
-      typeof g?.legacyStartIndex === 'number' ? String(g.legacyStartIndex) : '',
-      typeof g?.legacyEndIndex === 'number' ? String(g.legacyEndIndex) : '',
-      String(index),
-    ].join('\u001e'))
-    .join('\u001d');
-
-  return unresolvedKey ? `${presetName}\u001c${unresolvedKey}` : null;
 }
 
 function getGroupStateKey(presetName, grouping, fallbackIndex) {
@@ -258,7 +239,6 @@ function destroyEntryGrouping() {
   lastAppliedGroupingSignature = null;
   lastAppliedGroupingPreset = null;
   lastAppliedGroupingListNode = null;
-  lastUnresolvedGroupingWarningKey = null;
   sortDragState = null;
 
   try {
@@ -790,17 +770,6 @@ function applyGroupingToList() {
     if (groupings.length === 0) {
       bindTripleClickEvents();
       return;
-    }
-
-    const unresolvedCount = groupings.filter((g) => g?.unresolved).length;
-    if (unresolvedCount && window.toastr) {
-      const unresolvedWarningKey = computeUnresolvedGroupingWarningKey(presetName, groupings);
-      if (unresolvedWarningKey && lastUnresolvedGroupingWarningKey !== unresolvedWarningKey) {
-        lastUnresolvedGroupingWarningKey = unresolvedWarningKey;
-        toastr.warning(`有 ${unresolvedCount} 个旧分组无法解析（已跳过）`);
-      }
-    } else if (!unresolvedCount) {
-      lastUnresolvedGroupingWarningKey = null;
     }
 
     const resolvedGroupings = groupings

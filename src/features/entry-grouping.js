@@ -21,12 +21,98 @@ function asArray(value) {
   return Array.isArray(value) ? value : [value];
 }
 
+function stableSerialize(value) {
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableSerialize(item)).join(',')}]`;
+  }
+
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, item]) => `${JSON.stringify(key)}:${stableSerialize(item)}`);
+    return `{${entries.join(',')}}`;
+  }
+
+  return JSON.stringify(value);
+}
+
 function isPlainObject(value) {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
 function readGroupName(entry) {
   return entry?.name || entry?.groupName || DEFAULT_GROUP_NAME;
+}
+
+function computeLegacyGroupingSignature(entry) {
+  if (!isPlainObject(entry)) return '';
+
+  if (isMemberGrouping(entry)) {
+    return [
+      'members',
+      readGroupName(entry),
+      entry?.mode || DEFAULT_MODE,
+      normalizeMemberIdentifiers(entry.memberIdentifiers ?? entry.memberIds ?? entry.members).join('\u001f'),
+    ].join('\u001e');
+  }
+
+  if (isLegacyIndexGrouping(entry)) {
+    return [
+      'legacy-index',
+      readGroupName(entry),
+      entry?.mode || DEFAULT_MODE,
+      String(entry?.startIndex ?? ''),
+      String(entry?.endIndex ?? ''),
+    ].join('\u001e');
+  }
+
+  if (isIdentifierAnchorGrouping(entry)) {
+    return [
+      'anchors',
+      readGroupName(entry),
+      entry?.mode || DEFAULT_MODE,
+      String(entry?.startIdentifier ?? ''),
+      String(entry?.endIdentifier ?? ''),
+      String(entry?.legacyStartIndex ?? ''),
+      String(entry?.legacyEndIndex ?? ''),
+    ].join('\u001e');
+  }
+
+  const legacyStartIndex = entry?.legacyStartIndex;
+  const legacyEndIndex = entry?.legacyEndIndex;
+  if (typeof legacyStartIndex === 'number' || typeof legacyEndIndex === 'number') {
+    return [
+      'legacy-unresolved-index',
+      readGroupName(entry),
+      entry?.mode || DEFAULT_MODE,
+      String(legacyStartIndex ?? ''),
+      String(legacyEndIndex ?? ''),
+      String(entry?.startIdentifier ?? ''),
+      String(entry?.endIdentifier ?? ''),
+    ].join('\u001e');
+  }
+
+  return [
+    'fallback',
+    readGroupName(entry),
+    entry?.mode || DEFAULT_MODE,
+    JSON.stringify(entry),
+  ].join('\u001e');
+}
+
+function hashGroupingSignature(signature) {
+  let hash = 0;
+  const text = String(signature ?? '');
+  for (let i = 0; i < text.length; i += 1) {
+    hash = ((hash * 31) + text.charCodeAt(i)) >>> 0;
+  }
+  return hash.toString(36);
+}
+
+function resolveGroupingId(entry) {
+  const existingId = typeof entry?.id === 'string' ? entry.id.trim() : '';
+  if (existingId) return existingId;
+  return `pt-eg-legacy-${hashGroupingSignature(computeLegacyGroupingSignature(entry))}`;
 }
 
 function normalizeMemberIdentifiers(list) {
@@ -84,7 +170,7 @@ function normalizeForRead(entry, orderedIdentifiers) {
     if (memberIdentifiers.length === 0) return null;
 
     return {
-      id: typeof entry.id === 'string' ? entry.id : createGroupId(),
+      id: resolveGroupingId(entry),
       name: readGroupName(entry),
       memberIdentifiers,
       mode: entry.mode || DEFAULT_MODE,
@@ -97,7 +183,7 @@ function normalizeForRead(entry, orderedIdentifiers) {
     const memberIdentifiers = resolveMemberIdentifiersFromAnchors(startIdentifier, endIdentifier, orderedIdentifiers);
     if (memberIdentifiers && memberIdentifiers.length > 0) {
       return {
-        id: typeof entry.id === 'string' ? entry.id : createGroupId(),
+        id: resolveGroupingId(entry),
         name: readGroupName(entry),
         memberIdentifiers,
         mode: entry.mode || DEFAULT_MODE,
@@ -105,7 +191,7 @@ function normalizeForRead(entry, orderedIdentifiers) {
     }
 
     return {
-      id: typeof entry.id === 'string' ? entry.id : createGroupId(),
+      id: resolveGroupingId(entry),
       name: readGroupName(entry),
       mode: entry.mode || DEFAULT_MODE,
       unresolved: true,
@@ -120,7 +206,7 @@ function normalizeForRead(entry, orderedIdentifiers) {
     const memberIdentifiers = resolveMemberIdentifiersFromAnchors(startIdentifier, endIdentifier, orderedIdentifiers);
     if (memberIdentifiers && memberIdentifiers.length > 0) {
       return {
-        id: typeof entry.id === 'string' ? entry.id : createGroupId(),
+        id: resolveGroupingId(entry),
         name: readGroupName(entry),
         memberIdentifiers,
         mode: entry.mode || DEFAULT_MODE,
@@ -128,7 +214,7 @@ function normalizeForRead(entry, orderedIdentifiers) {
     }
 
     return {
-      id: typeof entry.id === 'string' ? entry.id : createGroupId(),
+      id: resolveGroupingId(entry),
       name: readGroupName(entry),
       mode: entry.mode || DEFAULT_MODE,
       unresolved: true,
@@ -136,6 +222,21 @@ function normalizeForRead(entry, orderedIdentifiers) {
       endIdentifier,
       legacyStartIndex: entry.legacyStartIndex,
       legacyEndIndex: entry.legacyEndIndex,
+    };
+  }
+
+  const legacyStartIndex = typeof entry?.legacyStartIndex === 'number' ? entry.legacyStartIndex : null;
+  const legacyEndIndex = typeof entry?.legacyEndIndex === 'number' ? entry.legacyEndIndex : null;
+  if (legacyStartIndex !== null || legacyEndIndex !== null) {
+    return {
+      id: resolveGroupingId(entry),
+      name: readGroupName(entry),
+      mode: entry.mode || DEFAULT_MODE,
+      unresolved: true,
+      legacyStartIndex,
+      legacyEndIndex,
+      startIdentifier: typeof entry?.startIdentifier === 'string' ? entry.startIdentifier : null,
+      endIdentifier: typeof entry?.endIdentifier === 'string' ? entry.endIdentifier : null,
     };
   }
 
@@ -150,7 +251,7 @@ function normalizeForWrite(entry, orderedIdentifiers) {
     if (memberIdentifiers.length === 0) return null;
 
     return {
-      id: typeof entry.id === 'string' ? entry.id : createGroupId(),
+      id: resolveGroupingId(entry),
       name: readGroupName(entry),
       memberIdentifiers,
       mode: entry.mode || DEFAULT_MODE,
@@ -164,7 +265,7 @@ function normalizeForWrite(entry, orderedIdentifiers) {
 
     if (memberIdentifiers && memberIdentifiers.length > 0) {
       return {
-        id: typeof entry.id === 'string' ? entry.id : createGroupId(),
+        id: resolveGroupingId(entry),
         name: readGroupName(entry),
         memberIdentifiers,
         mode: entry.mode || DEFAULT_MODE,
@@ -172,12 +273,11 @@ function normalizeForWrite(entry, orderedIdentifiers) {
     }
 
     return {
-      id: typeof entry.id === 'string' ? entry.id : createGroupId(),
+      id: resolveGroupingId(entry),
       name: readGroupName(entry),
       mode: entry.mode || DEFAULT_MODE,
-      unresolved: true,
-      legacyStartIndex: entry.startIndex,
-      legacyEndIndex: entry.endIndex,
+      startIndex: entry.startIndex,
+      endIndex: entry.endIndex,
     };
   }
 
@@ -188,7 +288,7 @@ function normalizeForWrite(entry, orderedIdentifiers) {
 
     if (memberIdentifiers && memberIdentifiers.length > 0) {
       return {
-        id: typeof entry.id === 'string' ? entry.id : createGroupId(),
+        id: resolveGroupingId(entry),
         name: readGroupName(entry),
         memberIdentifiers,
         mode: entry.mode || DEFAULT_MODE,
@@ -196,14 +296,31 @@ function normalizeForWrite(entry, orderedIdentifiers) {
     }
 
     return {
-      id: typeof entry.id === 'string' ? entry.id : createGroupId(),
+      id: resolveGroupingId(entry),
       name: readGroupName(entry),
       mode: entry.mode || DEFAULT_MODE,
-      unresolved: true,
       startIdentifier,
       endIdentifier,
       legacyStartIndex: entry.legacyStartIndex,
       legacyEndIndex: entry.legacyEndIndex,
+    };
+  }
+
+  const legacyStartIndex = typeof entry?.legacyStartIndex === 'number' ? entry.legacyStartIndex : null;
+  const legacyEndIndex = typeof entry?.legacyEndIndex === 'number' ? entry.legacyEndIndex : null;
+  const startIdentifier = typeof entry?.startIdentifier === 'string' ? entry.startIdentifier : null;
+  const endIdentifier = typeof entry?.endIdentifier === 'string' ? entry.endIdentifier : null;
+  if (legacyStartIndex !== null || legacyEndIndex !== null || startIdentifier || endIdentifier) {
+    return {
+      id: resolveGroupingId(entry),
+      name: readGroupName(entry),
+      mode: entry.mode || DEFAULT_MODE,
+      ...(startIdentifier ? { startIdentifier } : {}),
+      ...(endIdentifier ? { endIdentifier } : {}),
+      ...(legacyStartIndex !== null && !startIdentifier && !endIdentifier ? { startIndex: legacyStartIndex } : {}),
+      ...(legacyEndIndex !== null && !startIdentifier && !endIdentifier ? { endIndex: legacyEndIndex } : {}),
+      ...(legacyStartIndex !== null && (startIdentifier || endIdentifier) ? { legacyStartIndex } : {}),
+      ...(legacyEndIndex !== null && (startIdentifier || endIdentifier) ? { legacyEndIndex } : {}),
     };
   }
 
@@ -341,13 +458,15 @@ async function reassignPresetGroupingMembers(presetName, entryIdentifiers, order
     const groupings = getWritableGroupings(getAllPresetGroupings(name, orderedIdentifiers), orderedIdentifiers);
     if (groupings.length === 0) return false;
 
-    const targetGroupId = requestedGroupId || (
-      targetIdentifier
-        ? String(
-          groupings.find((grouping) => normalizeMemberIdentifiers(grouping?.memberIdentifiers).includes(targetIdentifier))?.id ?? '',
-        ).trim()
-        : ''
-    );
+    const requestedGroupExists = requestedGroupId
+      ? groupings.some((grouping) => String(grouping?.id ?? '').trim() === requestedGroupId)
+      : false;
+    const fallbackGroupId = targetIdentifier
+      ? String(
+        groupings.find((grouping) => normalizeMemberIdentifiers(grouping?.memberIdentifiers).includes(targetIdentifier))?.id ?? '',
+      ).trim()
+      : '';
+    const targetGroupId = requestedGroupExists ? requestedGroupId : fallbackGroupId;
 
     let changed = false;
     const nextGroupings = [];
@@ -423,9 +542,11 @@ function getAllPresetGroupings(presetName, orderedIdentifiers) {
       .filter(Boolean);
 
     const writableGroupings = getWritableGroupings(rawGroupings, orderedIdentifiers);
+    const rawSignature = stableSerialize(rawGroupings);
+    const writableSignature = stableSerialize(writableGroupings);
     const shouldMigrate =
       writableGroupings.length === normalized.length
-      && rawGroupings.some((entry) => isPlainObject(entry) && !isMemberGrouping(entry));
+      && rawSignature !== writableSignature;
 
     if (shouldMigrate) {
       preset.extensions.entryGrouping = writableGroupings;
