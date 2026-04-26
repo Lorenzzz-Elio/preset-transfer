@@ -1,6 +1,7 @@
 import { getJQuery } from '../core/utils.js';
 import { NEW_FIELD_DEFAULTS } from '../core/constants.js';
 import { getSelectedEntries, loadAndDisplayEntries } from '../display/entry-display.js';
+import { getSelectedGroups } from '../display/entry-group-display.js';
 import { getActiveTransferAdapter } from '../transfer/transfer-context.js';
 import { createWorldbookEditEntryModal } from '../worldbook/edit-modal.js';
 import { openWorldbookBatchEditModal } from '../worldbook/batch-edit-modal.js';
@@ -127,6 +128,7 @@ async function startTransferMode(apiInfo, fromSide, toSide) {
   const $ = getJQuery();
   const adapter = getActiveTransferAdapter();
   const selectedEntries = getSelectedEntries(fromSide);
+  const selectedGroups = adapter?.id === 'preset' ? getSelectedGroups(fromSide) : [];
 
   // 过滤掉 marker 类型的条目
   const transferableEntries = selectedEntries.filter(entry => !entry.marker);
@@ -190,6 +192,7 @@ async function startTransferMode(apiInfo, fromSide, toSide) {
 
     try {
       await performTransfer(apiInfo, fromPreset, toPreset, transferableEntries, null, autoEnable, displayMode, {
+        selectedGroups,
         targetGroupId,
         targetIdentifier,
       });
@@ -213,6 +216,7 @@ async function startTransferMode(apiInfo, fromSide, toSide) {
     fromSide: fromSide,
     toSide: toSide,
     selectedEntries: transferableEntries,
+    selectedGroups,
     sourceContainer: sourceContainer,
   };
 
@@ -264,6 +268,7 @@ async function executeTransferToPosition(apiInfo, fromSide, toSide, targetPositi
   const $ = getJQuery();
   const selectedEntries = window.transferMode.selectedEntries;
   const sourceContainer = window.transferMode?.sourceContainer;
+  const selectedGroups = Array.isArray(window.transferMode?.selectedGroups) ? window.transferMode.selectedGroups : [];
   const targetGroupId = String(window.transferMode?.targetGroupId ?? '').trim();
   const targetIdentifier = String(window.transferMode?.targetIdentifier ?? '').trim();
 
@@ -310,6 +315,7 @@ async function executeTransferToPosition(apiInfo, fromSide, toSide, targetPositi
       for (const [source, entries] of entriesBySource) {
         try {
           await performTransfer(apiInfo, source, toPreset, entries, insertPosition, autoEnable, displayMode, {
+            selectedGroups,
             targetGroupId,
             targetIdentifier,
           });
@@ -331,6 +337,7 @@ async function executeTransferToPosition(apiInfo, fromSide, toSide, targetPositi
         throw new Error('请选择源预设');
       }
       await performTransfer(apiInfo, fromPreset, toPreset, selectedEntries, insertPosition, autoEnable, displayMode, {
+        selectedGroups,
         targetGroupId,
         targetIdentifier,
       });

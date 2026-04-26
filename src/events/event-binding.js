@@ -494,13 +494,47 @@ function bindTransferEvents(apiInfo, modal) {
   }
 
   // 左侧控制
-  $('#left-select-all').on('click', () => {
-    $('#left-entries-list .entry-item:visible .entry-checkbox').prop('checked', true);
+  function syncTransferGroupCheckboxState($header) {
+    if (!$header?.length) return;
+    const $groupCheckbox = $header.find('.group-checkbox');
+    const $container = $header.next('.pt-transfer-group-container');
+    const $allEntryCheckboxes = $container.find('.entry-checkbox');
+    const checkedCount = $allEntryCheckboxes.filter(':checked').length;
+    const totalCount = $allEntryCheckboxes.length;
+
+    if (checkedCount === 0) {
+      $groupCheckbox.prop('checked', false);
+      $groupCheckbox.prop('indeterminate', false);
+    } else if (checkedCount === totalCount) {
+      $groupCheckbox.prop('checked', true);
+      $groupCheckbox.prop('indeterminate', false);
+    } else {
+      $groupCheckbox.prop('checked', false);
+      $groupCheckbox.prop('indeterminate', true);
+    }
+  }
+
+  function setVisibleSelections(side, checked) {
+    const $list = $(`#${side}-entries-list`);
+
+    $list.find('.pt-transfer-group-header:visible').each(function () {
+      const $header = $(this);
+      const $container = $header.next('.pt-transfer-group-container');
+      const $visibleEntries = $container.find('.entry-item:visible .entry-checkbox');
+      const $targetEntries = $visibleEntries.length ? $visibleEntries : $container.find('.entry-checkbox');
+      $targetEntries.prop('checked', !!checked);
+      syncTransferGroupCheckboxState($header);
+    });
+
+    $list.children('.entry-item:visible').find('.entry-checkbox').prop('checked', !!checked);
     updateSelectionCount();
+  }
+
+  $('#left-select-all').on('click', () => {
+    setVisibleSelections('left', true);
   });
   $('#left-select-none').on('click', () => {
-    $('#left-entries-list .entry-item:visible .entry-checkbox').prop('checked', false);
-    updateSelectionCount();
+    setVisibleSelections('left', false);
   });
 
   if (getActiveTransferAdapter().id === 'worldbook') {
@@ -516,12 +550,10 @@ function bindTransferEvents(apiInfo, modal) {
 
   // 右侧控制
   $('#right-select-all').on('click', () => {
-    $('#right-entries-list .entry-item:visible .entry-checkbox').prop('checked', true);
-    updateSelectionCount();
+    setVisibleSelections('right', true);
   });
   $('#right-select-none').on('click', () => {
-    $('#right-entries-list .entry-item:visible .entry-checkbox').prop('checked', false);
-    updateSelectionCount();
+    setVisibleSelections('right', false);
   });
 
   if (getActiveTransferAdapter().id === 'worldbook') {
@@ -557,12 +589,10 @@ function bindTransferEvents(apiInfo, modal) {
 
   // 单预设控制
   $('#single-select-all').on('click', () => {
-    $('#single-entries-list .entry-item:visible .entry-checkbox').prop('checked', true);
-    updateSelectionCount();
+    setVisibleSelections('single', true);
   });
   $('#single-select-none').on('click', () => {
-    $('#single-entries-list .entry-item:visible .entry-checkbox').prop('checked', false);
-    updateSelectionCount();
+    setVisibleSelections('single', false);
   });
 
   if (getActiveTransferAdapter().id === 'worldbook') {

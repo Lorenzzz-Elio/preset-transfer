@@ -21,6 +21,9 @@
  * @property {string} [insertPosition]
  * @property {boolean} [autoEnable]
  * @property {string} [displayMode]
+ * @property {string} [targetGroupId]
+ * @property {string} [targetIdentifier]
+ * @property {{ id?: string, name?: string, entryIdentifiers?: string[] }[]} [selectedGroups]
  */
 
 /**

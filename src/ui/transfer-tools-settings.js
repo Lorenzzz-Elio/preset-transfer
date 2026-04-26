@@ -118,7 +118,7 @@ function safeText(value) {
 function truncateText(text, maxLen = 140) {
   const s = String(text ?? '');
   if (s.length <= maxLen) return s;
-  return s.slice(0, Math.max(0, maxLen - 1)).trimEnd() + '…';
+  return s.slice(0, Math.max(0, maxLen - 1)).trimEnd() + '...';
 }
 
 function normalizeForDiff(text) {
@@ -1050,6 +1050,10 @@ function renderPanel() {
                   <input id="pt-enable-preset-list-grouping" type="checkbox" style="accent-color: ${themeAccentColor};" />
                   <small>AI响应预设分组</small>
                 </label>
+                <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-preset-auto-migrate-import">
+                  <input id="pt-enable-preset-auto-migrate-import" type="checkbox" style="accent-color: ${themeAccentColor};" />
+                  <small>导入新版本后自动迁移缝合</small>
+                </label>
               </div>
             </div>
 
@@ -1063,10 +1067,6 @@ function renderPanel() {
               <div class="flex-container flexFlowColumn flexGap5">
                 <div class="pt-transfer-tools-card flex-container flexFlowColumn flexGap5">
                   <div class="pt-transfer-tools-card-title">设置更新</div>
-                  <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-preset-auto-migrate-import">
-                    <input id="pt-enable-preset-auto-migrate-import" type="checkbox" style="accent-color: ${themeAccentColor};" />
-                    <small>导入新版本后自动迁移缝合</small>
-                  </label>
                   <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-preset-git-auto-update">
                     <input id="pt-enable-preset-git-auto-update" type="checkbox" style="accent-color: ${themeAccentColor};" />
                     <small>Git 自动更新预设（需配置 Git 源）</small>

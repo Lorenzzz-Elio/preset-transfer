@@ -510,6 +510,55 @@ async function reassignPresetGroupingMembers(presetName, entryIdentifiers, order
   }
 }
 
+async function preserveTransferredPresetGroups(presetName, groups, orderedIdentifiers) {
+  try {
+    const name = String(presetName ?? '').trim();
+    if (!name) return false;
+
+    const normalizedOrder = normalizeMemberIdentifiers(orderedIdentifiers);
+    const normalizedGroups = asArray(groups)
+      .map((group) => {
+        const memberIdentifiers = orderMemberIdentifiers(group?.memberIdentifiers, normalizedOrder);
+        if (memberIdentifiers.length === 0) return null;
+        return {
+          id: createGroupId(),
+          name: String(group?.name ?? '').trim() || DEFAULT_GROUP_NAME,
+          memberIdentifiers,
+          mode: DEFAULT_MODE,
+        };
+      })
+      .filter(Boolean);
+
+    if (normalizedGroups.length === 0) return false;
+
+    const movedIdentifiers = new Set(
+      normalizedGroups.flatMap((group) => normalizeMemberIdentifiers(group.memberIdentifiers)),
+    );
+    const existingGroupings = getWritableGroupings(getAllPresetGroupings(name, normalizedOrder), normalizedOrder);
+
+    const nextGroupings = [];
+    for (const grouping of existingGroupings) {
+      const nextMembers = orderMemberIdentifiers(
+        normalizeMemberIdentifiers(grouping?.memberIdentifiers).filter((identifier) => !movedIdentifiers.has(identifier)),
+        normalizedOrder,
+      );
+
+      if (nextMembers.length === 0) continue;
+      nextGroupings.push({
+        ...grouping,
+        memberIdentifiers: nextMembers,
+      });
+    }
+
+    nextGroupings.push(...normalizedGroups);
+    await persistPresetGroupings(name, nextGroupings);
+    return true;
+  } catch (error) {
+    console.error('淇濈暀杞Щ鍒嗙粍澶辫触:', error);
+    return false;
+  }
+}
+
 function getPresetGroupingIdForIdentifier(presetName, entryIdentifier, orderedIdentifiers) {
   try {
     const name = String(presetName ?? '').trim();
@@ -742,5 +791,6 @@ export {
   addPresetGrouping,
   updatePresetGrouping,
   removePresetGrouping,
+  preserveTransferredPresetGroups,
   reassignPresetGroupingMembers,
 };

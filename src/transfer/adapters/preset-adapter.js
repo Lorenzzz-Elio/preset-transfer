@@ -4,7 +4,7 @@ import { batchTransferWithNewFields, ensureAllEntriesHaveNewFields } from '../..
 import { getOrderedPromptEntries, getPresetDataFromManager } from '../../preset/preset-manager.js';
 import { ensureStitchMeta } from '../../preset/stitch-meta.js';
 import { getTargetPromptsList, getOrCreateDummyCharacterPromptOrder } from '../../preset/prompt-order-utils.js';
-import { reassignPresetGroupingMembers } from '../../features/entry-grouping.js';
+import { preserveTransferredPresetGroups, reassignPresetGroupingMembers } from '../../features/entry-grouping.js';
 
 function withPtKey(entries) {
     return entries.map(entry => ({
@@ -93,12 +93,16 @@ async function transferEntries(
 
     const targetPromptMap = new Map(targetData.prompts.map((p, i) => [p.name, i]));
     const insertedOrderEntries = [];
+    const transferredIdentifierMap = new Map();
     let targetIdentifier = String(options?.targetIdentifier ?? '').trim() || null;
     const targetGroupId = String(options?.targetGroupId ?? '').trim();
+    const selectedGroups = Array.isArray(options?.selectedGroups) ? options.selectedGroups : [];
 
     const entriesToTransfer = batchTransferWithNewFields(selectedEntries);
 
-    entriesToTransfer.forEach(entry => {
+    entriesToTransfer.forEach((entry, index) => {
+        const sourceIdentifier = String(selectedEntries?.[index]?.identifier ?? entry?.identifier ?? '').trim();
+
         if (targetPromptMap.has(entry.name)) {
             const targetIndex = targetPromptMap.get(entry.name);
             const existingIdentifier = targetData.prompts[targetIndex].identifier;
@@ -118,6 +122,10 @@ async function transferEntries(
             if (!existingOrderEntry) {
                 insertedOrderEntries.push({ identifier: existingIdentifier, enabled: !!autoEnable });
             }
+
+            if (sourceIdentifier) {
+                transferredIdentifierMap.set(sourceIdentifier, existingIdentifier);
+            }
         } else {
             const newPrompt = {
                 ...entry,
@@ -130,6 +138,9 @@ async function transferEntries(
             const stitchedPrompt = ensureStitchMeta(newPrompt);
             targetData.prompts.push(stitchedPrompt);
             insertedOrderEntries.push({ identifier: stitchedPrompt.identifier, enabled: !!autoEnable });
+            if (sourceIdentifier) {
+                transferredIdentifierMap.set(sourceIdentifier, stitchedPrompt.identifier);
+            }
         }
     });
 
@@ -167,6 +178,27 @@ async function transferEntries(
             orderedIdentifiers,
             { targetIdentifier, targetGroupId },
         );
+    }
+
+    if (selectedGroups.length > 0) {
+        const orderedIdentifiers = characterPromptOrder.order.map(entry => String(entry?.identifier ?? '').trim()).filter(Boolean);
+        const preservedGroups = selectedGroups
+            .map(group => {
+                const memberIdentifiers = (Array.isArray(group?.entryIdentifiers) ? group.entryIdentifiers : [])
+                    .map(identifier => transferredIdentifierMap.get(String(identifier ?? '').trim()))
+                    .filter(Boolean);
+
+                if (memberIdentifiers.length === 0) return null;
+                return {
+                    name: String(group?.name ?? '').trim() || '分组',
+                    memberIdentifiers,
+                };
+            })
+            .filter(Boolean);
+
+        if (preservedGroups.length > 0) {
+            await preserveTransferredPresetGroups(targetPreset, preservedGroups, orderedIdentifiers);
+        }
     }
 }
 
