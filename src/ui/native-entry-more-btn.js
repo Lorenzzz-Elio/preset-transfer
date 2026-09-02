@@ -135,6 +135,99 @@ async function handleBeautifyEntry(identifier) {
   await openBeautifyModal(identifier, apiInfo);
 }
 
+async function handleDeleteEntry(identifier) {
+  const apiInfo = getCurrentApiInfo();
+  if (!apiInfo) {
+    throw new Error('\u65e0\u6cd5\u8bbf\u95ee\u5f53\u524d\u9884\u8bbe\u7ba1\u7406\u5668\u3002');
+  }
+
+  const presetName = resolveCurrentPresetName();
+  if (!presetName) {
+    throw new Error('\u65e0\u6cd5\u786e\u5b9a\u5f53\u524d\u6fc0\u6d3b\u7684\u9884\u8bbe\u3002');
+  }
+
+  const { getPresetDataFromManager } = await import('../preset/preset-manager.js');
+  const presetData = getPresetDataFromManager(apiInfo, presetName);
+  const entry = presetData?.prompts?.find((prompt) => prompt?.identifier === identifier);
+
+  if (!entry) {
+    throw new Error('\u627e\u4e0d\u5230\u9009\u4e2d\u7684\u6761\u76ee\u3002');
+  }
+
+  if (entry.system_prompt) {
+    throw new Error('\u7cfb\u7edf\u63d0\u793a\u8bcd\u6761\u76ee\u4e0d\u5141\u8bb8\u5220\u9664\u3002');
+  }
+
+  const entryName = entry.name || identifier;
+  const parentWindow = getParentWindow();
+  const confirmed =
+    typeof parentWindow.confirm === 'function'
+      ? parentWindow.confirm(`\u786e\u5b9a\u8981\u5f7b\u5e95\u5220\u9664\u6761\u76ee "${entryName}" \u5417\uff1f\n\n\u6b64\u64cd\u4f5c\u5c06\u4ece\u5f53\u524d\u9884\u8bbe\u4e2d\u5b8c\u5168\u5220\u9664\u8be5\u6761\u76ee\uff08\u5305\u62ec\u63d0\u793a\u8bcd\u5185\u5bb9\u548c\u6392\u5e8f\u5217\u8868\uff09\uff0c\u4e0d\u53ef\u64a4\u9500\u3002`)
+      : true;
+
+  if (!confirmed) return;
+
+  if (Array.isArray(presetData.prompts)) {
+    presetData.prompts = presetData.prompts.filter((p) => p && p.identifier !== identifier);
+  }
+
+  if (Array.isArray(presetData.prompt_order)) {
+    for (const item of presetData.prompt_order) {
+      if (Array.isArray(item?.order)) {
+        item.order = item.order.filter((o) => o && o.identifier !== identifier);
+      }
+    }
+    if (presetData.prompt_order.some((item) => item && typeof item.identifier === 'string' && !item.order)) {
+      presetData.prompt_order = presetData.prompt_order.filter((o) => o && o.identifier !== identifier);
+    }
+  }
+
+  try {
+    const mod = await import('/scripts/openai.js');
+    if (mod.promptManager?.serviceSettings) {
+      if (Array.isArray(mod.promptManager.serviceSettings.prompts)) {
+        mod.promptManager.serviceSettings.prompts = mod.promptManager.serviceSettings.prompts.filter(
+          (p) => p && p.identifier !== identifier,
+        );
+      }
+      if (Array.isArray(mod.promptManager.serviceSettings.prompt_order)) {
+        for (const item of mod.promptManager.serviceSettings.prompt_order) {
+          if (Array.isArray(item?.order)) {
+            item.order = item.order.filter((o) => o && o.identifier !== identifier);
+          }
+        }
+        if (mod.promptManager.serviceSettings.prompt_order.some((item) => item && typeof item.identifier === 'string' && !item.order)) {
+          mod.promptManager.serviceSettings.prompt_order = mod.promptManager.serviceSettings.prompt_order.filter(
+            (o) => o && o.identifier !== identifier,
+          );
+        }
+      }
+    }
+  } catch {
+  }
+
+  await apiInfo.presetManager.savePreset(presetName, presetData, { skipUpdate: true });
+
+  await refreshNativePromptManager();
+
+  try {
+    const { scheduleApplyGrouping } = await import('./entry-grouping-ui.js');
+    scheduleApplyGrouping?.(0);
+  } catch {
+  }
+
+  const $ = getJQuery();
+  if ($('#preset-transfer-modal').is(':visible')) {
+    try {
+      const { loadAndDisplayEntries } = await import('../display/entry-display.js');
+      loadAndDisplayEntries?.(apiInfo);
+    } catch {
+    }
+  }
+
+  notify('success', `\u5df2\u5f7b\u5e95\u5220\u9664\u6761\u76ee\uff1a${entryName}`);
+}
+
 function showEntryMoreMenu(buttonElement, identifier) {
   const $ = getJQuery();
   const vars = CommonStyles.getVars();
@@ -153,19 +246,16 @@ function showEntryMoreMenu(buttonElement, identifier) {
       data-pt-identifier="${escapeAttr(identifier)}"
       style="
         --pt-theme-font-size: ${vars.themeFontSize};
-        --pt-entry-more-bg: ${vars.bgColor};
-        --pt-entry-more-border: ${vars.borderColor};
         --pt-entry-more-text: ${vars.textColor};
-        --pt-entry-more-hover-bg: ${vars.sectionBg};
-        --pt-entry-more-radius: ${vars.borderRadiusSmall};
-        --pt-entry-more-padding-y: calc(var(--pt-theme-font-size) * 0.5);
-        --pt-entry-more-padding-x: calc(var(--pt-theme-font-size) * 0.625);
       ">
       <button type="button" class="pt-entry-more-action" data-pt-action="duplicate">
         \u590d\u5236\u6761\u76ee
       </button>
       <button type="button" class="pt-entry-more-action" data-pt-action="beautify">
         \u7f8e\u5316\u6b63\u5219
+      </button>
+      <button type="button" class="pt-entry-more-action" data-pt-action="delete">
+        \u5220\u9664\u6761\u76ee
       </button>
     </div>
   `);
@@ -186,6 +276,12 @@ function showEntryMoreMenu(buttonElement, identifier) {
 
       if (action === 'beautify') {
         await handleBeautifyEntry(identifier);
+        return;
+      }
+
+      if (action === 'delete') {
+        await handleDeleteEntry(identifier);
+        return;
       }
     } catch (error) {
       console.error(`[EntryMoreBtn] Failed to run "${action}" action:`, error);

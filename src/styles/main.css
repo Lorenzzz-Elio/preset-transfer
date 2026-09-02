@@ -17,28 +17,41 @@
   display: flex;
   flex-wrap: nowrap;
   gap: 6px;
-  padding: 4px;
-  border-radius: 10px;
-  border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.12));
-  background: var(--SmartThemeBlurTintColor, rgba(0, 0, 0, 0.08));
+  padding: 2px 0 6px 0;
+  border: none;
+  background: transparent;
 }
 
 #preset-transfer-extension-settings .pt-transfer-tools-tabbar .pt-transfer-tools-tab {
   flex: 1 1 0;
   min-width: 0;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: transparent;
-  border: 1px solid transparent;
-  opacity: 0.85;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: transparent !important;
+  border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.18)) !important;
+  color: var(--SmartThemeBodyColor, inherit);
+  opacity: 0.75;
   white-space: nowrap;
   writing-mode: horizontal-tb;
+  font-size: calc(var(--mainFontSize, 14px) * 0.88);
+  cursor: pointer;
+  box-shadow: none !important;
+  transition: all 0.2s ease-in-out;
+}
+
+#preset-transfer-extension-settings .pt-transfer-tools-tabbar .pt-transfer-tools-tab:hover {
+  opacity: 1;
+  border-color: var(--SmartThemeEmColor, rgba(255, 255, 255, 0.45)) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
 }
 
 #preset-transfer-extension-settings .pt-transfer-tools-tabbar .pt-transfer-tools-tab.is-active {
   opacity: 1;
-  border-color: var(--SmartThemeEmColor, currentColor);
-  box-shadow: 0 0 0 1px var(--SmartThemeEmColor, currentColor) inset;
+  color: var(--SmartThemeEmColor, #3b82f6) !important;
+  border-color: var(--SmartThemeEmColor, #3b82f6) !important;
+  background: transparent !important;
+  box-shadow: 0 0 0 1px var(--SmartThemeEmColor, currentColor) !important;
+  font-weight: 600;
 }
 
 #preset-transfer-extension-settings .pt-transfer-tools-panel.is-hidden {
@@ -46,59 +59,92 @@
 }
 
 #preset-transfer-extension-settings .pt-transfer-tools-card {
-  padding: 10px;
-  border-radius: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
   border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.12));
-  background: var(--SmartThemeBlurTintColor, rgba(0, 0, 0, 0.06));
+  background: transparent;
 }
 
 #preset-transfer-extension-settings .pt-transfer-tools-card-title {
-  font-weight: 700;
+  font-weight: 600;
+  font-size: calc(var(--mainFontSize, 14px) * 0.95);
   opacity: 0.9;
 }
 
 /* Prompt manager entry grouping (outside the modal) */
+.pt-entry-group-header,
 .pt-entry-grouping-root .pt-entry-group-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 10px;
-  margin: 4px 0;
-  border-radius: 6px;
+  padding: 8px 12px;
+  min-height: 38px;
+  margin: 5px 0;
+  border-radius: 8px;
   cursor: pointer;
   user-select: none;
-  background: var(--pt-section-bg, rgba(0, 0, 0, 0.08));
-  border: 1px solid var(--pt-border, rgba(0, 0, 0, 0.15));
-  color: var(--pt-text, inherit);
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.12));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 4px rgba(0, 0, 0, 0.05);
+  color: var(--pt-text, var(--SmartThemeBodyColor, inherit));
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
+.pt-entry-group-header:hover,
 .pt-entry-grouping-root .pt-entry-group-header:hover {
-  filter: brightness(1.03);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.22));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 3px 8px rgba(0, 0, 0, 0.08);
+  filter: brightness(1.04);
 }
 
+.pt-entry-group-header.is-expanded,
+.pt-entry-grouping-root .pt-entry-group-header.is-expanded {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.18));
+}
+
+.pt-entry-group-toggle,
 .pt-entry-grouping-root .pt-entry-group-toggle {
   width: 16px;
   flex: 0 0 16px;
   text-align: center;
-  opacity: 0.9;
+  opacity: 0.75;
+  font-size: 11px;
+  line-height: 1;
 }
 
+.pt-entry-group-toggle::before,
 .pt-entry-grouping-root .pt-entry-group-toggle::before {
   content: "\25B6";
 }
 
+.pt-entry-group-header.is-expanded .pt-entry-group-toggle::before,
 .pt-entry-grouping-root .pt-entry-group-header.is-expanded .pt-entry-group-toggle::before {
   content: "\25BC";
 }
 
+.pt-entry-group-name,
 .pt-entry-grouping-root .pt-entry-group-name {
   flex: 1;
   font-weight: 600;
+  font-size: calc(var(--mainFontSize, 14px) * 0.95);
+  letter-spacing: 0.2px;
 }
 
+.pt-entry-group-count,
 .pt-entry-grouping-root .pt-entry-group-count {
-  opacity: 0.7;
-  font-size: 12px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  opacity: 0.8;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.3;
 }
 
 .pt-entry-grouping-root .pt-entry-group-wrapper {
@@ -157,6 +203,14 @@
   height: 0.75em;
 }
 
+/* 控件容器层叠与事件穿透保护（标准规范写法，防止外部美化遮罩层遮挡控件点击） */
+.completion_prompt_manager_prompt .prompt_manager_prompt_controls,
+.pt-entry-grouping-root .prompt_manager_prompt_controls {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
 /* Native Prompt Manager entry actions */
 .prompt_manager_prompt_controls .pt-entry-more-btn {
   line-height: 1;
@@ -173,40 +227,54 @@
 }
 
 .pt-entry-more-menu,
-.pt-entry-group-more-menu {
+.pt-entry-group-more-menu,
+.entry-grouping-menu {
   position: fixed;
   z-index: 10004;
   display: flex;
   flex-direction: column;
   min-width: calc(var(--pt-theme-font-size, var(--mainFontSize, 16px)) * 8.25);
-  padding: calc(var(--pt-theme-font-size, var(--mainFontSize, 16px)) * 0.25);
-  border-radius: var(--pt-entry-more-radius, 8px);
-  background: var(--pt-entry-more-bg);
-  border: 1px solid var(--pt-entry-more-border);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  color: var(--pt-entry-more-text);
+  padding: 6px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.06) !important;
+  backdrop-filter: blur(16px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
+  border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.16)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+  color: var(--pt-entry-more-text, var(--pt-text, var(--SmartThemeBodyColor, inherit))) !important;
   font-size: var(--pt-theme-font-size, var(--mainFontSize, 16px));
 }
 
 .pt-entry-more-menu .pt-entry-more-action,
-.pt-entry-group-more-menu .pt-entry-group-more-action {
+.pt-entry-group-more-menu .pt-entry-group-more-action,
+.entry-grouping-menu .menu-item {
   width: 100%;
-  padding: var(--pt-entry-more-padding-y) var(--pt-entry-more-padding-x);
+  padding: 7px 12px;
   border: 0;
-  border-radius: calc(var(--pt-theme-font-size, var(--mainFontSize, 16px)) * 0.375);
-  background: transparent;
-  color: inherit;
+  border-radius: 6px;
+  background: transparent !important;
+  color: inherit !important;
   text-align: left;
   cursor: pointer;
   font-size: inherit;
   writing-mode: horizontal-tb;
+  transition: all 0.15s ease;
 }
 
 .pt-entry-more-menu .pt-entry-more-action:hover,
 .pt-entry-more-menu .pt-entry-more-action:focus-visible,
 .pt-entry-group-more-menu .pt-entry-group-more-action:hover,
-.pt-entry-group-more-menu .pt-entry-group-more-action:focus-visible {
-  background: var(--pt-entry-more-hover-bg);
+.pt-entry-group-more-menu .pt-entry-group-more-action:focus-visible,
+.entry-grouping-menu .menu-item:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.pt-entry-more-menu .pt-entry-more-action[data-pt-action="delete"],
+.pt-entry-group-more-menu .pt-entry-group-delete-action {
+  border-top: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.12)) !important;
+  margin-top: 2px;
+  padding-top: 7px;
 }
 
 /* Worldbook grouping (World Info dropdowns) */

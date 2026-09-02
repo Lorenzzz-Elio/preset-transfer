@@ -102,18 +102,65 @@ function ensureRegexGroupingStyles() {
   if ($('#pt-regex-grouping-styles').length) return;
   $('head').append(`
     <style id="pt-regex-grouping-styles">
-      .pt-regex-grouping-root .pt-regex-in-group { box-shadow: inset 3px 0 0 var(--pt-accent); }
+      .pt-regex-grouping-root .pt-regex-in-group { box-shadow: inset 3px 0 0 var(--SmartThemeEmColor, var(--pt-accent, #3b82f6)); }
       .pt-regex-grouping-root .${HEADER_CLASS} {
         user-select: none;
-        border: 1px solid var(--pt-border);
-        background: var(--pt-section-bg);
-        color: var(--pt-text);
+        box-sizing: border-box;
+        padding: 8px 12px;
+        min-height: 38px;
+        margin: 5px 0;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.04);
+        backdrop-filter: blur(10px) saturate(120%);
+        -webkit-backdrop-filter: blur(10px) saturate(120%);
+        border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.12));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 4px rgba(0, 0, 0, 0.05);
+        color: var(--pt-text, var(--SmartThemeBodyColor, inherit));
+        transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
       }
-      .pt-regex-grouping-root .${HEADER_CLASS} .pt-regex-group-actions { margin-left: auto; gap: 4px; align-items: center; }
-      .pt-regex-grouping-root .${HEADER_CLASS} .pt-regex-group-actions .menu_button {
+      .pt-regex-grouping-root .${HEADER_CLASS}:hover {
+        background: rgba(255, 255, 255, 0.07);
+        border-color: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.22));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 3px 8px rgba(0, 0, 0, 0.08);
+        filter: brightness(1.04);
+      }
+      .pt-regex-grouping-root .${HEADER_CLASS} .pt-regex-group-toggle {
         padding: 2px 6px;
-        min-width: 28px;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        opacity: 0.8;
+      }
+      .pt-regex-grouping-root .${HEADER_CLASS} .pt-regex-group-count {
+        padding: 1px 7px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        opacity: 0.8;
+        font-size: 11.5px;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      .pt-regex-grouping-root .${HEADER_CLASS} .pt-regex-group-actions {
+        margin-left: auto;
+        gap: 4px;
+        align-items: center;
+      }
+      .pt-regex-grouping-root .${HEADER_CLASS} .pt-regex-group-actions .menu_button {
+        padding: 3px 6px;
+        min-width: 26px;
+        height: 24px;
         line-height: 1;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        opacity: 0.75;
+        transition: all 0.15s ease;
+      }
+      .pt-regex-grouping-root .${HEADER_CLASS} .pt-regex-group-actions .menu_button:hover {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.08);
+        border-color: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.25));
       }
       .pt-regex-grouping-root .${HEADER_CLASS} .pt-regex-group-actions .menu_button i,
       .pt-regex-grouping-root .${HEADER_CLASS} .pt-regex-group-actions .menu_button span {
@@ -167,16 +214,13 @@ function createGroupHeader(group, count, collapsed, scope, { anyDisabled = false
     <div class="${HEADER_CLASS} flex-container flexnowrap" data-pt-group-id="${escapeAttr(group.id)}" data-pt-group-scope="${escapeAttr(scope)}" style="
       align-items: center;
       gap: 8px;
-      padding: 6px 8px;
-      margin: 6px 0;
-      border-radius: 8px;
     ">
       <span class="drag-handle menu-handle" title="拖动分组">&#9776;</span>
-      <span class="pt-regex-group-toggle menu_button" style="padding: 2px 8px;" title="展开/收起">
+      <span class="pt-regex-group-toggle menu_button" title="展开/收起">
         <i class="fa-solid ${toggleIcon}"></i>
       </span>
       <span class="pt-regex-group-name flexGrow overflow-hidden" style="font-weight: 600;">${name}</span>
-      <span class="pt-regex-group-count" style="opacity: .75; font-size: 12px; white-space: nowrap;">${count}</span>
+      <span class="pt-regex-group-count">${count}</span>
       <div class="pt-regex-group-actions flex-container flexnowrap">
         <label class="checkbox flex-container pt-regex-group-enable-toggle" title="启用/禁用分组">
           <input type="checkbox" class="disable_regex pt-regex-group-disable" ${checkedAttr} />

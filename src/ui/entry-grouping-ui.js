@@ -925,16 +925,10 @@ function showPresetGroupHeaderMenu($groupHeader, { presetName, groupIndex, group
       left: ${rect.right}px;
       top: ${rect.bottom + 4}px;
       --pt-theme-font-size: ${vars.themeFontSize};
-      --pt-entry-more-bg: ${vars.bgColor};
-      --pt-entry-more-border: ${vars.borderColor};
-      --pt-entry-more-text: ${vars.textColor};
-      --pt-entry-more-hover-bg: ${vars.sectionBg};
-      --pt-entry-more-radius: ${vars.borderRadiusSmall};
-      --pt-entry-more-padding-y: calc(var(--pt-theme-font-size) * 0.5);
-      --pt-entry-more-padding-x: calc(var(--pt-theme-font-size) * 0.625);">
+      --pt-entry-more-text: ${vars.textColor};">
       <button type="button" class="pt-entry-group-more-action pt-entry-group-rename-action">\u91cd\u547d\u540d\u5206\u7ec4</button>
       <button type="button" class="pt-entry-group-more-action pt-entry-group-delete-action" style="
-        border-top: 1px solid ${vars.borderColor};">\u89e3\u9664\u5206\u7ec4</button>
+        border-top: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.1));">\u89e3\u9664\u5206\u7ec4</button>
     </div>
   `);
 
@@ -950,10 +944,6 @@ function showPresetGroupHeaderMenu($groupHeader, { presetName, groupIndex, group
   });
 
   menu.on('pointerdown mousedown click', (e) => e.stopPropagation());
-  menu.find('.pt-entry-group-more-action').hover(
-    function () { $(this).css('background', vars.sectionBg); },
-    function () { $(this).css('background', 'transparent'); },
-  );
 
   menu.find('.pt-entry-group-rename-action').on('click', () => {
     closePresetGroupHeaderMenu();
@@ -1013,10 +1003,31 @@ function bindTripleClickEvents() {
   items.each(function(index) {
     const $item = $(this);
     $item.on('click.grouping', function(e) {
-      // 忽略按钮点击
+      // 忽略按钮与控件区域点击
       const $target = $(e.target);
-      if ($target.closest('.prompt-manager-toggle-action, .prompt-manager-edit-action, .prompt-manager-detach-action, .prompt-manager-inspect-action, .pt-entry-more-btn, .pt-entry-more-menu, .pt-entry-group-more-btn, .pt-entry-group-more-menu, .group-edit-btn, .group-clear-btn').length) {
+      if ($target.closest('.prompt_manager_prompt_controls, .prompt-manager-toggle-action, .prompt-manager-edit-action, .prompt-manager-detach-action, .prompt-manager-inspect-action, .pt-entry-more-btn, .pt-entry-more-menu, .pt-entry-group-more-btn, .pt-entry-group-more-menu, .pt-entry-group-edit-btn, .pt-entry-group-clear-btn, .group-edit-btn, .group-clear-btn').length) {
         return;
+      }
+
+      // 坐标防御：如果点击坐标位于条目右侧控件区（防止部分美化主题设置的伪元素/遮罩层将事件目标拦截为 li）
+      const controlsEl = $item.find('.prompt_manager_prompt_controls')[0];
+      if (controlsEl && typeof e.clientX === 'number' && typeof e.clientY === 'number') {
+        const cRect = controlsEl.getBoundingClientRect();
+        if (cRect.width > 0 && cRect.height > 0) {
+          if (
+            e.clientX >= cRect.left - 12 &&
+            e.clientX <= cRect.right + 12 &&
+            e.clientY >= cRect.top - 8 &&
+            e.clientY <= cRect.bottom + 8
+          ) {
+            // 如果用户点击了控件区域但被美化遮罩层拦截在 li 上，代为触发原生开关点击
+            const $toggle = $item.find('.prompt-manager-toggle-action');
+            if ($toggle.length) {
+              $toggle.trigger('click');
+            }
+            return;
+          }
+        }
       }
 
       if (clickTimer) clearTimeout(clickTimer);
@@ -1071,13 +1082,10 @@ function showGroupingMenu($item, x, y) {
 
   const menu = $(`
     <div class="entry-grouping-menu" style="
-      position: fixed; left: ${x}px; top: ${y}px;
-      background: ${vars.bgColor}; border: 1px solid ${vars.borderColor};
-      border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 10004; padding: 4px; min-width: 140px;">
-      <div class="menu-item set-start" style="padding: 8px 12px; cursor: pointer; border-radius: 4px; font-size: 14px;">设为分组开始</div>
-      <div class="menu-item set-end" style="padding: 8px 12px; cursor: pointer; border-radius: 4px; font-size: 14px;">设为分组结束</div>
-      ${hasMarks ? '<div class="menu-item clear-marks" style="padding: 8px 12px; cursor: pointer; border-radius: 4px; font-size: 14px; color: #ef4444;">清除标记</div>' : ''}
+      position: fixed; left: ${x}px; top: ${y}px;">
+      <div class="menu-item set-start">设为分组开始</div>
+      <div class="menu-item set-end">设为分组结束</div>
+      ${hasMarks ? '<div class="menu-item clear-marks" style="color: #ef4444;">清除标记</div>' : ''}
     </div>
   `);
 
@@ -1092,12 +1100,6 @@ function showGroupingMenu($item, x, y) {
   const menuRect = menu[0].getBoundingClientRect();
   if (menuRect.right > window.innerWidth) menu.css('left', (x - menuRect.width) + 'px');
   if (menuRect.bottom > window.innerHeight) menu.css('top', (y - menuRect.height) + 'px');
-
-  // 悬停效果
-  menu.find('.menu-item').hover(
-    function() { $(this).css('background', vars.sectionBg); },
-    function() { $(this).css('background', 'transparent'); }
-  );
 
   // 处理标记完成后的逻辑
   const handleMarkComplete = async (isStart) => {

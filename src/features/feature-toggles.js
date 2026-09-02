@@ -8,7 +8,7 @@ import {
   getDefaultRegexBindings,
   switchPresetRegexes,
 } from './regex-binding.js';
-import { initNativeEntryMoreBtns } from '../ui/native-entry-more-btn.js';
+import { initNativeEntryMoreBtns, destroyNativeEntryMoreBtns } from '../ui/native-entry-more-btn.js';
 import * as NativePanel from '../ui/native-panel.js';
 import * as EntryGroupingUI from '../ui/entry-grouping-ui.js';
 import * as RegexScriptGroupingUI from '../ui/regex-script-grouping-ui.js';
@@ -32,6 +32,7 @@ export function getTransferToolFeatureFlags() {
   return {
     entryStatesPanelEnabled: !!settings.entryStatesPanelEnabled,
     entryGroupingEnabled: !!settings.entryGroupingEnabled,
+    entryMoreBtnEnabled: settings.entryMoreBtnEnabled !== false,
     worldbookEntryGroupingEnabled: !!settings.worldbookEntryGroupingEnabled,
     worldbookGroupingEnabled: !!settings.worldbookGroupingEnabled,
     worldbookCommonEnabled: !!settings.worldbookCommonEnabled,
@@ -51,6 +52,12 @@ export function setEntryStatesPanelEnabled(enabled) {
 export function setEntryGroupingEnabled(enabled) {
   const settings = loadTransferSettings();
   settings.entryGroupingEnabled = !!enabled;
+  saveTransferSettings(settings);
+}
+
+export function setEntryMoreBtnEnabled(enabled) {
+  const settings = loadTransferSettings();
+  settings.entryMoreBtnEnabled = !!enabled;
   saveTransferSettings(settings);
 }
 
@@ -176,6 +183,10 @@ export function applyTransferToolFeatureToggles() {
     destroyPresetListGrouping?.('#settings_preset_openai');
   }
 
-  // Entry more button (copy entry + beautify regex)
-  initNativeEntryMoreBtns();
+  // Entry more button (copy entry + beautify regex + delete entry)
+  if (flags.entryMoreBtnEnabled) {
+    initNativeEntryMoreBtns();
+  } else {
+    destroyNativeEntryMoreBtns();
+  }
 }

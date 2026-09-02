@@ -5,8 +5,8 @@
   "optional": [],
   "js": "dist/index.js",
   "css": "dist/style.css",
-  "author": "\u5343\u79cb\u68a6",
-  "version": "1.6.2",
+  "author": "千秋梦",
+  "version": "1.6.3",
   "homePage": "https://github.com/Lorenzzz-Elio/preset-transfer",
   "description": "Powerful preset migration and management tool with entry transfer, state management, and regex binding."
 }

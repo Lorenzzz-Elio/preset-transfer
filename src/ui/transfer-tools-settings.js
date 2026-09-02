@@ -37,6 +37,7 @@ import {
   applyTransferToolFeatureToggles,
   getTransferToolFeatureFlags,
   setEntryGroupingEnabled,
+  setEntryMoreBtnEnabled,
   setEntryStatesPanelEnabled,
   setRegexBindingFeatureEnabled,
   setRegexScriptGroupingEnabled,
@@ -1030,6 +1031,10 @@ function renderPanel() {
                   <input id="pt-enable-entry-grouping" type="checkbox" style="accent-color: ${themeAccentColor};" />
                   <small>条目分组</small>
                 </label>
+                <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-entry-more-btn">
+                  <input id="pt-enable-entry-more-btn" type="checkbox" style="accent-color: ${themeAccentColor};" />
+                  <small>条目更多操作</small>
+                </label>
                 <label class="checkbox_label alignItemsCenter flexGap5" for="pt-enable-worldbook-grouping">
                   <input id="pt-enable-worldbook-grouping" type="checkbox" style="accent-color: ${themeAccentColor};" />
                   <small>世界书分组查看</small>
@@ -1165,6 +1170,7 @@ function syncUiFromFlags(flags) {
   $('#pt-enable-regex-binding').prop('checked', !!flags.regexBindingEnabled);
   $('#pt-enable-regex-script-grouping').prop('checked', !!flags.regexScriptGroupingEnabled);
   $('#pt-enable-entry-grouping').prop('checked', !!flags.entryGroupingEnabled);
+  $('#pt-enable-entry-more-btn').prop('checked', !!flags.entryMoreBtnEnabled);
   $('#pt-enable-worldbook-grouping').prop('checked', !!flags.worldbookGroupingEnabled);
   $('#pt-enable-worldbook-entry-grouping').prop('checked', !!flags.worldbookEntryGroupingEnabled);
   $('#pt-enable-worldbook-common').prop('checked', !!flags.worldbookCommonEnabled);
@@ -1296,6 +1302,13 @@ function bindEvents() {
     .off('input.pt')
     .on('input.pt', function () {
       setEntryGroupingEnabled($(this).prop('checked'));
+      applyTransferToolFeatureToggles();
+    });
+
+  $('#pt-enable-entry-more-btn')
+    .off('input.pt')
+    .on('input.pt', function () {
+      setEntryMoreBtnEnabled($(this).prop('checked'));
       applyTransferToolFeatureToggles();
     });
 
