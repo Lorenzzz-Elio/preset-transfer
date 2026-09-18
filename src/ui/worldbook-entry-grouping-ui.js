@@ -241,7 +241,10 @@ async function applyGroupingToList() {
 
       applyGroupVisibility($list, groupId, shouldExpand);
 
-      $header.find('.pt-entry-group-toggle, .pt-entry-group-name, .pt-entry-group-count').on('click', () => {
+      $header.on('click', (e) => {
+        if ($(e.target).closest('button, input, select, label, .menu_button, .pt-entry-group-edit-btn, .pt-entry-group-clear-btn, .pt-entry-group-toggle-all-btn').length) {
+          return;
+        }
         const nextExpanded = !$header.hasClass('is-expanded');
         $header.toggleClass('is-expanded', nextExpanded);
         applyGroupVisibility($list, groupId, nextExpanded);

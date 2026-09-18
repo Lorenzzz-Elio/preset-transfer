@@ -27,7 +27,6 @@ function hasNonDefaultPrefs(value) {
     'worldbookCommonEnabled',
     'regexScriptGroupingEnabled',
     'presetAutoMigrateOnImportEnabled',
-    'presetGitAutoUpdateEnabled',
   ];
   return keys.some((key) => Object.prototype.hasOwnProperty.call(value, key) && value[key] !== defaults[key]);
 }
@@ -49,8 +48,6 @@ function getDefaultSettings() {
     presetListGroupingEnabled: true,
     // Preset stitches automation
     presetAutoMigrateOnImportEnabled: true,
-    presetGitAutoUpdateEnabled: false,
-    presetGitSources: {},
     // Per-base stitch snapshot (single source-of-truth)
     presetStitchSnapshotEnabled: true,
     presetStitchStateByBase: {},

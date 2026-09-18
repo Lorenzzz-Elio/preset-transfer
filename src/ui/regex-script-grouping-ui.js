@@ -75,7 +75,9 @@ async function saveRegexScriptsByScope(scope, scripts) {
   try {
     const context = getSillyTavernContext();
     context?.saveSettingsDebounced?.();
-    void context?.reloadCurrentChat?.();
+    if (context?.characterId !== undefined || context?.groupId) {
+      void context?.reloadCurrentChat?.();
+    }
   } catch {
     /* ignore */
   }

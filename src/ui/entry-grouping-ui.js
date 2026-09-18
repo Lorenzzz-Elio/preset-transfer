@@ -874,7 +874,10 @@ function createGroupUI(groupItems, grouping, presetName, groupIndex) {
     groupWrapper.append(item);
   });
 
-  groupHeader.find('.pt-entry-group-toggle, .pt-entry-group-name, .pt-entry-group-count').on('click', () => {
+  groupHeader.on('click', (e) => {
+    if ($(e.target).closest('button, input, select, label, .menu_button, .pt-entry-group-more-btn, .pt-entry-group-toggle-all-btn').length) {
+      return;
+    }
     const wrapper = groupHeader.next('.pt-entry-group-wrapper');
     const willBeExpanded = !groupHeader.hasClass('is-expanded');
     groupHeader.toggleClass('is-expanded', willBeExpanded);

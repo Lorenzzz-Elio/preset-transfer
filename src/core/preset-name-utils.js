@@ -120,7 +120,6 @@ function arePresetsSameDifferentVersion(leftPresetName, rightPresetName, options
   }
 
   const leftSet = new Set(leftTokens);
-  const leftIsSubsetOfRight = leftTokens.length > 0 && leftTokens.every(t => rightSet.has(t));
   const rightIsSubsetOfLeft = rightTokens.length > 0 && rightTokens.every(t => leftSet.has(t));
   const normalizedContains =
     left.normalizedBase.includes(right.normalizedBase) || right.normalizedBase.includes(left.normalizedBase);
@@ -130,4 +129,38 @@ function arePresetsSameDifferentVersion(leftPresetName, rightPresetName, options
   return { match, similarity, left, right };
 }
 
-export { arePresetsSameDifferentVersion, extractPresetVersionInfo, normalizePresetBaseName };
+function normalizeVersion(version) {
+  if (typeof version !== 'string') return '';
+  return version.trim().replace(/^[vV]/, '').trim();
+}
+
+function parseVersionParts(version) {
+  const normalized = normalizeVersion(version);
+  const match = normalized.match(/^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?/);
+  if (!match) return null;
+  return [
+    parseInt(match[1] ?? '0', 10),
+    parseInt(match[2] ?? '0', 10),
+    parseInt(match[3] ?? '0', 10),
+    parseInt(match[4] ?? '0', 10),
+  ];
+}
+
+function compareVersions(a, b) {
+  const pa = parseVersionParts(a);
+  const pb = parseVersionParts(b);
+  if (!pa || !pb) return 0;
+  for (let i = 0; i < 4; i++) {
+    if (pa[i] > pb[i]) return 1;
+    if (pa[i] < pb[i]) return -1;
+  }
+  return 0;
+}
+
+export {
+  arePresetsSameDifferentVersion,
+  compareVersions,
+  extractPresetVersionInfo,
+  normalizePresetBaseName,
+  normalizeVersion,
+};

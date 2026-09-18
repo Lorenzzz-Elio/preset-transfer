@@ -110,12 +110,29 @@ function filterByEnableState(list, enableState) {
 // (`reloadCurrentChat` -> `chatLoaded` -> message render events) to rebuild their DOM/iframes.
 // Preset Transfer historically only rerendered visible messages, which can leave those renderers
 // stuck showing the original code block source. Provide a native-like reload pathway.
+function hasActiveChat(ctx) {
+  if (!ctx) return false;
+  if (ctx.characterId !== undefined && ctx.characterId !== null && ctx.characterId !== '') {
+    return true;
+  }
+  if (ctx.groupId) {
+    return true;
+  }
+  return false;
+}
+
 let reloadChatTimer = null;
 let reloadChatPromise = null;
 let reloadChatResolve = null;
 function requestReloadCurrentChat(context) {
   const ctx = context ?? getSillyTavernContext();
   if (typeof ctx?.reloadCurrentChat !== 'function') return null;
+
+  // If no chat or character is loaded yet, calling reloadCurrentChat triggers ST's resetChatState()
+  // which replaces the chat with SAFETY_CHAT. Prevent this reload.
+  if (!hasActiveChat(ctx)) {
+    return null;
+  }
 
   if (!reloadChatPromise) {
     reloadChatPromise = new Promise(resolve => {
@@ -131,7 +148,9 @@ function requestReloadCurrentChat(context) {
     reloadChatTimer = null;
 
     try {
-      await ctx.reloadCurrentChat();
+      if (hasActiveChat(ctx)) {
+        await ctx.reloadCurrentChat();
+      }
     } catch {
       /* ignore */
     } finally {
@@ -175,6 +194,35 @@ export async function updateGlobalTavernRegexesWithNative(updater) {
       delete st.script_name;
       return st;
     });
+
+  // Check if settings.regex actually changed before mutating or reloading
+  const isUnchanged = (() => {
+    if (!Array.isArray(settings.regex)) return false;
+    if (settings.regex.length !== toSave.length) return false;
+    for (let i = 0; i < toSave.length; i++) {
+      const a = settings.regex[i];
+      const b = toSave[i];
+      if (!a || !b) return false;
+      if (String(a.id ?? '') !== String(b.id ?? '')) return false;
+      if (Boolean(a.disabled) !== Boolean(b.disabled)) return false;
+      if (String(a.scriptName ?? '') !== String(b.scriptName ?? '')) return false;
+      if (String(a.findRegex ?? '') !== String(b.findRegex ?? '')) return false;
+      if (String(a.replaceString ?? '') !== String(b.replaceString ?? '')) return false;
+      if (Boolean(a.markdownOnly) !== Boolean(b.markdownOnly)) return false;
+      if (Boolean(a.promptOnly) !== Boolean(b.promptOnly)) return false;
+      if (Boolean(a.runOnEdit) !== Boolean(b.runOnEdit)) return false;
+      if (Number(a.substituteRegex ?? 0) !== Number(b.substituteRegex ?? 0)) return false;
+      if (a.minDepth !== b.minDepth) return false;
+      if (a.maxDepth !== b.maxDepth) return false;
+      if (JSON.stringify(a.placement ?? []) !== JSON.stringify(b.placement ?? [])) return false;
+      if (JSON.stringify(a.trimStrings ?? []) !== JSON.stringify(b.trimStrings ?? [])) return false;
+    }
+    return true;
+  })();
+
+  if (isUnchanged) {
+    return getGlobalTavernRegexesNative({ scope: 'global', enable_state: 'all' });
+  }
 
   // Keep the original array + item references (by id) so existing consumers
   // see updates immediately without needing a refresh/reload.
