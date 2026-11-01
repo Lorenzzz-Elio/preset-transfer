@@ -1,4 +1,5 @@
 import { loadTransferSettings, saveTransferSettings } from '../settings/settings-manager.js';
+import { notify } from '../core/notify.js';
 import * as SnapshotStorage from './snapshot-storage.js';
 
 const MIGRATION_FLAG_KEY = 'presetStitchSnapshotMigrated';
@@ -73,12 +74,10 @@ async function checkAndMigrate() {
     const message = `已自动迁移 ${result.success} 个快照到 IndexedDB`;
     console.info(`[PresetTransfer] ${message}`);
 
-    if (window.toastr) {
-      if (result.failed > 0) {
-        window.toastr.warning(`${message}（${result.failed} 个失败）`);
-      } else {
-        window.toastr.success(message);
-      }
+    if (result.failed > 0) {
+      notify.warning(`${message}（${result.failed} 个失败）`);
+    } else {
+      notify.success(message);
     }
 
     return result;

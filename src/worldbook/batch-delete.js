@@ -1,3 +1,4 @@
+import { notify } from '../core/notify.js';
 import {
   debounce,
   ensureViewportCssVars,
@@ -457,7 +458,7 @@ async function createWorldbookBatchManageModal() {
   $('#execute-batch-delete').on('click', async function () {
     const selectedWorldbooks = getSelectedWorldbooks();
     if (!selectedWorldbooks.length) {
-      alert('请选择要删除的世界书');
+      notify.warning('请选择要删除的世界书');
       return;
     }
 
@@ -475,7 +476,7 @@ async function createWorldbookBatchManageModal() {
 
       if (errors.length > 0) {
         const failCount = results.filter((r) => !r.success).length;
-        alert(`删除完成，但有 ${failCount} 个失败:\n${errors.join('\n')}`);
+        notify.error(`删除完成，但有 ${failCount} 个失败:\n${errors.join('\n')}`);
       }
 
       worldbookNames = await listWorldbooks();
@@ -499,7 +500,7 @@ async function createWorldbookBatchManageModal() {
       rightSelect.trigger('change');
     } catch (error) {
       console.error('批量删除失败:', error);
-      alert('批量删除失败: ' + (error?.message ?? error));
+      notify.error('批量删除失败: ' + (error?.message ?? error));
     } finally {
       $button.prop('disabled', false).text(originalText);
     }

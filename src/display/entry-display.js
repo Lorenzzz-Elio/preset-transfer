@@ -1,3 +1,4 @@
+import { notify } from '../core/notify.js';
 import { NEW_FIELD_DEFAULTS } from '../core/constants.js';
 import { escapeAttr, escapeHtml, getCurrentApiInfo, getJQuery, getParentWindow } from '../core/utils.js';
 import { executeMoveToPosition } from '../operations/copy-move.js';
@@ -19,6 +20,8 @@ import {
 } from '../features/favorite-entries.js';
 import {
   applyGroupDisplayToRenderedEntries,
+  bindGroupEventsForTransfer,
+  renderGroupedEntriesHtmlForTransfer,
   rememberTransferPanelState,
   restoreTransferPanelScrollState,
 } from './entry-group-display.js';
@@ -48,7 +51,7 @@ async function commitWorldbookPickTarget(side) {
   }
 
   if (!targetContainer) {
-    if (window.toastr) toastr.warning('请选择目标世界书');
+    notify.warning('请选择目标世界书');
     return;
   }
 
@@ -64,10 +67,10 @@ async function commitWorldbookPickTarget(side) {
     });
 
     await loadAndDisplayEntries(payload.apiInfo);
-    if (window.toastr) toastr.success(`已转移到目标世界书: ${targetContainer}`);
+    notify.success(`已转移到目标世界书: ${targetContainer}`);
   } catch (error) {
     console.error('世界书转移失败:', error);
-    if (window.toastr) toastr.error('转移失败: ' + error.message);
+    notify.error('转移失败: ' + error.message);
   } finally {
     window.ptWorldbookPickTarget = null;
     $('#left-side, #right-side').removeClass('transfer-target');
@@ -85,14 +88,14 @@ function resolveContainerName(side, options = {}) {
   if (side === 'favorites') return String(window.ptFavoriteContainerName ?? '').trim();
   return '';
 }
-async function loadAndDisplayEntries(apiInfo) {
+async function loadAndDisplayEntries(apiInfo, targetSide = 'both') {
   const $ = getJQuery();
   const leftPreset = $('#left-preset').val();
   const rightPreset = $('#right-preset').val();
 
   // 检查是否至少选择了一个预设
   if (!leftPreset && !rightPreset) {
-    alert('请至少选择一个预设');
+    notify.warning('请至少选择一个预设');
     return;
   }
 
@@ -102,7 +105,7 @@ async function loadAndDisplayEntries(apiInfo) {
   if (isSingleMode) {
     await loadSinglePresetMode(apiInfo, leftPreset || rightPreset);
   } else {
-    await loadDualPresetMode(apiInfo, leftPreset, rightPreset);
+    await loadDualPresetMode(apiInfo, leftPreset, rightPreset, targetSide);
   }
 }
 
@@ -140,11 +143,11 @@ async function loadSinglePresetMode(apiInfo, presetName) {
     window.newEntryMode = null;
   } catch (error) {
     console.error('加载条目失败:', error);
-    alert('加载条目失败: ' + error.message);
+    notify.error('加载条目失败: ' + error.message);
   }
 }
 
-async function loadDualPresetMode(apiInfo, leftPreset, rightPreset) {
+async function loadDualPresetMode(apiInfo, leftPreset, rightPreset, targetSide = 'both') {
   const $ = getJQuery();
   const leftDisplayMode = $('#left-display-mode').val();
   const rightDisplayMode = $('#right-display-mode').val();
@@ -154,32 +157,39 @@ async function loadDualPresetMode(apiInfo, leftPreset, rightPreset) {
     const adapter = getActiveTransferAdapter();
     const engine = getTransferEngine();
 
+    const shouldLoadLeft = targetSide === 'both' || targetSide === 'left';
+    const shouldLoadRight = targetSide === 'both' || targetSide === 'right';
+
     // 加载左侧条目
-    if (leftPreset) {
-      const leftEntries = await engine.getEntries(apiInfo, leftPreset, leftDisplayMode);
-      window.leftEntries = leftEntries;
-      window.leftPresetData = null;
-      displayEntries(leftEntries, 'left');
-      $('#left-preset-title').text(`左侧预设: ${leftPreset}`);
-    } else {
-      window.leftEntries = [];
-      window.leftPresetData = null;
-      displayEntries([], 'left');
-      $('#left-preset-title').text('左侧预设: 未选择');
+    if (shouldLoadLeft) {
+      if (leftPreset) {
+        const leftEntries = await engine.getEntries(apiInfo, leftPreset, leftDisplayMode);
+        window.leftEntries = leftEntries;
+        window.leftPresetData = null;
+        displayEntries(leftEntries, 'left');
+        $('#left-preset-title').text(`左侧预设: ${leftPreset}`);
+      } else {
+        window.leftEntries = [];
+        window.leftPresetData = null;
+        displayEntries([], 'left');
+        $('#left-preset-title').text('左侧预设: 未选择');
+      }
     }
 
     // 加载右侧条目
-    if (rightPreset) {
-      const rightEntries = await engine.getEntries(apiInfo, rightPreset, rightDisplayMode);
-      window.rightEntries = rightEntries;
-      window.rightPresetData = null;
-      displayEntries(rightEntries, 'right');
-      $('#right-preset-title').text(`右侧预设: ${rightPreset}`);
-    } else {
-      window.rightEntries = [];
-      window.rightPresetData = null;
-      displayEntries([], 'right');
-      $('#right-preset-title').text('右侧预设: 未选择');
+    if (shouldLoadRight) {
+      if (rightPreset) {
+        const rightEntries = await engine.getEntries(apiInfo, rightPreset, rightDisplayMode);
+        window.rightEntries = rightEntries;
+        window.rightPresetData = null;
+        displayEntries(rightEntries, 'right');
+        $('#right-preset-title').text(`右侧预设: ${rightPreset}`);
+      } else {
+        window.rightEntries = [];
+        window.rightPresetData = null;
+        displayEntries([], 'right');
+        $('#right-preset-title').text('右侧预设: 未选择');
+      }
     }
 
     // 显示双预设界面，隐藏单预设界面
@@ -215,7 +225,7 @@ async function loadDualPresetMode(apiInfo, leftPreset, rightPreset) {
     window.newEntryMode = null;
   } catch (error) {
     console.error('加载条目失败:', error);
-    alert('加载条目失败: ' + error.message);
+    notify.error('加载条目失败: ' + error.message);
   }
 }
 
@@ -355,105 +365,40 @@ function displayEntries(entries, side, options = {}) {
        </div>
    </div>`;
 
-  const applyPresetEntryGrouping = () => {
-    if (!shouldPreserveTransferViewport) return;
-    setTimeout(() => {
-      applyGroupDisplayToRenderedEntries(entriesList, entries, side, containerName);
-      restoreTransferPanelScrollState(entriesList, side, containerName);
-    }, 100);
-  };
-
-  if (entries.length > 260) {
-    const topHtml = renderPositionItem('top', '📍 插入到顶部');
-    const bottomHtml = renderPositionItem('bottom', '📍 插入到底部');
-    const hostId = `pt-${side}-entries-chunk-host`;
-
-    const containerParts = [];
-    if (renderPositions) containerParts.push(topHtml);
-    containerParts.push(`<div id="${hostId}"></div>`);
-    if (renderPositions) containerParts.push(bottomHtml);
-    entriesList.html(containerParts.join(''));
-    const host = entriesList.find(`#${hostId}`);
-
-    const buildDetailsText = (entry) => {
-      const role = entry?.role || 'system';
-      const position = entry?.injection_position || 'relative';
-      const depth = entry?.injection_depth ?? 4;
-      const order = entry?.injection_order ?? 100;
-      const triggers = entry?.injection_trigger?.join(', ') || '无';
-      return `${role} | ${position} | ${depth} | ${order} | ${triggers}`;
-    };
-
-    const renderEntryItem = (entry, index) => `
-         <div class="entry-item" data-index="${index}" data-side="${side}" data-identifier="${escapeAttr(resolveEntryKey(entry))}" style="border-color: ${
-      vars.inputBorder
-    }; background: ${vars.inputBg}; transition: all 0.3s ease; cursor: pointer; position: relative; display: flex; align-items: center; padding: ${
-      isSmallScreen ? '8px 6px' : isMobile ? '8px 8px' : '12px 14px'
-    }; margin-bottom: ${isMobile ? '6px' : '6px'}; border: 1px solid ${vars.inputBorder}; border-radius: 8px; min-height: ${
-      isMobile ? '32px' : '40px'
-    };">
-             <input type="checkbox" class="entry-checkbox" style="margin-right: ${isMobile ? '8px' : '10px'}; width: ${
-      isMobile ? '14px' : '14px'
-    }; height: ${isMobile ? '14px' : '14px'}; accent-color: ${vars.accentColor}; cursor: pointer; position: relative; z-index: 10;">
-              <div style="flex: 1; ${isMobile ? 'min-width: 0;' : ''}">
-                  <div class="entry-name" style="font-weight: 600; color: ${vars.textColor}; font-size: ${
-       isSmallScreen
-         ? 'calc(var(--pt-font-size) * 0.6875)'
-         : isMobile
-         ? 'calc(var(--pt-font-size) * 0.75)'
-         : 'calc(var(--pt-font-size) * 0.8125)'
-    }; word-break: break-word; line-height: 1.2;">${renderWorldbookTriggerDot(entry)}${renderEntryTitle(entry)}</div>
-                  ${
-                    isMobile
-                      ? ''
-                      : `<div class="entry-details" style="font-size: calc(var(--pt-font-size) * 0.75); color: ${vars.tipColor}; line-height: 1.4; margin-top: 2px;">${escapeHtml(buildDetailsText(entry))}</div>`
-                  }
-             </div>
-             ${renderFavoriteButton(entry, index)}
-             ${renderCreateButtons ? `<button class="create-here-btn" data-entry-index="${index}" data-entry-side="${side}" title="在此处新建">
-                 ${createNewIcon()}
-             </button>` : ''}
-         </div>`;
-
-    const chunkSize = isMobile ? 60 : 160;
-    let startIndex = 0;
-    let worldbookFavoriteIds = null;
-    const renderChunk = () => {
-      const endIndex = Math.min(entries.length, startIndex + chunkSize);
-      let html = '';
-      for (let i = startIndex; i < endIndex; i += 1) {
-        html += renderEntryItem(entries[i], i);
-      }
-      host.append(html);
-      if (worldbookFavoriteIds) {
-        syncFavoriteButtons(worldbookFavoriteIds);
-      }
-      startIndex = endIndex;
-      if (startIndex < entries.length) {
-        requestAnimationFrame(renderChunk);
-        return;
-      }
-
-      applyPresetEntryGrouping();
-    };
-
-    renderChunk();
-    bindEntryListEvents();
-
-    if (supportsFavorites && adapter?.id === 'worldbook' && containerName) {
-      getFavoriteIdsForContainer(adapter.id, containerName)
-        .then(ids => {
-          worldbookFavoriteIds = ids;
-          syncFavoriteButtons(ids);
-        })
-        .catch(() => null);
-    } else if (favoriteIds) {
-      syncFavoriteButtons(favoriteIds);
-    } else if (favoriteIdsByContainer) {
-      syncFavoriteButtons(favoriteIdsByContainer);
-    }
-    return;
-  }
+  const renderEntryItem = (entry, index) => `
+       <div class="entry-item" data-index="${index}" data-side="${side}" data-identifier="${escapeAttr(resolveEntryKey(entry))}" style="border-color: ${
+    vars.inputBorder
+  }; background: ${vars.inputBg}; transition: all 0.3s ease; cursor: pointer; position: relative; display: flex; align-items: center; padding: ${
+    isSmallScreen ? '8px 6px' : isMobile ? '8px 8px' : '12px 14px'
+  }; margin-bottom: ${isMobile ? '6px' : '6px'}; border: 1px solid ${vars.inputBorder}; border-radius: 8px; min-height: ${
+    isMobile ? '32px' : '40px'
+  };">
+           <input type="checkbox" class="entry-checkbox" style="margin-right: ${isMobile ? '8px' : '10px'}; width: ${
+    isMobile ? '14px' : '14px'
+  }; height: ${isMobile ? '14px' : '14px'}; accent-color: ${vars.accentColor}; cursor: pointer; position: relative; z-index: 10;">
+            <div style="flex: 1; ${isMobile ? 'min-width: 0;' : ''}">
+                <div class="entry-name" style="font-weight: 600; color: ${vars.textColor}; font-size: ${
+      isSmallScreen
+        ? 'calc(var(--pt-font-size) * 0.6875)'
+        : isMobile
+        ? 'calc(var(--pt-font-size) * 0.75)'
+        : 'calc(var(--pt-font-size) * 0.8125)'
+  }; word-break: break-word; line-height: 1.2;">${renderWorldbookTriggerDot(entry)}${renderEntryTitle(entry)}${
+      entry.isUninserted
+        ? ' <span style="color: ' + vars.accentColor + '; font-size: calc(var(--pt-font-size) * 0.625);">🔸未插入</span>'
+        : ''
+  }</div>
+                ${
+                  isMobile
+                    ? ''
+                    : `<div class="entry-details" style="font-size: calc(var(--pt-font-size) * 0.75); color: ${vars.tipColor}; line-height: 1.4; margin-top: 2px;">${escapeHtml(buildDetailsText(entry))}</div>`
+                }
+           </div>
+           ${renderFavoriteButton(entry, index)}
+           ${renderCreateButtons ? `<button class="create-here-btn" data-entry-index="${index}" data-entry-side="${side}" title="在此处新建">
+               ${createNewIcon()}
+           </button>` : ''}
+       </div>`;
 
   const entriesHtmlParts = [];
   if (renderPositions) {
@@ -471,54 +416,13 @@ function displayEntries(entries, side, options = {}) {
       );
     }
   } else {
-    entriesHtmlParts.push(
-      ...entries.map(
-        (entry, index) => `
-         <div class="entry-item" data-index="${index}" data-side="${side}" data-identifier="${escapeAttr(resolveEntryKey(entry))}" style="border-color: ${vars.inputBorder}; background: ${
-            vars.inputBg
-          }; transition: all 0.3s ease; cursor: pointer; position: relative; display: flex; align-items: center; padding: ${
-            isSmallScreen ? '8px 6px' : isMobile ? '8px 8px' : '12px 14px'
-          }; margin-bottom: ${isMobile ? '6px' : '6px'}; border: 1px solid ${
-            vars.inputBorder
-          }; border-radius: 8px; min-height: ${isMobile ? '32px' : '40px'};">
-             <input type="checkbox" class="entry-checkbox" style="margin-right: ${isMobile ? '8px' : '10px'}; width: ${
-            isMobile ? '14px' : '14px'
-          }; height: ${isMobile ? '14px' : '14px'}; accent-color: ${
-            vars.accentColor
-          }; cursor: pointer; position: relative; z-index: 10;">
-             <div style="flex: 1; ${isMobile ? 'min-width: 0;' : ''}">
-                  <div class="entry-name" style="font-weight: 600; color: ${vars.textColor}; font-size: ${
-             isSmallScreen
-               ? 'calc(var(--pt-font-size) * 0.6875)'
-               : isMobile
-               ? 'calc(var(--pt-font-size) * 0.75)'
-               : 'calc(var(--pt-font-size) * 0.8125)'
-          }; word-break: break-word; line-height: 1.2;">${renderWorldbookTriggerDot(entry)}${renderEntryTitle(entry)}${
-             entry.isUninserted
-               ? ' <span style="color: ${vars.accentColor}; font-size: calc(var(--pt-font-size) * 0.625);">🔸未插入</span>'
-               : ''
-           }</div>
-                 ${
-                   isMobile
-                     ? ''
-                     : `<div class="entry-details" style="font-size: calc(var(--pt-font-size) * 0.75); color: ${
-                          vars.tipColor
-                        }; line-height: 1.4; margin-top: 2px;">
-                     <span>👤 ${escapeHtml(entry.role || 'system')}</span>
-                     <span style="margin-left: 8px;">📍 ${escapeHtml(entry.injection_position || 'relative')}</span>
-                     <span style="margin-left: 8px;">🔢 ${escapeHtml(entry.injection_depth ?? 4)}</span>
-                     <span style="margin-left: 8px;">#️⃣ ${escapeHtml(entry.injection_order ?? 100)}</span>
-                     <span style="margin-left: 8px;">⚡️ ${escapeHtml(entry.injection_trigger?.join(', ') || '无')}</span>
-                 </div>`
-                 }
-             </div>
-             ${renderFavoriteButton(entry, index)}
-             ${renderCreateButtons ? `<button class="create-here-btn" data-entry-index="${index}" data-entry-side="${side}" title="在此处新建">
-                 ${createNewIcon()}
-             </button>` : ''}
-         </div>`,
-      ),
-    );
+    if (shouldPreserveTransferViewport) {
+      entriesHtmlParts.push(renderGroupedEntriesHtmlForTransfer(entries, side, containerName, renderEntryItem));
+    } else {
+      entries.forEach((entry, index) => {
+        entriesHtmlParts.push(renderEntryItem(entry, index));
+      });
+    }
   }
 
   if (renderPositions) {
@@ -526,36 +430,10 @@ function displayEntries(entries, side, options = {}) {
   }
 
   const entriesHtml = entriesHtmlParts.join('');
-
   entriesList.html(entriesHtml);
-
-  // Normalize entry detail line: system | relative | 4 | 100 | 无
-  // This keeps the original markup structure but strips emoji icons
-  // and joins the key attributes with a simple separator for readability.
-  entriesList.find('.entry-details').each(function () {
-    const $detail = $(this);
-    const spans = $detail.find('span');
-    if (spans.length < 5) return;
-
-    const cleanText = index => {
-      const text = spans.eq(index).text().trim();
-      // Remove a leading symbol (emoji etc.) plus following spaces, if present.
-      return text.replace(/^\S+\s+/, '').trim();
-    };
-
-    const role = cleanText(0) || 'system';
-    const position = cleanText(1) || 'relative';
-    const depth = cleanText(2) || '4';
-    const order = cleanText(3) || '100';
-    const triggerRaw = cleanText(4);
-    const triggers = triggerRaw || '无';
-
-    $detail.text(`${role} | ${position} | ${depth} | ${order} | ${triggers}`);
-  });
 
   // 绑定事件
   function bindEntryListEvents() {
-  setTimeout(() => {
     const parentJQuery = getParentWindow().$;
     const entriesContainer = parentJQuery(containerSelector);
 
@@ -584,11 +462,7 @@ function displayEntries(entries, side, options = {}) {
         updateFavoriteButtonState($btn, nextState);
       } catch (error) {
         console.error('收藏切换失败:', error);
-        if (window.toastr) {
-          toastr.error('收藏切换失败: ' + (error?.message ?? error));
-        } else {
-          alert('收藏切换失败: ' + (error?.message ?? error));
-        }
+        notify.error('收藏切换失败: ' + (error?.message ?? error));
       }
     });
 
@@ -697,13 +571,13 @@ function displayEntries(entries, side, options = {}) {
       }
 
       if (!presetName) {
-        alert('请先选择目标预设');
+        notify.warning('请先选择目标预设');
         return;
       }
 
       const apiInfo = getCurrentApiInfo();
       if (!apiInfo) {
-        alert('无法获取API信息');
+        notify.error('无法获取API信息');
         return;
       }
 
@@ -743,24 +617,22 @@ function displayEntries(entries, side, options = {}) {
         },
       )
         .then(() => {
-          if (window.toastr) {
-            toastr.success('已在此处新建空白条目');
-          }
-          loadAndDisplayEntries(apiInfo);
+          notify.success('已在此处新建空白条目');
+          loadAndDisplayEntries(apiInfo, side);
         })
         .catch(error => {
           console.error('在此处新建失败:', error);
-          if (window.toastr) {
-            toastr.error('在此处新建失败: ' + error.message);
-          } else {
-            alert('在此处新建失败: ' + error.message);
-          }
+          notify.error('在此处新建失败: ' + error.message);
         });
     });
-  }, 50);
   }
 
   bindEntryListEvents();
+
+  if (shouldPreserveTransferViewport) {
+    bindGroupEventsForTransfer(entriesList);
+    restoreTransferPanelScrollState(entriesList, side, containerName);
+  }
 
   if (supportsFavorites && adapter?.id === 'worldbook' && containerName) {
     getFavoriteIdsForContainer(adapter.id, containerName)
@@ -771,9 +643,6 @@ function displayEntries(entries, side, options = {}) {
   } else if (favoriteIdsByContainer) {
     syncFavoriteButtons(favoriteIdsByContainer);
   }
-
-  // 应用分组显示（如果有分组配置）
-  applyPresetEntryGrouping();
 }
 
 // 统一获取当前侧已选中的条目（优先按 identifier 对应，保证顺序稳定）
@@ -835,4 +704,98 @@ function getSelectedEntries(side, options = {}) {
   return selected;
 }
 
-export { commitWorldbookPickTarget, displayEntries, getSelectedEntries, loadAndDisplayEntries, loadDualPresetMode, loadSinglePresetMode };
+
+function buildDetailsText(entry) {
+  const role = entry?.role || 'system';
+  const position = entry?.injection_position || 'relative';
+  const depth = entry?.injection_depth ?? 4;
+  const order = entry?.injection_order ?? 100;
+  const triggers = entry?.injection_trigger?.join(', ') || '无';
+  return role + ' | ' + position + ' | ' + depth + ' | ' + order + ' | ' + triggers;
+}
+
+function updateRenderedEntryInPlace(side, originalEntry, updatedEntry) {
+  const $ = getJQuery();
+  const listSelector = side === 'single' ? '#single-entries-list' : `#${side}-entries-list`;
+  const $list = $(listSelector);
+  if (!$list.length) return false;
+
+  const entriesKey = side === 'single' ? 'singleEntries' : `${side}Entries`;
+  const entries = window[entriesKey];
+
+  let entryIndex = -1;
+  if (Array.isArray(entries)) {
+    entryIndex = entries.findIndex(e =>
+      (e.identifier && originalEntry.identifier && e.identifier === originalEntry.identifier) ||
+      (e.name && originalEntry.name && e.name === originalEntry.name)
+    );
+    if (entryIndex !== -1) {
+      entries[entryIndex] = { ...entries[entryIndex], ...updatedEntry };
+    }
+  }
+
+  const originalKey = originalEntry.identifier || originalEntry.name;
+  let $item = $list.find(`.entry-item[data-identifier="${escapeAttr(originalKey)}"]`);
+  if (!$item.length && entryIndex !== -1) {
+    $item = $list.find(`.entry-item[data-index="${entryIndex}"]`);
+  }
+  if (!$item.length) {
+    return false;
+  }
+
+  const newKey = updatedEntry.identifier || updatedEntry.name || originalKey;
+  $item.attr('data-identifier', newKey);
+
+  const $name = $item.find('.entry-name');
+  if ($name.length) {
+    const uninsertedHtml = updatedEntry.isUninserted
+      ? ' <span style="color: var(--pt-accent); font-size: calc(var(--pt-font-size) * 0.625);">🔸未插入</span>'
+      : '';
+    $name.html(`${escapeHtml(String(updatedEntry.name ?? ''))}${uninsertedHtml}`);
+  }
+
+  const $details = $item.find('.entry-details');
+  if ($details.length) {
+    $details.text(buildDetailsText(updatedEntry));
+  }
+
+  return true;
+}
+
+function removeRenderedEntriesInPlace(side, entriesToRemove) {
+  const $ = getJQuery();
+  const listSelector = side === 'single' ? '#single-entries-list' : `#${side}-entries-list`;
+  const $list = $(listSelector);
+  if (!$list.length) return false;
+
+  const toRemove = Array.isArray(entriesToRemove) ? entriesToRemove : [entriesToRemove];
+  if (toRemove.length === 0) return true;
+
+  const removeIdSet = new Set(toRemove.map(e => String(e?.identifier || e?.name || '').trim()).filter(Boolean));
+
+  const entriesKey = side === 'single' ? 'singleEntries' : `${side}Entries`;
+  if (Array.isArray(window[entriesKey])) {
+    window[entriesKey] = window[entriesKey].filter(e => {
+      const id = String(e?.identifier || e?.name || '').trim();
+      return !removeIdSet.has(id);
+    });
+  }
+
+  toRemove.forEach(entry => {
+    const key = String(entry?.identifier || entry?.name || '').trim();
+    if (!key) return;
+    $list.find(`.entry-item[data-identifier="${escapeAttr(key)}"]`).remove();
+  });
+
+  $list.find('.pt-transfer-group-container').each(function () {
+    const $container = $(this);
+    const $header = $container.prev('.pt-transfer-group-header');
+    const remainingCount = $container.find('.entry-item').length;
+    $header.find('.pt-group-count').text(`(${remainingCount})`);
+  });
+
+  updateSelectionCount();
+  return true;
+}
+
+export { commitWorldbookPickTarget, displayEntries, getSelectedEntries, loadAndDisplayEntries, loadDualPresetMode, loadSinglePresetMode, updateRenderedEntryInPlace, removeRenderedEntriesInPlace, buildDetailsText };

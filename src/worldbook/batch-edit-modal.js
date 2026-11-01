@@ -1,3 +1,4 @@
+import { notify } from '../core/notify.js';
 import { ensureViewportCssVars, escapeHtml, getJQuery } from '../core/utils.js';
 import { loadAndDisplayEntries } from '../display/entry-display.js';
 import { CommonStyles } from '../styles/common-styles.js';
@@ -178,15 +179,15 @@ export function openWorldbookBatchEditModal(apiInfo, worldbookName, selectedEntr
   const uids = entries.map(getUidFromTransferEntry).filter((v) => Number.isFinite(v));
 
   if (!name) {
-    alert('请先选择世界书');
+    notify.warning('请先选择世界书');
     return;
   }
   if (!apiInfo) {
-    alert('无法获取API信息');
+    notify.error('无法获取API信息');
     return;
   }
   if (uids.length < 1) {
-    alert('请选择要编辑的条目');
+    notify.warning('请选择要编辑的条目');
     return;
   }
 
@@ -335,13 +336,11 @@ export function openWorldbookBatchEditModal(apiInfo, worldbookName, selectedEntr
       const msg = skippedKeywordCount
         ? `已批量更新 ${updatedCount} 个条目（其中 ${skippedKeywordCount} 个常驻条目未修改关键词）`
         : `已批量更新 ${updatedCount} 个条目`;
-      if (window.toastr) toastr.success(msg);
-      else alert(msg);
+      notify.success(msg);
     } catch (error) {
       console.error('批量编辑世界书条目失败:', error);
       const msg = '批量编辑失败: ' + (error?.message ?? error);
-      if (window.toastr) toastr.error(msg);
-      else alert(msg);
+      notify.error(msg);
     } finally {
       $btn.prop('disabled', false).text(originalText);
     }

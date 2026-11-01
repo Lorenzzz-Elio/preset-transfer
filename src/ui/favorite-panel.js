@@ -1,3 +1,4 @@
+import { notify } from '../core/notify.js';
 import { getJQuery, getParentWindow } from '../core/utils.js';
 import { displayEntries } from '../display/entry-display.js';
 import { getFavoriteIdsForContainer, isFavoritesSupported } from '../features/favorite-entries.js';
@@ -149,18 +150,14 @@ async function refreshFavoritesPanel(apiInfo, context) {
       favoriteIdsByContainer = result.favoriteIdsByContainer;
     } catch (error) {
       console.error('收藏面板加载失败:', error);
-      if (window.toastr) {
-        toastr.error('收藏加载失败: ' + (error?.message ?? error));
-      }
+      notify.error('收藏加载失败: ' + (error?.message ?? error));
     }
   } else if (containerName) {
     try {
       favoriteEntries = await buildFavoriteEntries(apiInfo, adapter, containerName);
     } catch (error) {
       console.error('收藏面板加载失败:', error);
-      if (window.toastr) {
-        toastr.error('收藏加载失败: ' + (error?.message ?? error));
-      }
+      notify.error('收藏加载失败: ' + (error?.message ?? error));
     }
   }
 
@@ -274,14 +271,14 @@ function bindFavoritesPanelEvents(apiInfo, modal, { closeSearchSettingsPopovers,
       const listSelector = getListSelector(context);
       const selectedCount = $(listSelector).find('.entry-checkbox:checked').length;
       if (!selectedCount) {
-        alert('请至少选择一个条目进行转移');
+        notify.warning('请至少选择一个条目进行转移');
         return;
       }
 
       const adapter = getActiveTransferAdapter();
       const sourceContainer = resolveContainerName(context);
       if (!sourceContainer && adapter?.id !== 'preset') {
-        alert('请选择源预设');
+        notify.warning('请选择源预设');
         return;
       }
 

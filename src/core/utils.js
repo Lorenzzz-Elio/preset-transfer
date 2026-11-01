@@ -318,6 +318,8 @@ function findEntryFromMap(identifierMap, identifier, name) {
 // =============================================
 
 
+import { cloneDeep } from './clone-utils.js';
+
 export {
   debounce,
   getSillyTavernContext,
@@ -334,5 +336,6 @@ export {
   ensureUniqueIdentifier,
   findEntryByIdentifierOrName,
   createIdentifierMap,
-  findEntryFromMap
+  findEntryFromMap,
+  cloneDeep
 };

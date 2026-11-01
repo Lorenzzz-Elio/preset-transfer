@@ -1,6 +1,7 @@
 import { PT } from '../core/api-compat.js';
 import { extractPresetVersionInfo } from '../core/preset-name-utils.js';
-import { ensureViewportCssVars, escapeHtml, getCurrentApiInfo, getDeviceInfo, getJQuery, getParentWindow } from '../core/utils.js';
+import { cloneDeep, ensureViewportCssVars, escapeHtml, getCurrentApiInfo, getDeviceInfo, getJQuery, getParentWindow } from '../core/utils.js';
+import { notify } from '../core/notify.js';
 import { getNameMatchKey } from '../preset/entry-match-utils.js';
 import { getPresetDataFromManager } from '../preset/preset-manager.js';
 import { CommonStyles } from '../styles/common-styles.js';
@@ -20,19 +21,8 @@ const SNAPSHOT_BUNDLE_VERSION = 1;
 let snapshotListCache = [];
 let refreshTimer = null;
 
-function cloneDeep(value) {
-  try {
-    return structuredClone(value);
-  } catch {
-    return JSON.parse(JSON.stringify(value));
-  }
-}
-
 function showToast(level, message) {
-  const fn = window.toastr?.[level];
-  if (typeof fn === 'function') {
-    fn(message);
-  }
+  notify[level]?.(message);
 }
 
 function formatBytes(bytes) {

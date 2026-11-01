@@ -1,4 +1,5 @@
 import { getJQuery } from '../core/utils.js';
+import { notify } from '../core/notify.js';
 import { CommonStyles } from '../styles/common-styles.js';
 import { getWorldbookFavoritesSet, toggleWorldbookEntryFavorite } from '../features/worldbook-common.js';
 
@@ -141,7 +142,7 @@ async function handleFavoriteToggle($btn) {
         queueApply();
     } catch (err) {
         console.error('PresetTransfer: failed to toggle worldbook common favorite', err);
-        if (window.toastr) toastr.error('操作失败: ' + (err?.message ?? err));
+        notify.error('操作失败: ' + (err?.message ?? err));
     }
 }
 

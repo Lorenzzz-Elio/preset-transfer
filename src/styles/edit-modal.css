@@ -209,14 +209,20 @@
 #edit-entry-modal .edit-modal-actions button:hover {
     box-shadow: 0 6px 14px rgba(0,0,0,0.18);
     transform: translateY(-1px);
+    opacity: 0.95;
 }
 
 #edit-entry-modal .edit-modal-actions button:active {
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     transform: translateY(0);
+    opacity: 0.85;
 }
 
-#edit-entry-modal #save-entry-changes,
+#edit-entry-modal #save-entry-changes {
+    background: var(--pt-accent-color);
+    font-weight: 700;
+}
+
 #edit-entry-modal #find-replace-btn,
 #edit-entry-modal #cancel-edit {
     background: var(--pt-accent-color-muted);

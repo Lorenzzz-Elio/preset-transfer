@@ -1,4 +1,4 @@
-import { getParentWindow } from '../core/utils.js';
+import { cloneDeep, getParentWindow } from '../core/utils.js';
 
 const PT_META_FIELD = 'pt_meta';
 const PT_META_NAMESPACE = 'presetTransfer';
@@ -24,16 +24,8 @@ function stripPresetTransferMetaInPlace(node) {
   Object.values(node).forEach(stripPresetTransferMetaInPlace);
 }
 
-function cloneDeepFallback(value) {
-  try {
-    return structuredClone(value);
-  } catch {
-    return JSON.parse(JSON.stringify(value));
-  }
-}
-
 function stripPresetTransferMetaForExport(value) {
-  const cloned = cloneDeepFallback(value);
+  const cloned = cloneDeep(value);
   stripPresetTransferMetaInPlace(cloned);
   return cloned;
 }

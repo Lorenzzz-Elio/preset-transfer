@@ -1,4 +1,10 @@
 import { generateUUID } from '../../core/utils.js';
+import {
+    buildWorldEntrySignature,
+    sortWorldEntries,
+    applyTransferEntriesToWorldbook,
+    applyDeleteEntriesFromWorldbook,
+} from '../../core/worldbook-data-pure.js';
 
 let worldInfoModulePromise = null;
 
@@ -16,22 +22,6 @@ async function waitForWorldInfoNames(mod, { timeoutMs = 800, intervalMs = 50 } =
         await new Promise((r) => setTimeout(r, intervalMs));
     }
     return false;
-}
-
-function normalizeKeyArray(value) {
-    if (!Array.isArray(value)) return '';
-    return value
-        .map(v => String(v ?? '').trim())
-        .filter(Boolean)
-        .sort((a, b) => a.localeCompare(b))
-        .join('|');
-}
-
-function buildSignature(entry) {
-    const comment = String(entry?.comment ?? '').trim();
-    const key = normalizeKeyArray(entry?.key);
-    const keysecondary = normalizeKeyArray(entry?.keysecondary);
-    return `${comment}||${key}||${keysecondary}`;
 }
 
 function mapPosition(position) {
@@ -53,15 +43,6 @@ function mapPosition(position) {
         default:
             return String(position ?? '');
     }
-}
-
-function sortWorldEntries(a, b) {
-    const ao = Number(a?.order ?? 0);
-    const bo = Number(b?.order ?? 0);
-    if (ao !== bo) return bo - ao;
-    const au = Number(a?.uid ?? 0);
-    const bu = Number(b?.uid ?? 0);
-    return au - bu;
 }
 
 async function listWorldbooks() {
@@ -125,7 +106,7 @@ function getEntriesFromWorldbookData(data, displayMode) {
     }
     filtered.sort(sortWorldEntries);
     return filtered.map(entry => {
-        const signature = buildSignature(entry);
+        const signature = buildWorldEntrySignature(entry);
         return {
             identifier: String(entry.uid ?? generateUUID()),
             name: String(entry.comment ?? ''),
@@ -142,20 +123,6 @@ function getEntriesFromWorldbookData(data, displayMode) {
     });
 }
 
-function getFreeUidFallback(targetData) {
-    const entriesObj = targetData?.entries && typeof targetData.entries === 'object' ? targetData.entries : {};
-    const used = new Set(Object.values(entriesObj).map(e => Number(e?.uid)).filter(Number.isFinite));
-    let uid = 0;
-    while (used.has(uid)) uid += 1;
-    return uid;
-}
-
-function cloneWorldEntry(sourceEntry) {
-    const clone = JSON.parse(JSON.stringify(sourceEntry ?? {}));
-    delete clone.uid;
-    return clone;
-}
-
 function getTriggerModeLabel(entry) {
     if (entry?.constant) return '常驻';
     const hasPrimaryKeys =
@@ -167,42 +134,15 @@ async function transferWorldEntries(apiInfo, sourceName, targetName, entries, au
     const sourceData = await loadWorldbook(sourceName);
     const targetData = await loadWorldbook(targetName);
 
-    if (!targetData.entries || typeof targetData.entries !== 'object') {
-        targetData.entries = {};
-    }
-
-    const targetSignatureToUid = new Map();
-    for (const entry of Object.values(targetData.entries)) {
-        if (!entry) continue;
-        targetSignatureToUid.set(buildSignature(entry), Number(entry.uid));
-    }
-
-    const sourceEntriesObj = sourceData?.entries && typeof sourceData.entries === 'object' ? sourceData.entries : {};
-    const sourceByUid = new Map(Object.values(sourceEntriesObj).filter(Boolean).map(e => [String(e.uid), e]));
-
     const mod = await getWorldInfoModule();
     const getFreeWorldEntryUid =
         typeof mod.getFreeWorldEntryUid === 'function' ? mod.getFreeWorldEntryUid : null;
 
-    for (const item of entries) {
-        const src = item?.raw ?? sourceByUid.get(String(item.identifier));
-        if (!src) continue;
-
-        const signature = buildSignature(src);
-        const existingUid = targetSignatureToUid.get(signature);
-        const clone = cloneWorldEntry(src);
-        if (autoEnable) {
-            clone.disable = false;
-        }
-
-        if (Number.isFinite(existingUid)) {
-            targetData.entries[String(existingUid)] = { uid: existingUid, ...clone };
-        } else {
-            const newUid = getFreeWorldEntryUid ? getFreeWorldEntryUid(targetData) : getFreeUidFallback(targetData);
-            targetData.entries[String(newUid)] = { uid: newUid, ...clone };
-            targetSignatureToUid.set(signature, newUid);
-        }
-    }
+    applyTransferEntriesToWorldbook(targetData, entries, {
+        autoEnable,
+        sourceData,
+        getFreeUidFn: getFreeWorldEntryUid,
+    });
 
     await saveWorldbook(targetName, targetData);
 }
@@ -211,24 +151,13 @@ async function deleteWorldEntries(apiInfo, worldbookName, entries) {
     void apiInfo;
     const data = await loadWorldbook(worldbookName);
 
-    if (!data.entries || typeof data.entries !== 'object') {
-        data.entries = {};
-    }
-
     const mod = await getWorldInfoModule();
     const deleteWorldInfoEntry =
         typeof mod.deleteWorldInfoEntry === 'function' ? mod.deleteWorldInfoEntry : null;
 
-    for (const item of entries) {
-        const uid = item?.raw?.uid ?? Number(item?.identifier);
-        if (!Number.isFinite(uid)) continue;
-
-        if (deleteWorldInfoEntry) {
-            await deleteWorldInfoEntry(data, uid, { silent: true });
-        } else {
-            delete data.entries[String(uid)];
-        }
-    }
+    applyDeleteEntriesFromWorldbook(data, entries, {
+        deleteEntryFn: deleteWorldInfoEntry,
+    });
 
     await saveWorldbook(worldbookName, data);
 }

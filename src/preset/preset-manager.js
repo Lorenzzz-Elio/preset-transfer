@@ -1,3 +1,4 @@
+import { notify } from '../core/notify.js';
 import { PT } from '../core/api-compat.js';
 import { getCurrentApiInfo, getJQuery } from '../core/utils.js';
 
@@ -31,8 +32,7 @@ function setCurrentPreset(side) {
   const $select = $(selectId);
 
   if (!currentPresetName) {
-    alert(
-      '无法获取当前预设名称，请确保已选择预设。\n\n可能的原因：\n1. 当前没有加载任何预设\n2. 预设API不可用\n3. 需要刷新页面重新加载',
+    notify.error('无法获取当前预设名称，请确保已选择预设。\n\n可能的原因：\n1. 当前没有加载任何预设\n2. 预设API不可用\n3. 需要刷新页面重新加载',
     );
     return;
   }
@@ -40,7 +40,7 @@ function setCurrentPreset(side) {
   // 检查预设是否存在于选项中
   const optionExists = $select.find(`option[value="${currentPresetName}"]`).length > 0;
   if (!optionExists) {
-    alert(`当前预设"${currentPresetName}"不在可选列表中，可能需要刷新预设列表`);
+    notify.info(`当前预设"${currentPresetName}"不在可选列表中，可能需要刷新预设列表`);
     return;
   }
 

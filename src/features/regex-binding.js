@@ -1,5 +1,6 @@
 import { PT } from '../core/api-compat.js';
 import { getCurrentApiInfo, getJQuery } from '../core/utils.js';
+import { notify } from '../core/notify.js';
 import { CommonStyles } from '../styles/common-styles.js';
 
 let regexBindingEnabled = localStorage.getItem('preset-transfer-regex-binding-enabled') !== 'false';
@@ -361,12 +362,7 @@ async function switchPresetRegexes(fromPresetName, toPresetName, opts = {}) {
   } catch (error) {
     console.error('切换正则失败:', error);
 
-    // 显示错误提示
-    if (window.toastr) {
-      toastr.error('正则切换失败: ' + error.message);
-    } else {
-      console.error('正则切换失败:', error.message);
-    }
+    notify.error('正则切换失败: ' + error.message);
 
     return false;
   }

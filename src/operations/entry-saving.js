@@ -1,4 +1,5 @@
 import { getPresetDataFromManager } from '../preset/preset-manager.js';
+import { syncNativePromptManagerIfActive } from '../preset/native-sync.js';
 
 async function saveEntryChanges(apiInfo, presetName, originalEntry, updatedEntry) {
   try {
@@ -41,7 +42,8 @@ async function saveEntryChanges(apiInfo, presetName, originalEntry, updatedEntry
     };
 
     // 保存预设
-    await apiInfo.presetManager.savePreset(presetName, presetData);
+    await apiInfo.presetManager.savePreset(presetName, presetData, { skipUpdate: true });
+    await syncNativePromptManagerIfActive(apiInfo, presetName, presetData);
     console.log(`条目 "${originalEntry.name}" 已更新为 "${updatedEntry.name}"`);
   } catch (error) {
     console.error('保存条目更改失败:', error);

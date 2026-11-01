@@ -2,6 +2,7 @@ import { getJQuery } from '../core/utils.js';
 import { getActiveTransferAdapter } from '../transfer/transfer-context.js';
 import { loadSearchSettings } from '../settings/search-settings.js';
 import { updateSelectionCount } from './ui-updates.js';
+import { notify } from '../core/notify.js';
 
 // Filter entries on both sides (and single mode) using the main search box.
 function filterDualEntries(searchTerm) {
@@ -238,7 +239,7 @@ function toggleNewEntries(apiInfo, side) {
   const button = $(`#${side}-show-new`);
 
   if (!leftPreset || !rightPreset || leftPreset === rightPreset) {
-    alert('请先选择两个不同的预设，才能查看新增条目。');
+    notify.warning('请先选择两个不同的预设，才能查看新增条目。');
     return;
   }
 
@@ -299,7 +300,7 @@ function toggleNewEntries(apiInfo, side) {
     const sideLabel = side === 'left' ? '左侧' : '右侧';
 
     if (newEntryIdentifiers.size === 0) {
-      alert(`${sideLabel}预设没有检测到新增条目。`);
+      notify.info(`${sideLabel}预设没有检测到新增条目。`);
       return;
     }
 
@@ -347,16 +348,16 @@ function toggleNewEntries(apiInfo, side) {
 
     if (visibleNewCount === 0) {
       if (searchTerm) {
-        alert(`在搜索 "${searchValue}" 的结果中，${sideLabel}预设没有符合条件的新增条目。`);
+        notify.info(`在搜索 "${searchValue}" 的结果中，${sideLabel}预设没有符合条件的新增条目。`);
       } else {
-        alert(`${sideLabel}预设没有检测到新增条目。`);
+        notify.info(`${sideLabel}预设没有检测到新增条目。`);
       }
       button.removeClass('showing-new');
       button.find('.btn-icon').text('');
     }
   } catch (error) {
     console.error('切换新增条目模式失败:', error);
-    alert('切换新增条目模式失败: ' + error.message);
+    notify.error('切换新增条目模式失败: ' + error.message);
     button.removeClass('showing-new');
     button.find('.btn-icon').text('');
   }

@@ -1,3 +1,4 @@
+import { notify } from '../core/notify.js';
 import { getJQuery } from '../core/utils.js';
 import { loadAndDisplayEntries } from './entry-display.js';
 import { getActiveTransferAdapter, getTransferEngine } from '../transfer/transfer-context.js';
@@ -254,17 +255,13 @@ async function runGlobalSearch({ apiInfo, context, wrapperSelector, searchTerm, 
             $('#left-side, #right-side').addClass('transfer-target');
 
             const tip = '转移模式已激活！请点击左侧或右侧面板区域，选择目标世界书。';
-            if (window.toastr) {
-              toastr.info(tip);
-            } else {
-              alert(tip);
-            }
+            notify.info(tip);
             return;
           }
 
           const worldbookTarget = hasLeft ? left : hasRight ? right : '';
           if (!worldbookTarget) {
-            if (window.toastr) toastr.warning('请先选择目标世界书');
+            notify.warning('请先选择目标世界书');
             return;
           }
 
@@ -289,10 +286,10 @@ async function runGlobalSearch({ apiInfo, context, wrapperSelector, searchTerm, 
         }
 
         await loadAndDisplayEntries(apiInfo);
-        if (window.toastr) toastr.success(`已转移到目标${adapter.ui.containerLabel}: ${actualTargetContainer}`);
+        notify.success(`已转移到目标${adapter.ui.containerLabel}: ${actualTargetContainer}`);
       } catch (error) {
         console.error('全局搜索转移失败:', error);
-        if (window.toastr) toastr.error('转移失败: ' + error.message);
+        notify.error('转移失败: ' + error.message);
       }
       return;
     }
@@ -315,11 +312,7 @@ async function runGlobalSearch({ apiInfo, context, wrapperSelector, searchTerm, 
     $('#left-side, #right-side, #single-container .entries-side').addClass('transfer-target');
 
     const tip = `转移模式已激活！请点击任意面板中的条目来选择插入位置。`;
-    if (window.toastr) {
-      toastr.info(tip);
-    } else {
-      alert(tip);
-    }
+    notify.info(tip);
   });
 }
 

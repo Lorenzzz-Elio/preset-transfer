@@ -2,6 +2,7 @@
 
 import { PT } from '../core/api-compat.js';
 import { debounce, getJQuery, getSillyTavernContext } from '../core/utils.js';
+import { notify } from '../core/notify.js';
 import {
   getAllPresetGroupings,
   addPresetGrouping,
@@ -961,7 +962,7 @@ function showPresetGroupHeaderMenu($groupHeader, { presetName, groupIndex, group
         getOrderedIdentifiersFromList(),
       );
       setTimeout(() => applyGroupingToList(), 200);
-      if (window.toastr) toastr.success('\u5206\u7ec4\u540d\u79f0\u5df2\u66f4\u65b0');
+      notify.success('\u5206\u7ec4\u540d\u79f0\u5df2\u66f4\u65b0');
     });
   });
 
@@ -971,7 +972,7 @@ function showPresetGroupHeaderMenu($groupHeader, { presetName, groupIndex, group
     await removePresetGrouping(presetName, groupIndex, getOrderedIdentifiersFromList());
     resetTempMarks();
     setTimeout(() => applyGroupingToList(), 200);
-    if (window.toastr) toastr.success('\u5206\u7ec4\u5df2\u89e3\u9664');
+    notify.success('\u5206\u7ec4\u5df2\u89e3\u9664');
   });
 
   setTimeout(() => {
@@ -1076,7 +1077,7 @@ function showGroupingMenu($item, x, y) {
   const orderedIdentifiers = getOrderedIdentifiersFromList();
   const groupedIdentifiers = getGroupedIdentifierSet(presetName, orderedIdentifiers);
   if (groupedIdentifiers.has(identifier)) {
-    if (window.toastr) toastr.info('该条目已在分组中，不能再次分组');
+    notify.info('该条目已在分组中，不能再次分组');
     return;
   }
 
@@ -1113,7 +1114,7 @@ function showGroupingMenu($item, x, y) {
         const endIndex = orderedIdentifiers.indexOf(tempMarks.end);
         if (startIndex === -1 || endIndex === -1) {
           resetTempMarks();
-          if (window.toastr) toastr.error('分组锚点无法解析，请重试');
+          notify.error('分组锚点无法解析，请重试');
           return;
         }
 
@@ -1123,7 +1124,7 @@ function showGroupingMenu($item, x, y) {
         const hasOverlap = orderedIdentifiers.slice(start, end + 1).some((id) => groupedIdentifiers.has(id));
         if (hasOverlap) {
           resetTempMarks();
-          if (window.toastr) toastr.error('选择范围包含已分组条目，请重新选择未分组的范围');
+          notify.error('选择范围包含已分组条目，请重新选择未分组的范围');
           return;
         }
 
@@ -1136,10 +1137,10 @@ function showGroupingMenu($item, x, y) {
         );
         resetTempMarks();
         setTimeout(() => applyGroupingToList(), 200);
-        if (window.toastr) toastr.success('分组已创建');
+        notify.success('分组已创建');
       });
     } else {
-      if (window.toastr) toastr.info(`已标记分组${isStart ? '开始' : '结束'}，请继续标记分组${isStart ? '结束' : '开始'}`);
+      notify.info(`已标记分组${isStart ? '开始' : '结束'}，请继续标记分组${isStart ? '结束' : '开始'}`);
     }
   };
 
@@ -1147,7 +1148,7 @@ function showGroupingMenu($item, x, y) {
   menu.find('.set-start').on('click', (e) => {
     e.stopPropagation();
     if (groupedIdentifiers.has(identifier)) {
-      if (window.toastr) toastr.info('该条目已在分组中，不能作为分组起点');
+      notify.info('该条目已在分组中，不能作为分组起点');
       return;
     }
     tempMarks.start = identifier;
@@ -1159,7 +1160,7 @@ function showGroupingMenu($item, x, y) {
   menu.find('.set-end').on('click', (e) => {
     e.stopPropagation();
     if (groupedIdentifiers.has(identifier)) {
-      if (window.toastr) toastr.info('该条目已在分组中，不能作为分组终点');
+      notify.info('该条目已在分组中，不能作为分组终点');
       return;
     }
     tempMarks.end = identifier;
@@ -1173,7 +1174,7 @@ function showGroupingMenu($item, x, y) {
     resetTempMarks();
     menu.remove();
     $(document).off('click.grouping-menu');
-    if (window.toastr) toastr.info('已清除临时标记');
+    notify.info('已清除临时标记');
   });
 
   // 点击外部关闭菜单

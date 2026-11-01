@@ -1,5 +1,6 @@
 import { ensureViewportCssVars, getJQuery } from '../core/utils.js';
 import { CommonStyles } from '../styles/common-styles.js';
+import { notify } from '../core/notify.js';
 function showFindReplaceDialog() {
   const $ = getJQuery();
   ensureViewportCssVars();
@@ -35,8 +36,8 @@ function showFindReplaceDialog() {
         </div>
 
         <div style="display: flex; gap: ${vars.gap}; justify-content: center;">
-          <button id="apply-find-replace" style="padding: ${vars.buttonPadding}; background: ${vars.sectionBg}; color: ${vars.textColor}; border: 1px solid ${vars.borderColor}; border-radius: ${vars.buttonRadius}; font-size: ${vars.fontSizeMedium}; font-weight: 600; cursor: pointer;">✅ 替换</button>
-          <button id="cancel-find-replace" style="padding: ${vars.buttonPadding}; background: ${vars.sectionBg}; color: ${vars.textColor}; border: 1px solid ${vars.borderColor}; border-radius: ${vars.buttonRadius}; font-size: ${vars.fontSizeMedium}; font-weight: 600; cursor: pointer;">❌ 取消</button>
+          <button id="apply-find-replace" style="padding: ${vars.buttonPadding}; background: ${vars.accentColor}; color: ${vars.textColor}; border: 1px solid ${vars.borderColor}; border-radius: ${vars.buttonRadius}; font-size: ${vars.fontSizeMedium}; font-weight: 700; cursor: pointer;">✅ 替换</button>
+          <button id="cancel-find-replace" style="padding: ${vars.buttonPadding}; background: ${vars.accentMutedColor}; color: ${vars.textColor}; border: 1px solid ${vars.borderColor}; border-radius: ${vars.buttonRadius}; font-size: ${vars.fontSizeMedium}; font-weight: 600; cursor: pointer;">❌ 取消</button>
         </div>
       </div>
     </div>
@@ -53,7 +54,7 @@ function showFindReplaceDialog() {
     const caseSensitive = $('#case-sensitive').is(':checked');
 
     if (!findText) {
-      alert('请输入要查找的文本');
+      notify.warning('请输入要查找的文本');
       return;
     }
 
@@ -85,7 +86,7 @@ function applyFindReplaceToCurrentEntry(findText, replaceText, caseSensitive) {
   const contentTextarea = $('#edit-entry-content');
 
   if (!contentTextarea.length) {
-    alert('未找到内容编辑区域');
+    notify.warning('未找到内容编辑区域');
     return;
   }
 
@@ -113,17 +114,9 @@ function applyFindReplaceToCurrentEntry(findText, replaceText, caseSensitive) {
 
   // 显示替换结果
   if (replacedCount > 0) {
-    if (window.toastr) {
-      toastr.success(`成功替换 ${replacedCount} 处文本`);
-    } else {
-      alert(`成功替换 ${replacedCount} 处文本`);
-    }
+    notify.success(`成功替换 ${replacedCount} 处文本`);
   } else {
-    if (window.toastr) {
-      toastr.info('未找到要替换的文本');
-    } else {
-      alert('未找到要替换的文本');
-    }
+    notify.info('未找到要替换的文本');
   }
 }
 

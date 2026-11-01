@@ -447,6 +447,103 @@ async function persistPresetGroupings(presetName, groupings) {
   return true;
 }
 
+function calculateReassignedGroupings(groupings, movedIdentifiers, orderedIdentifiers, options = {}) {
+  const moved = normalizeMemberIdentifiers(movedIdentifiers);
+  if (!moved.length || !groupings || !groupings.length) return groupings || [];
+
+  const targetIdentifier = String(options?.targetIdentifier ?? '').trim();
+  const requestedGroupId = String(options?.targetGroupId ?? '').trim();
+  const requestedGroupExists = requestedGroupId
+    ? groupings.some((grouping) => String(grouping?.id ?? '').trim() === requestedGroupId)
+    : false;
+  const fallbackGroupId = targetIdentifier
+    ? String(
+      groupings.find((grouping) => normalizeMemberIdentifiers(grouping?.memberIdentifiers).includes(targetIdentifier))?.id ?? '',
+    ).trim()
+    : '';
+  const targetGroupId = requestedGroupExists ? requestedGroupId : fallbackGroupId;
+
+  const nextGroupings = [];
+  for (const grouping of groupings) {
+    const beforeMembers = normalizeMemberIdentifiers(grouping?.memberIdentifiers);
+    const memberSet = new Set(beforeMembers);
+
+    for (const identifier of moved) {
+      memberSet.delete(identifier);
+    }
+
+    if (targetGroupId && String(grouping?.id ?? '').trim() === targetGroupId) {
+      for (const identifier of moved) {
+        memberSet.add(identifier);
+      }
+    }
+
+    const nextMembers = orderMemberIdentifiers(Array.from(memberSet), orderedIdentifiers);
+    if (nextMembers.length === 0) continue;
+
+    nextGroupings.push({
+      ...grouping,
+      memberIdentifiers: nextMembers,
+    });
+  }
+
+  return nextGroupings;
+}
+
+function calculatePreservedGroups(existingGroupings, groups, orderedIdentifiers) {
+  const normalizedOrder = normalizeMemberIdentifiers(orderedIdentifiers);
+  const normalizedGroups = asArray(groups)
+    .map((group) => {
+      const memberIdentifiers = orderMemberIdentifiers(group?.memberIdentifiers, normalizedOrder);
+      if (memberIdentifiers.length === 0) return null;
+      return {
+        id: createGroupId(),
+        name: String(group?.name ?? '').trim() || DEFAULT_GROUP_NAME,
+        memberIdentifiers,
+        mode: DEFAULT_MODE,
+      };
+    })
+    .filter(Boolean);
+
+  if (normalizedGroups.length === 0) return existingGroupings || [];
+
+  const movedIdentifiers = new Set(
+    normalizedGroups.flatMap((group) => normalizeMemberIdentifiers(group.memberIdentifiers)),
+  );
+
+  const nextGroupings = [];
+  for (const grouping of (existingGroupings || [])) {
+    const nextMembers = orderMemberIdentifiers(
+      normalizeMemberIdentifiers(grouping?.memberIdentifiers).filter((identifier) => !movedIdentifiers.has(identifier)),
+      normalizedOrder,
+    );
+
+    if (nextMembers.length === 0) continue;
+    nextGroupings.push({
+      ...grouping,
+      memberIdentifiers: nextMembers,
+    });
+  }
+
+  nextGroupings.push(...normalizedGroups);
+  return nextGroupings;
+}
+
+function applyGroupingChangesToPresetData(presetData, orderedIdentifiers, { movedIdentifiers, reassignOptions, preservedGroups } = {}) {
+  if (!presetData) return;
+  if (!presetData.extensions) presetData.extensions = {};
+  let groupings = getWritableGroupings(presetData.extensions.entryGrouping || [], orderedIdentifiers);
+
+  if (movedIdentifiers && movedIdentifiers.length > 0) {
+    groupings = calculateReassignedGroupings(groupings, movedIdentifiers, orderedIdentifiers, reassignOptions);
+  }
+  if (preservedGroups && preservedGroups.length > 0) {
+    groupings = calculatePreservedGroups(groupings, preservedGroups, orderedIdentifiers);
+  }
+
+  presetData.extensions.entryGrouping = getWritableGroupings(groupings, orderedIdentifiers);
+}
+
 async function reassignPresetGroupingMembers(presetName, entryIdentifiers, orderedIdentifiers, options = {}) {
   try {
     const name = String(presetName ?? '').trim();
@@ -793,4 +890,7 @@ export {
   removePresetGrouping,
   preserveTransferredPresetGroups,
   reassignPresetGroupingMembers,
+  calculateReassignedGroupings,
+  calculatePreservedGroups,
+  applyGroupingChangesToPresetData,
 };

@@ -1,7 +1,8 @@
 // ==================== 预设包导入导出功能 ====================
 
 import { PT } from '../core/api-compat.js';
-import { ensureViewportCssVars, escapeHtml, generateUUID, getCurrentApiInfo, getJQuery, getSillyTavernContext } from '../core/utils.js';
+import { cloneDeep, ensureViewportCssVars, escapeHtml, generateUUID, getCurrentApiInfo, getJQuery, getSillyTavernContext } from '../core/utils.js';
+import { notify } from '../core/notify.js';
 import { getCssVar } from '../core/color-utils.js';
 import { getPresetRegexBindings, getAllAvailableRegexes, savePresetRegexBindings } from './regex-binding.js';
 import { exportRegexScriptGroupingsForBundle, importRegexScriptGroupingsFromBundle } from './regex-script-grouping.js';
@@ -31,14 +32,6 @@ function uniqueStringList(values) {
   return out;
 }
 
-function cloneDeepFallback(value) {
-  try {
-    return structuredClone(value);
-  } catch {
-    return JSON.parse(JSON.stringify(value));
-  }
-}
-
 function stripPresetTransferMetaInPlace(node) {
   if (!node || typeof node !== 'object') return;
 
@@ -61,7 +54,7 @@ function stripPresetTransferMetaInPlace(node) {
 }
 
 function stripPresetTransferMetaForExport(value) {
-  const cloned = cloneDeepFallback(value);
+  const cloned = cloneDeep(value);
   stripPresetTransferMetaInPlace(cloned);
   return cloned;
 }
@@ -251,10 +244,8 @@ async function exportPresetBundle(presetName, { includeGlobalWorldbooks = false 
       URL.revokeObjectURL(url);
     }
 
-    if (window.toastr) {
-      const extra = includeGlobalWorldbooks ? '（含全局世界书）' : '';
-      toastr.success(`预设包已导出${extra}: ${fileName}`);
-    }
+    const extra = includeGlobalWorldbooks ? '（含全局世界书）' : '';
+    notify.success(`预设包已导出${extra}: ${fileName}`);
   } catch (error) {
     console.error('导出预设包失败:', error);
     throw error;
@@ -480,7 +471,7 @@ async function showConflictResolutionDialog(bundleData, existingPreset, conflict
         resolve();
       } catch (e) {
         console.error('执行导入失败:', e);
-        if (window.toastr) toastr.error('导入失败: ' + e.message);
+        notify.error('导入失败: ' + e.message);
         resolve();
       }
     });
@@ -606,10 +597,8 @@ async function executeImport(bundleData, action, prefix, { importWorldbooks = tr
       /* ignore */
     }
 
-    if (window.toastr) {
-      const wb = worldbookResult ? `，世界书: ${worldbookResult.imported} 个` : '';
-      toastr.success(`预设包导入成功！预设: ${presetName}，正则: ${bundleData.regexes.length} 个${wb}`);
-    }
+    const wb = worldbookResult ? `，世界书: ${worldbookResult.imported} 个` : '';
+    notify.success(`预设包导入成功！预设: ${presetName}，正则: ${bundleData.regexes.length} 个${wb}`);
   } catch (error) {
     console.error('执行导入失败:', error);
     throw error;

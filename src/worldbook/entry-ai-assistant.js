@@ -1,3 +1,4 @@
+import { notify } from '../core/notify.js';
 import { getJQuery } from '../core/utils.js';
 import { getWorldInfoModule } from '../core/worldbook-api.js';
 import { callAIAssistant } from '../features/ai-assistant.js';
@@ -83,7 +84,7 @@ export async function initWorldbookEntryAIAssistant(apiInfo, worldbookName) {
     if (selectedUid) {
       const rawRef = uidToEntry.get(selectedUid);
       if (!rawRef) {
-        alert('找不到指定的参考条目');
+        notify.info('找不到指定的参考条目');
         return;
       }
       referenceEntry = {
@@ -96,7 +97,7 @@ export async function initWorldbookEntryAIAssistant(apiInfo, worldbookName) {
         content: normalizeText($('#pt-wi-content').val()),
       };
       if (!referenceEntry.content.trim()) {
-        alert('当前条目内容为空，请先填写内容或选择参考条目');
+        notify.warning('当前条目内容为空，请先填写内容或选择参考条目');
         return;
       }
     }

@@ -1,4 +1,5 @@
 import { getJQuery } from './utils.js';
+import { notify } from './notify.js';
 
 const EXTENSIONS_MENU_SELECTOR = '#extensionsMenu';
 const PRESET_MENU_ITEM_ID = 'preset-transfer-menu-item';
@@ -163,7 +164,7 @@ export function integrateIntoExtensionsMenu({ MainUI } = {}) {
           await MainUI?.createTransferUI?.({ adapterKey: 'preset' });
         } catch (error) {
           console.error('PresetTransfer: 创建 UI 失败', error);
-          alert('创建预设转移工具界面失败：' + error.message);
+          notify.error('创建预设转移工具界面失败：' + error.message);
         }
       });
     }
@@ -186,7 +187,7 @@ export function integrateIntoExtensionsMenu({ MainUI } = {}) {
           await MainUI?.createTransferUI?.({ adapterKey: 'worldbook' });
         } catch (error) {
           console.error('PresetTransfer: 创建 UI 失败', error);
-          alert('创建世界书转移工具界面失败：' + error.message);
+          notify.error('创建世界书转移工具界面失败：' + error.message);
         }
       });
     }

@@ -1,6 +1,7 @@
+import { notify } from '../core/notify.js';
 import { escapeHtml, getJQuery, getCurrentApiInfo } from '../core/utils.js';
 import { getPresetDataFromManager, getPromptEntries } from '../preset/preset-manager.js';
-import { loadAndDisplayEntries, getSelectedEntries } from '../display/entry-display.js';
+import { loadAndDisplayEntries, getSelectedEntries, removeRenderedEntriesInPlace } from '../display/entry-display.js';
 import { getActiveTransferAdapter } from '../transfer/transfer-context.js';
 import { performDelete } from '../operations/core-operations.js';
 
@@ -18,12 +19,12 @@ async function deleteSelectedEntries(apiInfo, side) {
   }
 
   if (selectedEntries.length === 0) {
-    alert('请至少选择一个条目进行删除');
+    notify.warning('请至少选择一个条目进行删除');
     return;
   }
 
   if (!presetName) {
-    alert(`请先选择${containerLabel}`);
+    notify.warning(`请先选择${containerLabel}`);
     return;
   }
 
@@ -41,10 +42,13 @@ async function deleteSelectedEntries(apiInfo, side) {
           return;
         }
 
-        loadAndDisplayEntries(apiInfo);
+        const inPlaceSuccess = removeRenderedEntriesInPlace(side, selectedEntries);
+        if (!inPlaceSuccess) {
+          loadAndDisplayEntries(apiInfo, side);
+        }
       } catch (error) {
         console.error('删除失败:', error);
-        alert('删除失败: ' + error.message);
+        notify.error('删除失败: ' + error.message);
       } finally {
         const deleteButton = side === 'single' ? '#single-delete' : `#${side}-delete`;
         $(deleteButton).prop('disabled', false).text('删除');

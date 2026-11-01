@@ -39,16 +39,10 @@ export function restoreTransferPanelScrollState($listContainer, side, presetName
   const savedScrollTop = transferListScrollStates.get(getTransferListStateKey(side, presetName));
   if (!Number.isFinite(savedScrollTop)) return;
 
-  const applyScroll = () => {
-    const node = $listContainer[0];
-    if (!node) return;
-    const maxScrollTop = Math.max(0, node.scrollHeight - node.clientHeight);
-    $listContainer.scrollTop(Math.min(savedScrollTop, maxScrollTop));
-  };
-
-  applyScroll();
-  requestAnimationFrame(applyScroll);
-  setTimeout(applyScroll, 80);
+  const node = $listContainer[0];
+  if (!node) return;
+  const maxScrollTop = Math.max(0, node.scrollHeight - node.clientHeight);
+  node.scrollTop = Math.min(savedScrollTop, maxScrollTop);
 }
 
 /**
@@ -305,45 +299,74 @@ function findRenderedEntryByIdentifier($listContainer, side, identifier) {
 }
 
 /**
+ * Render grouped entries directly into structured HTML without DOM rearrangement.
+ */
+export function renderGroupedEntriesHtmlForTransfer(entries, side, presetName, renderEntryItemFn) {
+  if (!entries || !Array.isArray(entries) || entries.length === 0) {
+    return '';
+  }
+
+  const { groups } = organizeEntriesIntoGroups(entries, side, presetName);
+  if (!groups || groups.length === 0) {
+    return entries.map((entry, index) => renderEntryItemFn(entry, index)).join('');
+  }
+
+  const renderedIdentifiers = new Set();
+  const anchorGroupMap = new Map();
+
+  groups.forEach((group, groupIndex) => {
+    const entryIdentifiers = Array.isArray(group.entryIdentifiers) ? group.entryIdentifiers : [];
+    const firstIdentifier = entryIdentifiers[0];
+    if (firstIdentifier) {
+      anchorGroupMap.set(firstIdentifier, { group, groupIndex });
+    }
+  });
+
+  const parts = [];
+
+  entries.forEach((entry, index) => {
+    const id = String(entry?.identifier ?? '').trim();
+    if (renderedIdentifiers.has(id)) {
+      return;
+    }
+
+    if (anchorGroupMap.has(id)) {
+      const { group, groupIndex } = anchorGroupMap.get(id);
+      const groupStateKey = getTransferGroupStateKey(side, presetName, group, groupIndex);
+      const isExpanded = transferGroupExpandStates.get(groupStateKey) === true;
+      const groupId = String(group?.grouping?.id ?? group?.id ?? '').trim();
+
+      const groupHeaderHtml = renderGroupHeaderForTransfer(group, side, { groupStateKey, isExpanded });
+      parts.push(groupHeaderHtml);
+
+      parts.push(`
+        <div class="pt-transfer-group-container" data-side="${escapeAttr(side)}" data-group-id="${escapeAttr(groupId)}" data-group-name="${escapeAttr(group.name)}" data-group-key="${escapeAttr(groupStateKey)}" style="
+          display: ${isExpanded ? 'block' : 'none'};
+          margin-bottom: 6px;
+        ">
+      `);
+
+      group.entries.forEach((groupEntry) => {
+        const groupEntryId = String(groupEntry?.identifier ?? '').trim();
+        renderedIdentifiers.add(groupEntryId);
+        const originalIndex = entries.indexOf(groupEntry);
+        parts.push(renderEntryItemFn(groupEntry, originalIndex !== -1 ? originalIndex : index));
+      });
+
+      parts.push(`</div>`);
+    } else {
+      renderedIdentifiers.add(id);
+      parts.push(renderEntryItemFn(entry, index));
+    }
+  });
+
+  return parts.join('');
+}
+
+/**
  * Wrap already-rendered entry rows into transfer-panel groups.
  */
 export function applyGroupDisplayToRenderedEntries($listContainer, entries, side, presetName) {
   if (!$listContainer || !$listContainer.length) return;
-  if (!entries || !Array.isArray(entries) || entries.length === 0) return;
-  if (!presetName) return;
-
-  const { groups } = organizeEntriesIntoGroups(entries, side, presetName);
-
-  if (groups.length === 0) return;
-
-  for (const [groupIndex, group] of groups.entries()) {
-    const entryIdentifiers = Array.isArray(group.entryIdentifiers) ? group.entryIdentifiers : [];
-    const firstIdentifier = entryIdentifiers[0];
-
-    if (!firstIdentifier) continue;
-
-    const $firstEntry = findRenderedEntryByIdentifier($listContainer, side, firstIdentifier);
-    if (!$firstEntry.length) continue;
-
-    const groupStateKey = getTransferGroupStateKey(side, presetName, group, groupIndex);
-    const isExpanded = transferGroupExpandStates.get(groupStateKey) === true;
-
-    const groupHeaderHtml = renderGroupHeaderForTransfer(group, side, { groupStateKey, isExpanded });
-    $firstEntry.before(groupHeaderHtml);
-
-    const groupContainerHtml = renderGroupContainerForTransfer(group, side, { groupStateKey, isExpanded });
-    const $groupHeader = $firstEntry.prev('.pt-transfer-group-header');
-    $groupHeader.after(groupContainerHtml);
-
-    const $groupContainer = $groupHeader.next('.pt-transfer-group-container');
-
-    for (const identifier of entryIdentifiers) {
-      const $entry = findRenderedEntryByIdentifier($listContainer, side, identifier);
-      if ($entry.length) {
-        $groupContainer.append($entry);
-      }
-    }
-  }
-
   bindGroupEventsForTransfer($listContainer);
 }

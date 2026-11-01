@@ -1,5 +1,6 @@
 import { PT } from '../core/api-compat.js';
 import { getJQuery, escapeHtml } from '../core/utils.js';
+import { notify } from '../core/notify.js';
 import {
   getEntryStatesSaveWorldBindings,
   setEntryStatesSaveWorldBindings,
@@ -204,7 +205,7 @@ function bindNativeEntryStatesPanelEvents(presetName) {
     const currentPreset = PT.API.getLoadedPresetName?.();
 
     if (!currentPreset) {
-      if (window.toastr) toastr.error('请先选择一个预设');
+      notify.error('请先选择一个预设');
       return;
     }
 
@@ -212,10 +213,10 @@ function bindNativeEntryStatesPanelEvents(presetName) {
       await applyEntryStates(currentPreset, versionId);
       updateNativeEntryStatesPanel(currentPreset);
       renderNativeEntryStatesContent(currentPreset);
-      if (window.toastr) toastr.success('状态已应用');
+      notify.success('状态已应用');
     } catch (error) {
       console.error('应用状态失败:', error);
-      if (window.toastr) toastr.error('应用状态失败: ' + error.message);
+      notify.error('应用状态失败: ' + error.message);
     }
   });
 
@@ -232,10 +233,10 @@ function bindNativeEntryStatesPanelEvents(presetName) {
     try {
       await renameEntryStatesVersion(currentPreset, versionId, newName);
       renderNativeEntryStatesContent(currentPreset);
-      if (window.toastr) toastr.success('重命名成功');
+      notify.success('重命名成功');
     } catch (error) {
       console.error('重命名失败:', error);
-      if (window.toastr) toastr.error('重命名失败: ' + error.message);
+      notify.error('重命名失败: ' + error.message);
     }
   });
 
@@ -252,10 +253,10 @@ function bindNativeEntryStatesPanelEvents(presetName) {
       await deleteEntryStatesVersion(currentPreset, versionId);
       renderNativeEntryStatesContent(currentPreset);
       updateNativeEntryStatesPanel(currentPreset);
-      if (window.toastr) toastr.success('删除成功');
+      notify.success('删除成功');
     } catch (error) {
       console.error('删除失败:', error);
-      if (window.toastr) toastr.error('删除失败: ' + error.message);
+      notify.error('删除失败: ' + error.message);
     }
   });
 }
@@ -285,7 +286,7 @@ function bindNativeEntryStatesMainPanelEvents() {
           }
         } catch (e) {
           console.error('[EntryStatesPanel] 展开面板失败:', e);
-          if (window.toastr) toastr.error('打开状态管理界面失败: ' + e.message);
+          notify.error('打开状态管理界面失败: ' + e.message);
         }
       }
     });
@@ -297,7 +298,7 @@ function bindNativeEntryStatesMainPanelEvents() {
       try {
         const currentPreset = PT.API.getLoadedPresetName?.();
         if (!currentPreset) {
-          if (window.toastr) toastr.error('请先选择一个预设');
+          notify.error('请先选择一个预设');
           return;
         }
 
@@ -307,10 +308,10 @@ function bindNativeEntryStatesMainPanelEvents() {
         await saveCurrentEntryStatesAsVersion(currentPreset, versionName);
         updateNativeEntryStatesPanel(currentPreset);
         renderNativeEntryStatesContent(currentPreset);
-        if (window.toastr) toastr.success('状态已保存');
+        notify.success('状态已保存');
       } catch (e) {
         console.error('保存状态失败:', e);
-        if (window.toastr) toastr.error('保存状态失败: ' + e.message);
+        notify.error('保存状态失败: ' + e.message);
       }
     });
 

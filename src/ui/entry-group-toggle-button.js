@@ -2,6 +2,7 @@
 // 类似正则分组的批量开关功能
 
 import { getJQuery } from '../core/utils.js';
+import { notify } from '../core/notify.js';
 
 /**
  * 为分组头部添加一键开关按钮
@@ -92,9 +93,7 @@ export function addToggleAllButtonToGroupHeader($groupHeader, groupItems, onTogg
 
     } catch (error) {
       console.error('[EntryGroupToggle] 切换失败:', error);
-      if (window.toastr) {
-        toastr.error('切换失败: ' + error.message);
-      }
+      notify.error('切换失败: ' + error.message);
     } finally {
       $toggleBtn.prop('disabled', false);
     }

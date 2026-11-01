@@ -1,6 +1,7 @@
 // ==================== 条目状态核心管理 ====================
 
 import { PT } from '../core/api-compat.js';
+import { getCurrentApiInfo } from '../core/utils.js';
 import { getPresetDataFromManager, getOrderedPromptEntries } from '../preset/preset-manager.js';
 import { syncStitchPatchSnapshot } from './preset-stitch-state.js';
 import { ensurePresetManagerSavePresetWrapped } from './preset-stitch-automation.js';
@@ -52,7 +53,7 @@ export function hookPresetSaveToProtectExtensions() {
 
     originalSavePreset = apiInfo.presetManager.savePreset.bind(apiInfo.presetManager);
 
-    apiInfo.presetManager.savePreset = async function hookPresetSaveToProtectExtensions(name, settings, options = {}) {
+    apiInfo.presetManager.savePreset = async function protectedSavePreset(name, settings, options = {}) {
       try {
         const existingPreset = PT.API.getPreset(name);
         const existingExtensions = existingPreset?.extensions || {};

@@ -1,3 +1,4 @@
+import { notify } from '../core/notify.js';
 import { getJQuery } from '../core/utils.js';
 import { getPresetDataFromManager } from '../preset/preset-manager.js';
 import { assignNewStitchMeta } from '../preset/stitch-meta.js';
@@ -5,7 +6,8 @@ import { getOrCreateDummyCharacterPromptOrder } from '../preset/prompt-order-uti
 import { getSelectedEntries, loadAndDisplayEntries } from '../display/entry-display.js';
 import { getPresetNameForSide } from '../batch/batch-modifications.js';
 import { getActiveTransferAdapter } from '../transfer/transfer-context.js';
-import { getPresetGroupingIdForIdentifier, reassignPresetGroupingMembers } from '../features/entry-grouping.js';
+import { getPresetGroupingIdForIdentifier, reassignPresetGroupingMembers, applyGroupingChangesToPresetData } from '../features/entry-grouping.js';
+import { syncNativePromptManagerIfActive } from '../preset/native-sync.js';
 // ==================== 新增功能模块 ====================
 
 // QuickCopy模块已移除 - 复制功能已被"在此处新建"功能替代
@@ -58,12 +60,12 @@ async function copyWorldbookEntries(side, apiInfo) {
   const autoEnable = $('#auto-enable-entry').prop('checked');
 
   if (selectedEntries.length === 0) {
-    alert('请选择要复制的条目');
+    notify.warning('请选择要复制的条目');
     return;
   }
 
   if (!worldbookName) {
-    alert('无法确定目标世界书');
+    notify.error('无法确定目标世界书');
     return;
   }
 
@@ -118,12 +120,12 @@ async function copyWorldbookEntries(side, apiInfo) {
   }
 
   await mod.saveWorldInfo(worldbookName, data, true);
-  loadAndDisplayEntries(apiInfo);
+  loadAndDisplayEntries(apiInfo, side);
 }
 
 // 简化的复制功能
 async function duplicatePresetEntries(apiInfo, presetName, sourceEntries, options = {}) {
-  const { refreshDisplay = true } = options;
+  const { refreshDisplay = true, side = null } = options;
 
   if (!apiInfo?.presetManager) {
     throw new Error('Preset manager is not available.');
@@ -209,22 +211,24 @@ async function duplicatePresetEntries(apiInfo, presetName, sourceEntries, option
     appendCopiedEntry(entry);
   }
 
-  await apiInfo.presetManager.savePreset(presetName, presetData);
-
   if (copiedIdentifiersByGroup.size > 0) {
     const orderedIdentifiers = characterPromptOrder.order
       .map((item) => String(item?.identifier ?? '').trim())
       .filter(Boolean);
 
     for (const [targetGroupId, copiedIdentifiers] of copiedIdentifiersByGroup.entries()) {
-      await reassignPresetGroupingMembers(presetName, copiedIdentifiers, orderedIdentifiers, {
-        targetGroupId,
+      applyGroupingChangesToPresetData(presetData, orderedIdentifiers, {
+        movedIdentifiers: copiedIdentifiers,
+        reassignOptions: { targetGroupId },
       });
     }
   }
 
+  await apiInfo.presetManager.savePreset(presetName, presetData, { skipUpdate: true });
+  await syncNativePromptManagerIfActive(apiInfo, presetName, presetData);
+
   if (refreshDisplay) {
-    loadAndDisplayEntries(apiInfo);
+    loadAndDisplayEntries(apiInfo, side || 'both');
   }
 
   return copiedEntries;
@@ -238,7 +242,7 @@ async function simpleCopyEntries(side, apiInfo) {
       await copyWorldbookEntries(side, apiInfo);
     } catch (error) {
       console.error('\u590d\u5236\u5931\u8d25:', error);
-      alert('\u590d\u5236\u5931\u8d25: ' + error.message);
+      notify.error('\u590d\u5236\u5931\u8d25: ' + error.message);
     }
     return;
   }
@@ -247,22 +251,22 @@ async function simpleCopyEntries(side, apiInfo) {
   const presetName = getPresetNameForSide(side);
 
   if (selectedEntries.length === 0) {
-    alert('\u8bf7\u9009\u62e9\u8981\u590d\u5236\u7684\u6761\u76ee');
+    notify.info('\u8bf7\u9009\u62e9\u8981\u590d\u5236\u7684\u6761\u76ee');
     return;
   }
 
   if (!presetName) {
-    alert('\u65e0\u6cd5\u786e\u5b9a\u76ee\u6807\u9884\u8bbe');
+    notify.info('\u65e0\u6cd5\u786e\u5b9a\u76ee\u6807\u9884\u8bbe');
     return;
   }
 
   try {
-    await duplicatePresetEntries(apiInfo, presetName, selectedEntries);
+    await duplicatePresetEntries(apiInfo, presetName, selectedEntries, { side });
 
     console.log(`\u6210\u529f\u590d\u5236 ${selectedEntries.length} \u4e2a\u6761\u76ee`);
   } catch (error) {
     console.error('\u590d\u5236\u5931\u8d25:', error);
-    alert('\u590d\u5236\u5931\u8d25: ' + error.message);
+    notify.error('\u590d\u5236\u5931\u8d25: ' + error.message);
   }
 }
 
@@ -273,12 +277,12 @@ function startMoveMode(side, apiInfo) {
   const presetName = getPresetNameForSide(side);
 
   if (selectedEntries.length === 0) {
-    alert('请选择要移动的条目');
+    notify.warning('请选择要移动的条目');
     return;
   }
 
   if (!presetName) {
-    alert('无法确定预设');
+    notify.error('无法确定预设');
     return;
   }
 
@@ -291,8 +295,7 @@ function startMoveMode(side, apiInfo) {
   };
 
   // 更新UI提示
-  alert(
-    `移动模式已激活！请点击${
+  notify.warning(`移动模式已激活！请点击${
       side === 'single' ? '预设' : side === 'left' ? '左侧' : '右侧'
     }面板中的条目来选择插入位置。`,
   );
@@ -332,16 +335,17 @@ async function applyMoveToPosition(apiInfo, presetName, selectedEntries, targetI
 
   characterPromptOrder.order.splice(insertIndex, 0, ...newOrderEntries);
 
-  await apiInfo.presetManager.savePreset(presetName, presetData);
-  await reassignPresetGroupingMembers(
-    presetName,
-    selectedEntries.map(entry => entry?.identifier),
-    characterPromptOrder.order.map(entry => String(entry?.identifier ?? '').trim()).filter(Boolean),
-    {
+  const orderedIdentifiers = characterPromptOrder.order.map(entry => String(entry?.identifier ?? '').trim()).filter(Boolean);
+  applyGroupingChangesToPresetData(presetData, orderedIdentifiers, {
+    movedIdentifiers: selectedEntries.map(entry => entry?.identifier),
+    reassignOptions: {
       targetIdentifier: targetIndex === 'top' || targetIndex === 'bottom' ? null : targetIdentifier,
       targetGroupId: String(options?.targetGroupId ?? '').trim(),
     },
-  );
+  });
+
+  await apiInfo.presetManager.savePreset(presetName, presetData, { skipUpdate: true });
+  await syncNativePromptManagerIfActive(apiInfo, presetName, presetData);
   console.log(
     `成功移动 ${selectedEntries.length} 个条目到${
       targetIndex === 'top' ? '顶部' : targetIndex === 'bottom' ? '底部' : '指定位置'
@@ -349,7 +353,7 @@ async function applyMoveToPosition(apiInfo, presetName, selectedEntries, targetI
   );
 
   // 刷新界面
-  loadAndDisplayEntries(apiInfo);
+  loadAndDisplayEntries(apiInfo, options.side || 'both');
 }
 
 // 供“移动模式”（点击选位置）使用，保留 moveMode / UI 状态处理
@@ -368,10 +372,10 @@ async function executeMoveToPosition(apiInfo, side, targetIdentifier, targetInde
   }
 
   try {
-    await applyMoveToPosition(apiInfo, presetName, selectedEntries, targetIdentifier, targetIndex, options);
+    await applyMoveToPosition(apiInfo, presetName, selectedEntries, targetIdentifier, targetIndex, { ...options, side });
   } catch (error) {
     console.error('移动失败:', error);
-    alert('移动失败: ' + error.message);
+    notify.error('移动失败: ' + error.message);
   } finally {
     // 重置移动模式
     window.moveMode = null;
@@ -399,14 +403,10 @@ async function executeMoveToPositionWithEntries(
       return;
     }
 
-    await applyMoveToPosition(apiInfo, presetName, selectedEntries, targetIdentifier, targetIndex, options);
+    await applyMoveToPosition(apiInfo, presetName, selectedEntries, targetIdentifier, targetIndex, { ...options, side });
   } catch (error) {
     console.error('移动失败:', error);
-    if (window.toastr) {
-      toastr.error('移动失败: ' + error.message);
-    } else {
-      alert('移动失败: ' + error.message);
-    }
+    notify.error('移动失败: ' + error.message);
   }
 }
 

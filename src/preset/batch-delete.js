@@ -1,3 +1,4 @@
+import { notify } from '../core/notify.js';
 import { debounce, ensureViewportCssVars, getCurrentApiInfo, getJQuery } from '../core/utils.js';
 import { CommonStyles } from '../styles/common-styles.js';
 import { bindWorldbookBatchOrderDnd, unbindWorldbookBatchOrderDnd } from '../core/worldbook-order-dnd.js';
@@ -47,7 +48,7 @@ async function createPresetBatchManageModal(apiInfo) {
   const currentApiInfo = getCurrentApiInfo();
   const effectiveApiInfo = currentApiInfo || apiInfo;
   if (!effectiveApiInfo) {
-    alert('无法获取当前API信息，请确保 SillyTavern 已正确加载');
+    notify.error('无法获取当前API信息，请确保 SillyTavern 已正确加载');
     return;
   }
 
@@ -414,7 +415,7 @@ async function createPresetBatchManageModal(apiInfo) {
   $('#execute-batch-delete').on('click', async function () {
     const selectedPresets = getSelectedPresets();
     if (!selectedPresets.length) {
-      alert('请选择要删除的预设');
+      notify.warning('请选择要删除的预设');
       return;
     }
 
@@ -430,7 +431,7 @@ async function createPresetBatchManageModal(apiInfo) {
 
       if (errors.length > 0) {
         const failCount = results.filter((r) => !r.success).length;
-        alert(`删除完成，但有 ${failCount} 个失败:\n${errors.join('\n')}`);
+        notify.error(`删除完成，但有 ${failCount} 个失败:\n${errors.join('\n')}`);
       }
 
       const refreshedApiInfo = getCurrentApiInfo();
@@ -456,7 +457,7 @@ async function createPresetBatchManageModal(apiInfo) {
       }
     } catch (error) {
       console.error('批量删除失败:', error);
-      alert('批量删除失败: ' + (error?.message ?? error));
+      notify.error('批量删除失败: ' + (error?.message ?? error));
     } finally {
       $button.prop('disabled', false).text(originalText);
     }

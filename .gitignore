@@ -9,3 +9,5 @@ docs/
 fix-file.cjs
 fix-file.js
 split-code.js
+tests/
+vitest.config.js

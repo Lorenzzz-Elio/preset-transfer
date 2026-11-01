@@ -1,3 +1,4 @@
+import { notify } from '../core/notify.js';
 import { ensureViewportCssVars, getDeviceInfo, getJQuery, escapeHtml } from '../core/utils.js';
 import { loadAndDisplayEntries } from '../display/entry-display.js';
 import { CommonStyles } from '../styles/common-styles.js';
@@ -55,7 +56,7 @@ function createWorldbookEditEntryModal(apiInfo, worldbookName, entry) {
 
   const uid = entry?.raw?.uid ?? Number(entry?.identifier);
   if (!Number.isFinite(uid)) {
-    alert('无法识别世界书条目的 UID，无法编辑');
+    notify.error('无法识别世界书条目的 UID，无法编辑');
     return;
   }
 
@@ -530,7 +531,7 @@ function createWorldbookEditEntryModal(apiInfo, worldbookName, entry) {
       await loadAndDisplayEntries(apiInfo);
     } catch (error) {
       console.error('保存世界书条目失败:', error);
-      alert('保存失败: ' + error.message);
+      notify.error('保存失败: ' + error.message);
     } finally {
       $btn.prop('disabled', false).text(originalText);
     }

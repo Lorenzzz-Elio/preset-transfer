@@ -34,6 +34,7 @@ function applyNewVersionFields(targetEntry, newFields) {
 function transferEntryWithNewFields(sourceEntry, targetEntry = null) {
   if (!targetEntry) {
     targetEntry = {
+      ...sourceEntry,
       identifier: sourceEntry.identifier,
       name: sourceEntry.name,
       role: sourceEntry.role,

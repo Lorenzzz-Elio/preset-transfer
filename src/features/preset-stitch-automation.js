@@ -1,5 +1,6 @@
 import { PT } from '../core/api-compat.js';
 import { getCurrentApiInfo, getParentWindow, getSillyTavernContext } from '../core/utils.js';
+import { notify } from '../core/notify.js';
 import {
   arePresetsSameDifferentVersion,
   compareVersions,
@@ -213,16 +214,16 @@ async function applyStitchesToData(apiInfo, sourcePresetName, targetData, option
   const stitchCount = countPatchStitches(patch);
 
   if (stitchCount === 0) {
-    if (showNoOpToast && window.toastr) {
-      window.toastr.info(`${toastPrefix}未检测到可迁移的缝合条目`);
+    if (showNoOpToast) {
+      notify.info(`${toastPrefix}未检测到可迁移的缝合条目`);
     }
     return { stitchCount: 0, applied: null };
   }
 
   const applied = applyStitchPatch(targetData, patch, { insertedEnabled });
 
-  if (showSuccessToast && window.toastr) {
-    window.toastr.success(
+  if (showSuccessToast) {
+    notify.success(
       `${toastPrefix}缝合已迁移：${stitchCount} 条（新增 ${applied.addedPrompts}，更新 ${applied.updatedPrompts}）`,
     );
   }
@@ -238,7 +239,7 @@ async function applyStitchesPatchToPreset(apiInfo, patch, targetPresetName, opti
   const stitchCount = countPatchStitches(patch);
 
   if (stitchCount === 0) {
-    if (showNoOpToast && window.toastr) window.toastr.info(`${toastPrefix}未检测到可迁移的缝合条目`);
+    if (showNoOpToast) notify.info(`${toastPrefix}未检测到可迁移的缝合条目`);
     return { stitchCount: 0, applied: null };
   }
 
@@ -246,8 +247,8 @@ async function applyStitchesPatchToPreset(apiInfo, patch, targetPresetName, opti
 
   await apiInfo.presetManager.savePreset(targetPresetName, targetData);
 
-  if (showSuccessToast && window.toastr) {
-    window.toastr.success(
+  if (showSuccessToast) {
+    notify.success(
       `${toastPrefix}缝合已迁移：${stitchCount} 条（新增 ${applied.addedPrompts}，更新 ${applied.updatedPrompts}）`,
     );
   }
@@ -310,7 +311,7 @@ async function maybeAutoMigrateOnImport(apiInfo, newPresetName) {
         `检测到预设“${newPresetName}”可迁移 ${stitchCount} 条缝合（来源：快照）。\n\n是否执行自动迁移？\n\n【确定】迁移\n【取消】跳过（不修改该预设）`,
       );
       if (!ok) {
-        if (window.toastr) window.toastr.info('[导入自动] 已取消缝合迁移');
+        notify.info('[导入自动] 已取消缝合迁移');
         return true;
       }
     }
@@ -336,7 +337,7 @@ async function maybeAutoMigrateOnImport(apiInfo, newPresetName) {
         `检测到预设“${newPresetName}”可迁移 ${stitchCount} 条缝合（来源：${sourcePresetName}）。\n\n是否执行自动迁移？\n\n【确定】迁移\n【取消】跳过（不修改该预设）`,
       );
       if (!ok) {
-        if (window.toastr) window.toastr.info('[导入自动] 已取消缝合迁移');
+        notify.info('[导入自动] 已取消缝合迁移');
         return true;
       }
     }
@@ -419,7 +420,7 @@ async function pollPresetList() {
       markImportProcessed(name);
     } catch (error) {
       console.error('[PresetTransfer] 导入自动迁移失败:', error);
-      if (window.toastr) window.toastr.error('[导入自动] 迁移失败: ' + (error?.message ?? error));
+      notify.error('[导入自动] 迁移失败: ' + (error?.message ?? error));
     } finally {
       state.importInProgress.delete(name);
     }
@@ -485,7 +486,7 @@ async function handleOaiPresetImportReady(payload) {
           `检测到导入的预设“${presetName}”可迁移 ${stitchCount} 条缝合（来源：快照）。\n\n是否执行自动迁移？\n\n【确定】迁移\n【取消】跳过（保持导入内容不变）`,
         );
         if (!ok) {
-          if (window.toastr) window.toastr.info('[导入自动] 已取消缝合迁移');
+          notify.info('[导入自动] 已取消缝合迁移');
           markImportProcessed(presetName);
           return;
         }
@@ -496,7 +497,7 @@ async function handleOaiPresetImportReady(payload) {
       sourcePreset = findSourcePresetForOaiImport(apiInfo, presetName);
       if (!sourcePreset) {
         console.info('[PresetTransfer] 导入自动迁移：未找到缝合源预设:', presetName);
-        if (window.toastr) window.toastr.info('[导入自动] 未找到可迁移的缝合源预设');
+        notify.info('[导入自动] 未找到可迁移的缝合源预设');
         markImportProcessed(presetName);
         return;
       }
@@ -510,7 +511,7 @@ async function handleOaiPresetImportReady(payload) {
             `检测到导入的预设“${presetName}”可迁移 ${stitchCount} 条缝合（来源：${sourcePreset}）。\n\n是否执行自动迁移？\n\n【确定】迁移\n【取消】跳过（保持导入内容不变）`,
           );
           if (!ok) {
-            if (window.toastr) window.toastr.info('[导入自动] 已取消缝合迁移');
+            notify.info('[导入自动] 已取消缝合迁移');
             markImportProcessed(presetName);
             return;
           }
@@ -528,7 +529,7 @@ async function handleOaiPresetImportReady(payload) {
     }
 
     if (result.stitchCount === 0) {
-      if (window.toastr) window.toastr.info('[导入自动] 未检测到可迁移的缝合条目');
+      notify.info('[导入自动] 未检测到可迁移的缝合条目');
       markImportProcessed(presetName);
       return;
     }
@@ -536,11 +537,9 @@ async function handleOaiPresetImportReady(payload) {
     // Persist a single source-of-truth snapshot for this base.
     recordStitchPatchSnapshot(presetName, data, { force: true });
 
-    if (window.toastr) {
-      window.toastr.success(
-        `[导入自动] 缝合已迁移：${result.stitchCount} 条（新增 ${result.applied?.addedPrompts ?? 0}，更新 ${result.applied?.updatedPrompts ?? 0}）`,
-      );
-    }
+    notify.success(
+      `[导入自动] 缝合已迁移：${result.stitchCount} 条（新增 ${result.applied?.addedPrompts ?? 0}，更新 ${result.applied?.updatedPrompts ?? 0}）`,
+    );
 
     markImportProcessed(presetName);
     console.info('[PresetTransfer] 导入自动迁移完成:', {
@@ -550,7 +549,7 @@ async function handleOaiPresetImportReady(payload) {
     });
   } catch (error) {
     console.error('[PresetTransfer] 导入自动迁移失败:', error);
-    if (window.toastr) window.toastr.error('[导入自动] 迁移失败: ' + (error?.message ?? error));
+    notify.error('[导入自动] 迁移失败: ' + (error?.message ?? error));
   } finally {
     state.importInProgress.delete(presetName);
   }

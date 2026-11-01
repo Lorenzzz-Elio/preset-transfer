@@ -1,7 +1,8 @@
 import { ensureViewportCssVars, getJQuery, getCurrentApiInfo, getDeviceInfo } from '../core/utils.js';
 import { getPresetDataFromManager, getOrderedPromptEntries } from '../preset/preset-manager.js';
 import { createEntryWithNewFields, ensureNewVersionFields } from '../preset/new-version-fields.js';
-import { loadAndDisplayEntries } from '../display/entry-display.js';
+import { loadAndDisplayEntries, updateRenderedEntryInPlace } from '../display/entry-display.js';
+import { saveEntryChanges } from '../operations/entry-saving.js';
 import { performInsertNewEntry } from '../operations/core-operations.js';
 import { showCompareModal } from './compare-modal.js';
 import { showFindReplaceDialog } from '../operations/find-replace.js';
@@ -162,6 +163,10 @@ function createEditEntryModal(
   const editModalEl = $('#edit-entry-modal')[0];
   if (editModalEl) {
     editModalEl.style.setProperty('--pt-font-size', vars.fontSize);
+    editModalEl.style.setProperty('--pt-accent-color', vars.accentColor);
+    editModalEl.style.setProperty('--pt-accent-color-muted', vars.accentMutedColor || vars.accentColor);
+    editModalEl.style.setProperty('--pt-body-color', vars.textColor);
+    editModalEl.style.setProperty('--pt-border-color', vars.borderColor);
   }
 
   // Remove decorative icon and emoji from the header/cancel button
@@ -189,6 +194,10 @@ function applyEditModalStyles(isMobile, isSmallScreen, isPortrait) {
   const styles = `
         #edit-entry-modal {
             --pt-font-size: ${vars.fontSize};
+            --pt-accent-color: ${vars.accentColor};
+            --pt-accent-color-muted: ${vars.accentMutedColor || vars.accentColor};
+            --pt-body-color: ${vars.textColor};
+            --pt-border-color: ${vars.borderColor};
             ${CommonStyles.getModalBaseStyles()}
             align-items: ${vars.isMobile ? 'flex-start' : 'center'};
             ${vars.isMobile ? 'padding-top: 20px;' : ''}
@@ -306,15 +315,24 @@ function applyEditModalStyles(isMobile, isSmallScreen, isPortrait) {
             min-height: ${isMobile ? 'calc(var(--pt-font-size) * 2.5)' : 'calc(var(--pt-font-size) * 2.25)'};
             flex: ${isMobile ? '1' : '0'};
         }
-        #edit-entry-modal #save-entry-changes,
+        #edit-entry-modal #save-entry-changes {
+            min-width: ${isMobile ? 'auto' : 'calc(var(--pt-font-size) * 8)'};
+            background: var(--pt-accent-color, ${vars.accentColor});
+            color: ${vars.textColor};
+            font-weight: 700;
+        }
         #edit-entry-modal #cancel-edit,
         #edit-entry-modal #find-replace-btn {
             min-width: ${isMobile ? 'auto' : 'calc(var(--pt-font-size) * 8)'};
+            background: var(--pt-accent-color-muted, ${vars.accentMutedColor});
+            color: ${vars.textColor};
         }
     `;
 
   if (!$('#edit-entry-modal-styles').length) {
     $('head').append(`<style id="edit-entry-modal-styles">${styles}</style>`);
+  } else {
+    $('#edit-entry-modal-styles').html(styles);
   }
 
   const cssLink = document.createElement('link');
@@ -494,12 +512,13 @@ function bindEditModalEvents(
 
       // 刷新主界面的条目列表
       if ($('#preset-transfer-modal').length) {
-        if (side) {
-          // 双侧模式
-          loadAndDisplayEntries(apiInfo);
+        if (!isNewEntry && side) {
+          const inPlaceSuccess = updateRenderedEntryInPlace(side, originalEntry, updatedEntry);
+          if (!inPlaceSuccess) {
+            loadAndDisplayEntries(apiInfo, side);
+          }
         } else {
-          // 原有模式（如果还在使用）
-          loadAndDisplayEntries(apiInfo);
+          loadAndDisplayEntries(apiInfo, side || 'both');
         }
       }
     } catch (error) {

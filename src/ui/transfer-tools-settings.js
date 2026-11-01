@@ -1,5 +1,6 @@
 import { PT } from '../core/api-compat.js';
 import { getJQuery } from '../core/utils.js';
+import { notify } from '../core/notify.js';
 import { getCssVar } from '../core/color-utils.js';
 import { exportPresetBundle, importPresetBundle } from '../features/import-export.js';
 import {
@@ -364,14 +365,14 @@ function bindEvents() {
       try {
         const presetName = getCurrentPresetName();
         if (!presetName) {
-          if (window.toastr) toastr.error('请先选择一个预设');
+          notify.error('请先选择一个预设');
           return;
         }
         const includeGlobalWorldbooks = $('#pt-export-global-worldbooks').prop('checked');
         await exportPresetBundle(presetName, { includeGlobalWorldbooks });
       } catch (e) {
         console.error('导出预设包失败', e);
-        if (window.toastr) toastr.error('导出失败: ' + (e?.message ?? e));
+        notify.error('导出失败: ' + (e?.message ?? e));
       }
     });
 
@@ -390,7 +391,7 @@ function bindEvents() {
         await importPresetBundle(file);
       } catch (err) {
         console.error('导入预设包失败', err);
-        if (window.toastr) toastr.error('导入失败: ' + (err?.message ?? err));
+        notify.error('导入失败: ' + (err?.message ?? err));
       } finally {
         $(this).val('');
       }

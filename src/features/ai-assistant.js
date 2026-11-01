@@ -1,3 +1,4 @@
+import { notify } from '../core/notify.js';
 import { getJQuery, getSillyTavernContext } from '../core/utils.js';
 import { CommonStyles } from '../styles/common-styles.js';
 // =============================================
@@ -160,7 +161,7 @@ function recurse_into_deeper_spiral() {
     return parsedResult;
   } catch (error) {
     console.error('AI 辅助失败:', error);
-    alert('AI 辅助失败: ' + error.message);
+    notify.error('AI 辅助失败: ' + error.message);
     throw error;
   } finally {
     showAILoading(false);

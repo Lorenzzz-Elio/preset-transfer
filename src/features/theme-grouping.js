@@ -1,5 +1,6 @@
 // UI主题分组功能
 import { debounce, getJQuery } from '../core/utils.js';
+import { notify } from '../core/notify.js';
 import { CommonStyles } from '../styles/common-styles.js';
 import { getPresetTransferSettingsNode, trySaveSillyTavernSettings } from '../core/pt-extension-settings.js';
 import { bindSelect2AutoClose } from './preset-list-grouping.js';
@@ -1152,13 +1153,9 @@ function addCreateGroupButton(selectEl) {
 
         const trimmedName = groupName.trim();
         if (createGroup(trimmedName)) {
-          if (typeof toastr !== 'undefined') {
-            toastr.success(`分组"${trimmedName}"已创建`, '创建成功');
-          }
+          notify.success(`分组"${trimmedName}"已创建`, '创建成功');
         } else {
-          if (typeof toastr !== 'undefined') {
-            toastr.error('该分组已存在或创建失败', '创建失败');
-          }
+          notify.error('该分组已存在或创建失败', '创建失败');
         }
       });
 
@@ -1865,9 +1862,7 @@ function finishDragging(clientX, clientY) {
         // Drop on group header/blank area: append to the group.
         if (addThemeToGroup(themeValue, targetGroup)) {
           setTimeout(() => void regroupOpenSelect2Results($themesSelect[0]), 0);
-          if (typeof toastr !== 'undefined') {
-            toastr.success(`已将主题添加到分组"${targetGroup}"`, '添加成功');
-          }
+          notify.success(`已将主题添加到分组"${targetGroup}"`, '添加成功');
         }
       }
     }

@@ -1,3 +1,4 @@
+import { notify } from '../core/notify.js';
 ﻿import { ensureViewportCssVars, escapeAttr, escapeHtml, getDeviceInfo, getJQuery, highlightDiff } from '../core/utils.js';
 import { isEntryDifferent, shouldHighlightPositionDifference, showConfirmDialog } from '../events/compare-events.js';
 import { editEntryInPreset, copyEntryBetweenPresets } from '../operations/entry-operations.js';
@@ -11,7 +12,7 @@ function showCompareModal(apiInfo) {
   const rightPreset = $('#right-preset').val();
 
   if (!leftPreset || !rightPreset || leftPreset === rightPreset) {
-    alert('请选择两个不同的预设进行比较');
+    notify.warning('请选择两个不同的预设进行比较');
     return;
   }
 
@@ -37,14 +38,14 @@ function showCompareModal(apiInfo) {
     });
 
     if (commonEntries.length === 0) {
-      alert('两个预设中没有同名条目可以比较');
+      notify.warning('两个预设中没有同名条目可以比较');
       return;
     }
 
     createCompareModal(apiInfo, leftPreset, rightPreset, commonEntries);
   } catch (error) {
     console.error('比较失败:', error);
-    alert('比较失败: ' + error.message);
+    notify.error('比较失败: ' + error.message);
   }
 }
 

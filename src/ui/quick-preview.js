@@ -1,3 +1,4 @@
+import { notify } from '../core/notify.js';
 // 4. 快速预览和测试功能
 import { ensureViewportCssVars, getJQuery } from '../core/utils.js';
 import { getOrderedPromptEntries, getPresetDataFromManager } from '../preset/preset-manager.js';
@@ -267,7 +268,7 @@ const QuickPreview = {
       });
     } catch (error) {
       console.error('预览失败:', error);
-      alert('预览失败: ' + error.message);
+      notify.error('预览失败: ' + error.message);
     }
   },
 };

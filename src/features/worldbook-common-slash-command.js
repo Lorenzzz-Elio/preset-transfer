@@ -1,3 +1,4 @@
+import { notify } from '../core/notify.js';
 import { openWorldbookCommonPanel } from '../ui/worldbook-common-panel.js';
 
 let registered = false;
@@ -26,7 +27,7 @@ export async function ensureWorldbookCommonSlashCommand({ enabled }) {
                 aliases: ['worldbook-common'],
                 callback: async () => {
                     if (!isEnabled()) {
-                        if (window.toastr) toastr.info('世界书常用功能已关闭');
+                        notify.info('世界书常用功能已关闭');
                         return '';
                     }
                     await openWorldbookCommonPanel();

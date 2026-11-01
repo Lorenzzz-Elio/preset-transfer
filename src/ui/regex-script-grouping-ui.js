@@ -1,6 +1,7 @@
 // Native Regex scripts grouping (global / scoped / preset scripts lists) - UI logic
 
 import { debounce, escapeAttr, getJQuery, getParentWindow, getSillyTavernContext } from '../core/utils.js';
+import { notify } from '../core/notify.js';
 import { CommonStyles } from '../styles/common-styles.js';
 import {
   addRegexScriptGroupingFromMembers,
@@ -895,18 +896,18 @@ async function importRegexGroupBundleFile(file) {
     bundle = JSON.parse(await readFileAsText(file));
   } catch (e) {
     console.warn('[RegexGrouping] invalid JSON:', e);
-    if (window.toastr) toastr.error('正则组文件解析失败（JSON 无效）');
+    notify.error('正则组文件解析失败（JSON 无效）');
     return false;
   }
 
   if (!bundle || typeof bundle !== 'object' || bundle.type !== REGEX_GROUP_BUNDLE_TYPE) {
-    if (window.toastr) toastr.error('不是有效的 Preset Transfer 正则组文件');
+    notify.error('不是有效的 Preset Transfer 正则组文件');
     return false;
   }
 
   const regexes = Array.isArray(bundle.regexes) ? bundle.regexes : [];
   if (regexes.length === 0) {
-    if (window.toastr) toastr.warning('正则组文件为空');
+    notify.warning('正则组文件为空');
     return false;
   }
 
@@ -934,7 +935,7 @@ async function importRegexGroupBundleFile(file) {
     });
   } catch (e) {
     console.warn('[RegexGrouping] import regexes failed:', e);
-    if (window.toastr) toastr.error('导入正则失败');
+    notify.error('导入正则失败');
     return false;
   }
 
@@ -945,13 +946,12 @@ async function importRegexGroupBundleFile(file) {
   if (mappedMemberIds.length > 0) {
     const ok = await addRegexScriptGroupingFromMembers(mappedMemberIds, groupName, { collapsed, scope });
     if (!ok) {
-      if (window.toastr) toastr.warning('正则已导入，但创建分组失败（可能与已有分组冲突）');
+      notify.warning('正则已导入，但创建分组失败（可能与已有分组冲突）');
       return true;
     }
   }
-
   queueApplyGrouping();
-  if (window.toastr) toastr.success('正则组已导入');
+  notify.success('正则组已导入');
   return true;
 }
 
@@ -1065,11 +1065,11 @@ async function moveSelectedRegexScriptsTogether(scope, memberIds) {
 async function handleBulkGroupButtonClick() {
   const selections = getSelectedRegexIdsByScope();
   if (selections.length === 0) {
-    if (window.toastr) toastr.warning('请先在 Bulk Edit 中勾选要分组的正则');
+    notify.warning('请先在 Bulk Edit 中勾选要分组的正则');
     return;
   }
   if (selections.length > 1) {
-    if (window.toastr) toastr.warning('一次只能对同一类正则脚本分组，请只保留一个列表中的勾选项');
+    notify.warning('一次只能对同一类正则脚本分组，请只保留一个列表中的勾选项');
     return;
   }
 
@@ -1081,24 +1081,24 @@ async function handleBulkGroupButtonClick() {
   const grouped = getRegexScriptGroupingGroupedIdSet(orderedIds, { scope });
   const hasOverlap = memberIds.some((id) => grouped.has(String(id)));
   if (hasOverlap) {
-    if (window.toastr) toastr.warning('选中的正则包含已分组项，请先取消分组后再创建新分组');
+    notify.warning('选中的正则包含已分组项，请先取消分组后再创建新分组');
     return;
   }
 
   showInputDialog('创建分组', '分组', async (groupNameRaw) => {
     const groupName = String(groupNameRaw ?? '').trim();
     if (!groupName) {
-      if (window.toastr) toastr.warning('分组名称不能为空');
+      notify.warning('分组名称不能为空');
       return;
     }
 
     const createGroup = async () => {
       const ok = await addRegexScriptGroupingFromMembers(memberIds, groupName, { collapsed: true, scope });
       if (!ok) {
-        if (window.toastr) toastr.error('创建分组失败：所选正则可能与已有分组冲突');
+        notify.error('创建分组失败：所选正则可能与已有分组冲突');
         return false;
       }
-      if (window.toastr) toastr.success('分组已创建');
+      notify.success('分组已创建');
       queueApplyGrouping();
       clearRegexBulkSelection();
       return true;
@@ -1106,7 +1106,7 @@ async function handleBulkGroupButtonClick() {
 
     const contiguous = isMemberSelectionContiguous(memberIds, orderedIds);
     if (contiguous === null) {
-      if (window.toastr) toastr.error('无法定位所选正则，请刷新后重试');
+      notify.error('无法定位所选正则，请刷新后重试');
       return;
     }
 
@@ -1119,7 +1119,7 @@ async function handleBulkGroupButtonClick() {
       await moveSelectedRegexScriptsTogether(scope, memberIds);
     } catch (e) {
       console.warn('[RegexGrouping] move selected scripts failed:', e);
-      if (window.toastr) toastr.error('移动所选正则失败');
+      notify.error('移动所选正则失败');
       return;
     }
 
@@ -1343,7 +1343,7 @@ function installHeaderEvents() {
 
         await removeRegexScriptGrouping(groupId);
         queueApplyGrouping();
-        if (window.toastr) toastr.success('已删除分组及其所有正则');
+        notify.success('已删除分组及其所有正则');
       }, { okText: '删除' });
     });
 
@@ -1356,7 +1356,7 @@ function installHeaderEvents() {
 
       await removeRegexScriptGrouping(groupId);
       queueApplyGrouping();
-      if (window.toastr) toastr.info('已取消分组');
+      notify.info('已取消分组');
     });
 
     $list.on('click.pt-regex-group-header', `.${HEADER_CLASS} .pt-regex-group-export`, async function (e) {

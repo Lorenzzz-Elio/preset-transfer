@@ -2,6 +2,9 @@ import { getJQuery } from '../core/utils.js';
 import { getPresetDataFromManager } from '../preset/preset-manager.js';
 import { loadAndDisplayEntries } from '../display/entry-display.js';
 import { BatchEditor } from '../ui/batch-editor.js';
+import { notify } from '../core/notify.js';
+import { applyUpdateEntriesInPreset } from '../core/preset-data-pure.js';
+import { syncNativePromptManagerIfActive } from '../preset/native-sync.js';
 function getSelectedEntriesForSide(side) {
   const $ = getJQuery();
   const selectedEntries = [];
@@ -58,8 +61,8 @@ async function applyBatchModificationsToSide(side, selectedEntries, modification
   try {
     const presetName = getPresetNameForSide(side);
     if (!presetName) {
-      alert('无法确定目标预设');
-      return;
+      notify.warning('无法确定目标预设');
+      return false;
     }
 
     // 应用批量修改
@@ -67,34 +70,23 @@ async function applyBatchModificationsToSide(side, selectedEntries, modification
 
     // 获取预设数据
     const presetData = getPresetDataFromManager(apiInfo, presetName);
-    const allEntries = presetData.prompts || [];
 
-    // 更新修改的条目
-    modifiedEntries.forEach(modifiedEntry => {
-      const index = allEntries.findIndex(e => e.identifier === modifiedEntry.identifier);
-      if (index >= 0) {
-        allEntries[index] = modifiedEntry;
-      }
-    });
+    // 复用核心纯函数：基于原生 identifier 精准更新预设条目并保留其他字段
+    applyUpdateEntriesInPreset(presetData, modifiedEntries);
 
     // 保存预设
-    await apiInfo.presetManager.savePreset(presetName, presetData);
+    await apiInfo.presetManager.savePreset(presetName, presetData, { skipUpdate: true });
+    await syncNativePromptManagerIfActive(apiInfo, presetName, presetData);
 
-    if (window.toastr) {
-      toastr.success(`已对 ${selectedEntries.length} 个条目应用批量修改`);
-    } else {
-      alert(`已对 ${selectedEntries.length} 个条目应用批量修改`);
-    }
+    notify.success(`已对 ${selectedEntries.length} 个条目应用批量修改`);
 
     // 刷新界面
-    loadAndDisplayEntries(apiInfo);
+    loadAndDisplayEntries(apiInfo, side);
+    return true;
   } catch (error) {
     console.error('批量修改失败:', error);
-    if (window.toastr) {
-      toastr.error('批量修改失败: ' + error.message);
-    } else {
-      alert('批量修改失败: ' + error.message);
-    }
+    notify.error('批量修改失败: ' + error.message);
+    return false;
   }
 }
 
@@ -102,5 +94,5 @@ async function applyBatchModificationsToSide(side, selectedEntries, modification
 export {
   getSelectedEntriesForSide,
   getPresetNameForSide,
-  applyBatchModificationsToSide
+  applyBatchModificationsToSide,
 };

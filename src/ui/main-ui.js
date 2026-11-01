@@ -1,3 +1,4 @@
+import { notify } from '../core/notify.js';
 import { ensureViewportCssVars, escapeAttr, escapeHtml, getCurrentApiInfo, getDeviceInfo, getJQuery } from '../core/utils.js';
 import { bindTransferEvents } from '../events/event-binding.js';
 import { loadLocalManifest } from '../features/extension-update.js';
@@ -16,14 +17,14 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
   const apiInfo = getCurrentApiInfo();
   if (!apiInfo) {
     console.error('无法获取API信息');
-    alert('无法获取当前API信息，请确保 SillyTavern 已正确加载');
+    notify.error('无法获取当前API信息，请确保 SillyTavern 已正确加载');
     return;
   }
 
   console.log('API信息获取成功，预设数量:', apiInfo.presetNames.length);
   const initialContainerNames = adapter.id === 'preset' && Array.isArray(apiInfo.presetNames) ? apiInfo.presetNames.slice() : [];
   if (adapter.id === 'preset' && initialContainerNames.length < 1) {
-    alert('至少需要 1 个预设才能进行操作');
+    notify.info('至少需要 1 个预设才能进行操作');
     return;
   }
 
@@ -619,7 +620,7 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
           populateContainerOptions([], { loading: true });
           const names = await getTransferEngine().listContainers(apiInfo);
           if (!Array.isArray(names) || names.length < 1) {
-            alert(`至少需要 1 个${adapter.ui.containerLabel}才能进行操作`);
+            notify.info(`至少需要 1 个${adapter.ui.containerLabel}才能进行操作`);
             $('#close-modal').trigger('click');
             return;
           }
@@ -627,7 +628,7 @@ async function createTransferUI({ adapterKey = 'preset' } = {}) {
           populateContainerOptions(containerNames, { loading: false });
         } catch (error) {
           console.error('PresetTransfer: failed to load containers', error);
-          alert(`加载${adapter.ui.containerLabel}列表失败: ` + (error?.message ?? error));
+          notify.error(`加载${adapter.ui.containerLabel}列表失败: ` + (error?.message ?? error));
           $('#close-modal').trigger('click');
         }
       })();

@@ -17,6 +17,7 @@ import { updatePresetRegexStatus } from '../ui/regex-ui.js';
 import { createWorldbookBatchManageModal } from '../worldbook/batch-delete.js';
 import { loadSearchSettings, updateSearchSettings } from '../settings/search-settings.js';
 import { initDragDrop } from './drag-drop-events.js';
+import { notify } from '../core/notify.js';
 function bindTransferEvents(apiInfo, modal) {
   const $ = getJQuery();
   const leftSelect = $('#left-preset');
@@ -366,6 +367,13 @@ function bindTransferEvents(apiInfo, modal) {
     }
 
     // 保存当前值作为下次的"之前值"
+
+    // 更新正则绑定状态显示（全局监听器会处理正则切换）
+    if (newPresetName) {
+      updatePresetRegexStatus(newPresetName);
+    }
+
+    // 保存当前值作为下次的"之前值"
     $this.data('previous-value', newPresetName);
   });
 
@@ -373,7 +381,7 @@ function bindTransferEvents(apiInfo, modal) {
   $('#batch-delete-presets').on('click', async () => {
     const currentApiInfo = getCurrentApiInfo();
     if (!currentApiInfo) {
-      alert('无法获取当前API信息，请确保 SillyTavern 已正确加载');
+      notify.warning('无法获取当前API信息，请确保 SillyTavern 已正确加载');
       return;
     }
 
@@ -387,7 +395,7 @@ function bindTransferEvents(apiInfo, modal) {
   } catch (error) {
     const actionLabel = '批量管理';
     console.error(`${actionLabel}打开失败:`, error);
-    alert(`${actionLabel}打开失败: ` + (error?.message ?? error));
+    notify.error(`${actionLabel}打开失败: ` + (error?.message ?? error));
   }
   });
 

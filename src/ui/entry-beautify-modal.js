@@ -1,4 +1,5 @@
 import { ensureViewportCssVars, getDeviceInfo, getJQuery, escapeAttr, escapeHtml, getParentWindow } from '../core/utils.js';
+import { notify as notifyModule } from '../core/notify.js';
 import { CommonStyles } from '../styles/common-styles.js';
 import { PT } from '../core/api-compat.js';
 import { closeIcon } from './icons.js';
@@ -18,13 +19,7 @@ const beautifySessions = new Map();
 let generationSequence = 0;
 
 function notify(type, message) {
-  const parentWindow = getParentWindow();
-  if (parentWindow.toastr?.[type]) {
-    parentWindow.toastr[type](message);
-    return;
-  }
-
-  parentWindow.alert?.(message);
+  notifyModule[type]?.(message);
 }
 
 function resolveCurrentPresetName() {
@@ -238,9 +233,7 @@ function notifyBackgroundCompletion(session, generationMode) {
         ? '重新生成的新版本正则'
         : 'AI 生成的正则';
 
-  if (parentWindow.toastr?.success) {
-    parentWindow.toastr.success(`“${session.entryName}”的${actionLabel}已完成。`);
-  }
+  notifyModule.success(`“${session.entryName}”的${actionLabel}已完成。`);
 
   const message = `“${session.entryName}”的${actionLabel}已完成。是否现在打开结果窗口继续查看和修改？`;
 

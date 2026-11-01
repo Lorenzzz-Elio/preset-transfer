@@ -42,19 +42,34 @@
     font-size: var(--pt-font-size);
 }
 
-/* Global placeholder text font size */
-input::placeholder,
-textarea::placeholder,
-input::-webkit-input-placeholder,
-textarea::-webkit-input-placeholder,
-input::-moz-placeholder,
-textarea::-moz-placeholder {
+#preset-transfer-modal,
+#preset-transfer-modal *,
+#preset-transfer-modal *::before,
+#preset-transfer-modal *::after {
+    box-sizing: border-box;
+}
+
+/* Scoped placeholder text font size within extension containers */
+#preset-transfer-modal input::placeholder,
+#preset-transfer-modal textarea::placeholder,
+#preset-transfer-modal input::-webkit-input-placeholder,
+#preset-transfer-modal textarea::-webkit-input-placeholder,
+#preset-transfer-modal input::-moz-placeholder,
+#preset-transfer-modal textarea::-moz-placeholder,
+#compare-modal input::placeholder,
+#compare-modal textarea::placeholder,
+#confirm-dialog-modal input::placeholder,
+#confirm-dialog-modal textarea::placeholder,
+#pt-worldbook-common-modal input::placeholder,
+#pt-worldbook-common-modal textarea::placeholder {
     font-size: inherit !important;
 }
 
-/* Global select option font size */
-select option {
-    font-size: calc(var(--pt-font-size) * 0.875) !important;
+/* Scoped select option font size within extension containers */
+#preset-transfer-modal select option,
+#compare-modal select option,
+#pt-worldbook-common-modal select option {
+    font-size: calc(var(--pt-font-size, var(--mainFontSize, 16px)) * 0.875) !important;
 }
 
 #preset-transfer-modal .modal-header {

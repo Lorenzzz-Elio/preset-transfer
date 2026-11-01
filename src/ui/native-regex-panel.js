@@ -1,5 +1,6 @@
 import { PT } from '../core/api-compat.js';
 import { getJQuery, escapeHtml, debounce } from '../core/utils.js';
+import { notify } from '../core/notify.js';
 import { CommonStyles } from '../styles/common-styles.js';
 import {
   getRegexBindingEnabled,
@@ -353,7 +354,7 @@ function bindNativePresetRegexPanelEvents(presetName) {
 
       const ok = await savePresetRegexBindings(presetName, nextBindings);
       if (!ok) {
-        if (window.toastr) toastr.error('保存失败');
+        notify.error('保存失败');
         renderNativePresetRegexContent(presetName);
         return;
       }
@@ -498,24 +499,24 @@ function bindNativeRegexBindingPanelEvents(presetName, $root, { onSaved } = {}) 
             try {
               await switchPresetRegexes(presetName, presetName, { fromBindings: beforeBindings, toBindings: nextBindings });
               await new Promise(r => setTimeout(r, 100));
-              if (window.toastr) toastr.success('正则绑定配置已保存并生效');
+              notify.success('正则绑定配置已保存并生效');
             } catch (switchError) {
               console.error('应用正则绑定失败:', switchError);
-              if (window.toastr) toastr.warning('正则绑定配置已保存，但应用失败: ' + switchError.message);
+              notify.warning('正则绑定配置已保存，但应用失败: ' + switchError.message);
             }
           } else {
-            if (window.toastr) toastr.info('已保存（正则绑定功能当前为关闭状态，未立即生效）');
+            notify.info('已保存（正则绑定功能当前为关闭状态，未立即生效）');
           }
 
           renderNativeRegexBindingContent(presetName, $modal);
           bindNativeRegexBindingPanelEvents(presetName, $modal, { onSaved });
           if (typeof onSaved === 'function') onSaved();
         } else {
-          if (window.toastr) toastr.error('保存失败');
+          notify.error('保存失败');
         }
       } catch (e) {
         console.error('保存绑定失败:', e);
-        if (window.toastr) toastr.error('保存失败: ' + e.message);
+        notify.error('保存失败: ' + e.message);
       }
     });
 }
@@ -585,7 +586,7 @@ function bindNativeRegexPanelEvents() {
           }
         } catch (e) {
           console.error('[RegexPanel] 展开面板失败:', e);
-          if (window.toastr) toastr.error('打开绑定界面失败: ' + e.message);
+          notify.error('打开绑定界面失败: ' + e.message);
         }
       }
     });
@@ -596,7 +597,7 @@ function bindNativeRegexPanelEvents() {
       try {
         const presetName = PT.API.getLoadedPresetName?.();
         if (!presetName) {
-          if (window.toastr) toastr.error('请先选择一个预设');
+          notify.error('请先选择一个预设');
           return;
         }
         openPresetRegexBindingManager(presetName);

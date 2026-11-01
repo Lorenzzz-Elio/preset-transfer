@@ -1,6 +1,8 @@
 import { escapeAttr, getCurrentApiInfo, getJQuery, getParentWindow } from '../core/utils.js';
+import { notify as notifyModule } from '../core/notify.js';
 import { PT } from '../core/api-compat.js';
 import { duplicatePresetEntries } from '../operations/copy-move.js';
+import { syncNativePromptManagerIfActive } from '../preset/native-sync.js';
 import { CommonStyles } from '../styles/common-styles.js';
 
 const MORE_BUTTON_SELECTOR = '.pt-entry-more-btn';
@@ -16,16 +18,7 @@ function getParentDocument() {
 }
 
 function notify(type, message) {
-  const parentWindow = getParentWindow();
-
-  if (parentWindow.toastr?.[type]) {
-    parentWindow.toastr[type](message);
-    return;
-  }
-
-  if (type === 'error') {
-    parentWindow.alert?.(message);
-  }
+  notifyModule[type]?.(message);
 }
 
 function closeEntryMoreMenu() {
@@ -207,7 +200,7 @@ async function handleDeleteEntry(identifier) {
   }
 
   await apiInfo.presetManager.savePreset(presetName, presetData, { skipUpdate: true });
-
+  await syncNativePromptManagerIfActive(apiInfo, presetName, presetData);
   await refreshNativePromptManager();
 
   try {

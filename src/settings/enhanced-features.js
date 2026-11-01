@@ -1,6 +1,7 @@
 import { getJQuery } from '../core/utils.js';
 import { previewPresetIcon } from '../ui/icons.js';
 import { QuickPreview } from '../ui/quick-preview.js';
+import { notify } from '../core/notify.js';
 
 function initializeEnhancedFeatures(apiInfo) {
   console.log('初始化增强功能...');
@@ -34,7 +35,7 @@ function addPreviewButtons(apiInfo) {
       if (presetName) {
         QuickPreview.showPreviewModal(apiInfo, presetName);
       } else {
-        alert('请先选择左侧预设');
+        notify.warning('请先选择左侧预设');
       }
     });
 
@@ -54,7 +55,7 @@ function addPreviewButtons(apiInfo) {
       if (presetName) {
         QuickPreview.showPreviewModal(apiInfo, presetName);
       } else {
-        alert('请先选择右侧预设');
+        notify.warning('请先选择右侧预设');
       }
     });
 
