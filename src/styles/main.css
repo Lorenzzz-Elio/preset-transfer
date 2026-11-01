@@ -883,3 +883,46 @@
 .pt-preset-list-group .select2-results__options--nested {
   padding-left: 16px;
 }
+
+
+/* 条目分组选择按钮与选择状态样式 */
+.pt-entry-group-select-btn.is-active {
+  color: var(--SmartThemeQuoteColor, #60a5fa) !important;
+  border-color: var(--SmartThemeQuoteColor, #60a5fa) !important;
+  background: rgba(96, 165, 250, 0.18) !important;
+  box-shadow: 0 0 8px rgba(96, 165, 250, 0.35);
+}
+
+.pt-entry-group-selecting li[data-pm-identifier] {
+  cursor: pointer !important;
+  user-select: none !important;
+  transition: background-color 0.15s ease, outline-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.pt-entry-group-selecting li[data-pm-identifier] * {
+  pointer-events: none !important;
+}
+
+.pt-entry-group-selecting li[data-pm-identifier]:not(.pt-entry-group-item-disabled):hover {
+  background-color: rgba(96, 165, 250, 0.1) !important;
+  outline: 1px dashed var(--SmartThemeQuoteColor, rgba(96, 165, 250, 0.65)) !important;
+  outline-offset: -1px;
+}
+
+.pt-entry-group-selecting li[data-pm-identifier].pt-entry-group-item-selected {
+  background-color: rgba(96, 165, 250, 0.22) !important;
+  outline: 2px solid var(--SmartThemeQuoteColor, #60a5fa) !important;
+  outline-offset: -2px;
+  box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.35) !important;
+}
+
+.pt-entry-group-selecting li[data-pm-identifier].pt-entry-group-item-in-range {
+  background-color: rgba(96, 165, 250, 0.12) !important;
+  outline: 1px dashed var(--SmartThemeQuoteColor, #60a5fa) !important;
+  outline-offset: -1px;
+}
+
+.pt-entry-group-selecting li[data-pm-identifier].pt-entry-group-item-disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+}

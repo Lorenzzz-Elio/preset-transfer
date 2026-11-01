@@ -11,11 +11,20 @@ import {
   reassignPresetGroupingMembers,
 } from '../features/entry-grouping.js';
 import { CommonStyles } from '../styles/common-styles.js';
+import { showGroupInputDialog } from './batch-group-dialogs.js';
 import { addToggleAllButtonToGroupHeader, toggleAllEntriesInGroup } from './entry-group-toggle-button.js';
 import { moreHorizontalIcon } from './icons.js';
 
-// 临时标记状态
-const tempMarks = { start: null, end: null };
+const GROUP_SELECT_BTN_CLASS = 'pt-entry-group-select-btn';
+const GROUP_INPUT_DIALOG_ID = 'pt-entry-grouping-input-dialog';
+
+// 分组选择状态
+let isGroupSelectMode = false;
+let selectedIdentifiers = [];
+let selectedPresetName = null;
+let drawerObserver = null;
+let observedDrawerNode = null;
+let boundCaptureListNode = null;
 
 // MutationObserver 实例
 let listObserver = null;
@@ -73,52 +82,6 @@ function cleanupGroupingUi(listContainer) {
   listContainer.find('li[data-pm-identifier]').removeAttr('data-pt-group-id');
   listContainer.find('.pt-entry-group-wrapper, .entry-group-wrapper').contents().unwrap();
   listContainer.find('.pt-entry-group-header, .entry-group-header').remove();
-}
-
-function findListItemByIdentifier(listContainer, identifier) {
-  const $ = getJQuery();
-  return listContainer
-    .find('li[data-pm-identifier]')
-    .filter(function () {
-      return String($(this).attr('data-pm-identifier') ?? '').trim() === String(identifier ?? '').trim();
-    })
-    .first();
-}
-
-function readNeighborContext($node, direction = 'prev') {
-  const $ = getJQuery();
-  const method = direction === 'next' ? 'nextAll' : 'prevAll';
-  const $neighbor = $node[method](
-    '.pt-entry-group-wrapper, .entry-group-wrapper, .pt-entry-group-header, .entry-group-header, li[data-pm-identifier]',
-  ).first();
-  if (!$neighbor.length) return { groupId: null, identifier: null };
-
-  if ($neighbor.is('.pt-entry-group-header, .entry-group-header')) {
-    const id = String($neighbor.attr('data-pt-group-id') ?? '').trim();
-    return { groupId: id || null, identifier: null };
-  }
-
-  if ($neighbor.is('.pt-entry-group-wrapper, .entry-group-wrapper')) {
-    const id = String($neighbor.attr('data-pt-group-id') ?? '').trim();
-    const $items = $neighbor.find('li[data-pm-identifier]');
-    const $targetItem = direction === 'next' ? $items.first() : $items.last();
-    const identifier = String($targetItem.attr('data-pm-identifier') ?? '').trim();
-    return {
-      groupId: id || null,
-      identifier: identifier || null,
-    };
-  }
-
-  const id = String($neighbor.attr('data-pt-group-id') ?? '').trim();
-  const identifier = String($neighbor.attr('data-pm-identifier') ?? '').trim();
-  return {
-    groupId: id || null,
-    identifier: identifier || null,
-  };
-}
-
-function readNeighborGroupId($node, direction = 'prev') {
-  return readNeighborContext($node, direction).groupId;
 }
 
 function getPointerClientPosition(event) {
@@ -208,8 +171,12 @@ function inferMoveTargetContext($item, event = null) {
 }
 
 function destroyEntryGrouping() {
+  setGroupSelectionMode(false, { silent: true });
   entryGroupingEnabled = false;
   teardownThemeReapplyListener();
+  teardownDrawerCloseObserver();
+  teardownGroupSelectionButtonListeners();
+  unbindListCaptureClick();
 
   try {
     if (applyGroupingTimer) {
@@ -243,6 +210,8 @@ function destroyEntryGrouping() {
   sortDragState = null;
 
   try {
+    const $ = getJQuery();
+    $(`.${GROUP_SELECT_BTN_CLASS}`).remove();
     const listContainer = findListContainer();
     if (listContainer?.length) cleanupGroupingUi(listContainer);
   } catch {
@@ -329,10 +298,10 @@ function findPanelContainer() {
   return listContainer.closest('.range-block');
 }
 
-// 辅助函数：重置临时标记
-function resetTempMarks() {
-  tempMarks.start = null;
-  tempMarks.end = null;
+// 辅助函数：清空当前选中的条目（保留选择模式状态）
+function clearSelectedEntries() {
+  selectedIdentifiers = [];
+  syncSelectionModeUi();
 }
 
 function getOrderedIdentifiersFromList() {
@@ -579,6 +548,7 @@ function initEntryGrouping() {
   installPromptManagerHook();
   setupPanelObserver();
   setupThemeReapplyListener();
+  setupGroupSelectionButtonListeners();
 
   // 设置 MutationObserver 监听列表变化
   setupListObserver();
@@ -697,11 +667,13 @@ function applyGroupingToList() {
 
   try {
     applyEntryGroupingThemeVars();
+    ensureGroupSelectButtonInjected();
 
     const groupingUiExists = hasGroupingUi(listContainer);
 
     const preItems = listContainer.find('li[data-pm-identifier]').toArray();
     if (preItems.length === 0) {
+      bindGroupSelectionEvents();
       return;
     }
 
@@ -711,7 +683,7 @@ function applyGroupingToList() {
     const preUnique = new Set(preOrderedIdentifiers);
     if (preUnique.size !== preOrderedIdentifiers.length) {
       console.warn('EntryGrouping: duplicate data-pm-identifier detected; skipping grouping.');
-      bindTripleClickEvents();
+      bindGroupSelectionEvents();
       return;
     }
 
@@ -723,7 +695,7 @@ function applyGroupingToList() {
       lastAppliedGroupingSignature = signature;
       lastAppliedGroupingPreset = presetName;
       lastAppliedGroupingListNode = listContainer[0];
-      bindTripleClickEvents();
+      bindGroupSelectionEvents();
       return;
     }
 
@@ -733,12 +705,12 @@ function applyGroupingToList() {
       && lastAppliedGroupingPreset === presetName
       && lastAppliedGroupingListNode === listContainer[0]
     ) {
-      bindTripleClickEvents();
+      bindGroupSelectionEvents();
       return;
     }
 
     // 保存当前展开状态
-    listContainer.find('.pt-entry-group-header, .entry-group-header').each(function() {
+    listContainer.find('.pt-entry-group-header, .entry-group-header').each(function () {
       const $header = $(this);
       const groupIndex = $header.data('group-index');
       const groupId = String($header.attr('data-pt-group-id') ?? '').trim();
@@ -754,6 +726,7 @@ function applyGroupingToList() {
 
     const items = listContainer.find('li[data-pm-identifier]').toArray();
     if (items.length === 0) {
+      bindGroupSelectionEvents();
       return;
     }
 
@@ -763,13 +736,13 @@ function applyGroupingToList() {
     const unique = new Set(orderedIdentifiers);
     if (unique.size !== orderedIdentifiers.length) {
       console.warn('EntryGrouping: duplicate data-pm-identifier detected; skipping grouping.');
-      bindTripleClickEvents();
+      bindGroupSelectionEvents();
       return;
     }
 
     const groupings = getAllPresetGroupings(presetName, orderedIdentifiers);
     if (groupings.length === 0) {
-      bindTripleClickEvents();
+      bindGroupSelectionEvents();
       return;
     }
 
@@ -784,8 +757,8 @@ function applyGroupingToList() {
         return { ...g, memberIdentifiers: resolvedMembers, anchorIndex };
       })
       .filter(Boolean)
-      // 按照 start/end 的较小索引排序，从后往前应用（避免索引变化）
       .sort((a, b) => (a.anchorIndex ?? Number.MAX_SAFE_INTEGER) - (b.anchorIndex ?? Number.MAX_SAFE_INTEGER));
+
     // Heuristic: if the preset has groupings but none can be resolved against current list identifiers,
     // it's likely the host list is still showing a previous preset; retry after it finishes updating.
     if (resolvedGroupings.length === 0) {
@@ -799,7 +772,7 @@ function applyGroupingToList() {
         setTimeout(() => scheduleApplyGrouping(0), 450);
         setTimeout(() => scheduleApplyGrouping(0), 1200);
       }
-      bindTripleClickEvents();
+      bindGroupSelectionEvents();
       return;
     }
     zeroResolvedRetryPreset = null;
@@ -820,7 +793,7 @@ function applyGroupingToList() {
     lastAppliedGroupingPreset = presetName;
     lastAppliedGroupingListNode = listContainer[0];
 
-    bindTripleClickEvents();
+    bindGroupSelectionEvents();
   } finally {
     // 确保标志位被重置
     setTimeout(() => {
@@ -843,12 +816,12 @@ function createGroupUI(groupItems, grouping, presetName, groupIndex) {
       <span class="pt-entry-group-toggle" aria-hidden="true"></span>
       <span class="pt-entry-group-name"></span>
       <span class="pt-entry-group-count"></span>
-      <button type="button" class="menu_button pt-icon-btn pt-entry-group-more-btn" title="\u66f4\u591a" aria-label="\u66f4\u591a">
+      <button type="button" class="menu_button pt-icon-btn pt-entry-group-more-btn" title="更多" aria-label="更多">
         <span class="pt-entry-group-more-icon" aria-hidden="true">${moreHorizontalIcon(14)}</span>
       </button>
     </div>
   `);
-  groupHeader.find('.pt-entry-group-name').text(grouping.name || '\u5206\u7ec4');
+  groupHeader.find('.pt-entry-group-name').text(grouping.name || '分组');
 
   const totalCount = groupItems.length;
   let enabledCount = 0;
@@ -930,9 +903,9 @@ function showPresetGroupHeaderMenu($groupHeader, { presetName, groupIndex, group
       top: ${rect.bottom + 4}px;
       --pt-theme-font-size: ${vars.themeFontSize};
       --pt-entry-more-text: ${vars.textColor};">
-      <button type="button" class="pt-entry-group-more-action pt-entry-group-rename-action">\u91cd\u547d\u540d\u5206\u7ec4</button>
+      <button type="button" class="pt-entry-group-more-action pt-entry-group-rename-action">重命名分组</button>
       <button type="button" class="pt-entry-group-more-action pt-entry-group-delete-action" style="
-        border-top: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.1));">\u89e3\u9664\u5206\u7ec4</button>
+        border-top: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.1));">解除分组</button>
     </div>
   `);
 
@@ -947,32 +920,41 @@ function showPresetGroupHeaderMenu($groupHeader, { presetName, groupIndex, group
     top: `${Math.max(8, nextTop)}px`,
   });
 
-  menu.on('pointerdown mousedown click', (e) => e.stopPropagation());
+  menu.on('touchstart touchend pointerdown mousedown click', (e) => e.stopPropagation());
 
   menu.find('.pt-entry-group-rename-action').on('click', () => {
     closePresetGroupHeaderMenu();
-    showInputDialog('\u8bf7\u8f93\u5165\u65b0\u7684\u5206\u7ec4\u540d\u79f0', grouping?.name || '\u5206\u7ec4', async (newName) => {
-      if (newName === grouping?.name) return;
-      await updatePresetGrouping(
-        presetName,
-        groupIndex,
-        grouping?.memberIdentifiers,
-        null,
-        newName,
-        getOrderedIdentifiersFromList(),
-      );
-      setTimeout(() => applyGroupingToList(), 200);
-      notify.success('\u5206\u7ec4\u540d\u79f0\u5df2\u66f4\u65b0');
+    showGroupInputDialog({
+      dialogId: GROUP_INPUT_DIALOG_ID,
+      title: '请输入新的分组名称',
+      placeholder: '分组名称',
+      defaultValue: grouping?.name || '分组',
+      container: findPanelContainer(),
+      onConfirm: async (newName) => {
+        if (newName === grouping?.name) return;
+        await updatePresetGrouping(
+          presetName,
+          groupIndex,
+          grouping?.memberIdentifiers,
+          null,
+          newName,
+          getOrderedIdentifiersFromList(),
+        );
+        applyGroupingToList();
+        scheduleApplyGrouping(200);
+        notify.success('分组名称已更新');
+      },
     });
   });
 
   menu.find('.pt-entry-group-delete-action').on('click', async () => {
     closePresetGroupHeaderMenu();
-    if (!confirm('\u786e\u5b9a\u8981\u89e3\u9664\u8fd9\u4e2a\u5206\u7ec4\u5417\uff1f')) return;
+    if (!confirm('确定要解除这个分组吗？')) return;
     await removePresetGrouping(presetName, groupIndex, getOrderedIdentifiersFromList());
-    resetTempMarks();
-    setTimeout(() => applyGroupingToList(), 200);
-    notify.success('\u5206\u7ec4\u5df2\u89e3\u9664');
+    clearSelectedEntries();
+    applyGroupingToList();
+    scheduleApplyGrouping(200);
+    notify.success('分组已解除');
   });
 
   setTimeout(() => {
@@ -986,93 +968,289 @@ function showPresetGroupHeaderMenu($groupHeader, { presetName, groupIndex, group
   }, 0);
 }
 
-function bindTripleClickEvents() {
+// 查找底栏中的“插入提示词”按钮（fa-chain）
+function findInsertPromptButton(panelContainer) {
+  const $ = getJQuery();
+  const $scope = panelContainer?.length ? panelContainer : $(document);
+  let $btn = $scope
+    .find('.completion_prompt_manager_footer a.menu_button.fa-chain, [class$="prompt_manager_footer"] a.menu_button.fa-chain')
+    .first();
+  if (!$btn.length) {
+    $btn = $scope.find('a.menu_button[data-i18n="[title]Insert prompt"]').first();
+  }
+  return $btn;
+}
+
+// 在“插入提示词”按钮左侧注入分组选择按钮
+function ensureGroupSelectButtonInjected() {
+  if (!entryGroupingEnabled) return false;
+  const $ = getJQuery();
+  const panelContainer = findPanelContainer();
+  const $insertBtn = findInsertPromptButton(panelContainer);
+  if (!$insertBtn.length) return false;
+
+  const $footer = $insertBtn.parent();
+  if ($footer.find(`.${GROUP_SELECT_BTN_CLASS}`).length) {
+    return true;
+  }
+
+  const $groupBtn = $(
+    `<a class="menu_button fa-object-group fa-solid fa-fw interactable ${GROUP_SELECT_BTN_CLASS}" title="创建条目分组" tabindex="0" role="button" aria-pressed="false"></a>`,
+  );
+  $insertBtn.before($groupBtn);
+  return true;
+}
+
+// 切换或设置分组选择模式
+function setGroupSelectionMode(nextMode, { silent = false } = {}) {
+  const normalized = !!nextMode && entryGroupingEnabled;
+  const changed = isGroupSelectMode !== normalized;
+  isGroupSelectMode = normalized;
+  selectedIdentifiers = [];
+  selectedPresetName = PT.API.getLoadedPresetName?.() || null;
+
+  if (!isGroupSelectMode) {
+    const $ = getJQuery();
+    $(`#${GROUP_INPUT_DIALOG_ID}`).remove();
+  }
+
+  syncSelectionModeUi();
+
+  if (changed && !silent) {
+    if (isGroupSelectMode) {
+      notify.info('已进入分组选择模式：请点击条目进行选择，选中两个条目后创建分组');
+    } else {
+      notify.info('已退出分组选择模式');
+    }
+  }
+}
+
+// 同步分组选择模式的按钮与条目视觉状态
+function syncSelectionModeUi() {
   const $ = getJQuery();
   const listContainer = findListContainer();
+  const panelContainer = findPanelContainer();
+  const presetName = PT.API.getLoadedPresetName?.();
+
+  if (isGroupSelectMode && presetName && selectedPresetName && selectedPresetName !== presetName) {
+    selectedIdentifiers = [];
+    selectedPresetName = presetName;
+  }
+
+  const $buttons = $(`.${GROUP_SELECT_BTN_CLASS}`);
+  $buttons.toggleClass('is-active', isGroupSelectMode);
+  $buttons.attr('aria-pressed', isGroupSelectMode ? 'true' : 'false');
+  $buttons.attr('title', isGroupSelectMode ? '退出分组选择模式' : '创建条目分组');
+
   if (!listContainer.length) return;
 
-  // Clean up all previous grouping event handlers
-  listContainer.find('li[data-pm-identifier]').off('click.grouping');
+  listContainer.toggleClass('pt-entry-group-selecting', isGroupSelectMode);
+  if (panelContainer.length) {
+    panelContainer.toggleClass('pt-entry-group-selecting-panel', isGroupSelectMode);
+  }
 
-  const items = listContainer.find('li[data-pm-identifier]');
-  let clickCount = 0;
-  let clickTimer = null;
-  let lastClickedIndex = -1;
+  try {
+    if (typeof listContainer.sortable === 'function' && listContainer.data('ui-sortable')) {
+      listContainer.sortable('option', 'disabled', isGroupSelectMode);
+    }
+  } catch {
+    /* ignore */
+  }
 
-  const resetClickState = () => {
-    clickCount = 0;
-    lastClickedIndex = -1;
-  };
+  const $items = listContainer.find('li[data-pm-identifier]');
+  $items.removeClass('pt-entry-group-item-selected pt-entry-group-item-in-range pt-entry-group-item-disabled');
 
-  items.each(function(index) {
+  if (!isGroupSelectMode || !presetName) return;
+
+  const orderedIdentifiers = getOrderedIdentifiersFromList();
+  const groupedIdentifiers = getGroupedIdentifierSet(presetName, orderedIdentifiers);
+
+  selectedIdentifiers = selectedIdentifiers.filter(
+    (id) => orderedIdentifiers.includes(id) && !groupedIdentifiers.has(id),
+  );
+
+  const selectedSet = new Set(selectedIdentifiers);
+  const rangeSet = new Set();
+
+  if (selectedIdentifiers.length >= 2) {
+    const idxA = orderedIdentifiers.indexOf(selectedIdentifiers[0]);
+    const idxB = orderedIdentifiers.indexOf(selectedIdentifiers[1]);
+    if (idxA !== -1 && idxB !== -1) {
+      const start = Math.min(idxA, idxB);
+      const end = Math.max(idxA, idxB);
+      for (let i = start; i <= end; i += 1) {
+        rangeSet.add(orderedIdentifiers[i]);
+      }
+    }
+  }
+
+  $items.each(function () {
     const $item = $(this);
-    $item.on('click.grouping', function(e) {
-      // 忽略按钮与控件区域点击
-      const $target = $(e.target);
-      if ($target.closest('.prompt_manager_prompt_controls, .prompt-manager-toggle-action, .prompt-manager-edit-action, .prompt-manager-detach-action, .prompt-manager-inspect-action, .pt-entry-more-btn, .pt-entry-more-menu, .pt-entry-group-more-btn, .pt-entry-group-more-menu, .pt-entry-group-edit-btn, .pt-entry-group-clear-btn, .group-edit-btn, .group-clear-btn').length) {
-        return;
-      }
+    const id = String($item.attr('data-pm-identifier') ?? '').trim();
+    if (!id) return;
 
-      // 坐标防御：如果点击坐标位于条目右侧控件区（防止部分美化主题设置的伪元素/遮罩层将事件目标拦截为 li）
-      const controlsEl = $item.find('.prompt_manager_prompt_controls')[0];
-      if (controlsEl && typeof e.clientX === 'number' && typeof e.clientY === 'number') {
-        const cRect = controlsEl.getBoundingClientRect();
-        if (cRect.width > 0 && cRect.height > 0) {
-          if (
-            e.clientX >= cRect.left - 12 &&
-            e.clientX <= cRect.right + 12 &&
-            e.clientY >= cRect.top - 8 &&
-            e.clientY <= cRect.bottom + 8
-          ) {
-            // 如果用户点击了控件区域但被美化遮罩层拦截在 li 上，代为触发原生开关点击
-            const $toggle = $item.find('.prompt-manager-toggle-action');
-            if ($toggle.length) {
-              $toggle.trigger('click');
-            }
-            return;
-          }
-        }
-      }
+    if (groupedIdentifiers.has(id)) {
+      $item.addClass('pt-entry-group-item-disabled');
+      return;
+    }
 
-      if (clickTimer) clearTimeout(clickTimer);
-
-      if (lastClickedIndex === index) {
-        clickCount++;
-        if (clickCount >= 3) {
-          resetClickState();
-          e.preventDefault();
-          e.stopPropagation();
-          showGroupingMenu($item, e.clientX, e.clientY);
-          return;
-        }
-      } else {
-        clickCount = 1;
-        lastClickedIndex = index;
-      }
-
-      clickTimer = setTimeout(resetClickState, 1000);
-    });
+    if (selectedSet.has(id)) {
+      $item.addClass('pt-entry-group-item-selected');
+    } else if (rangeSet.has(id)) {
+      $item.addClass('pt-entry-group-item-in-range');
+    }
   });
 }
 
-// 显示输入对话框
-function showInputDialog(title, defaultValue, callback) {
-  const value = globalThis.prompt?.(title, String(defaultValue ?? ''));
-  if (value == null) return;
-  const nextValue = String(value).trim();
-  if (nextValue) callback(nextValue);
+// 捕获阶段拦截列表内条目点击，防止在选择模式下触发原生弹窗或开关
+function handleListCaptureClick(e) {
+  if (!entryGroupingEnabled || !isGroupSelectMode) return;
+  const target = e.target;
+  if (!(target instanceof Element)) return;
+
+  if (target.closest('.pt-entry-group-header, .entry-group-header, .pt-entry-group-more-menu')) {
+    return;
+  }
+
+  const itemEl = target.closest('li[data-pm-identifier]');
+  if (!itemEl) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+  if (typeof e.stopImmediatePropagation === 'function') {
+    e.stopImmediatePropagation();
+  }
+
+  const $ = getJQuery();
+  handleEntrySelectionClick($(itemEl));
 }
 
-// 显示分组菜单
-function showGroupingMenu($item, x, y) {
+function unbindListCaptureClick() {
+  if (boundCaptureListNode) {
+    try {
+      boundCaptureListNode.removeEventListener('click', handleListCaptureClick, true);
+    } catch {
+      /* ignore */
+    }
+    boundCaptureListNode = null;
+  }
+}
+
+function bindListCaptureClick() {
+  const listContainer = findListContainer();
+  const listNode = listContainer[0] || null;
+  if (boundCaptureListNode === listNode) return;
+
+  unbindListCaptureClick();
+  if (listNode) {
+    listNode.addEventListener('click', handleListCaptureClick, true);
+    boundCaptureListNode = listNode;
+  }
+}
+
+function teardownDrawerCloseObserver() {
+  if (drawerObserver) {
+    try {
+      drawerObserver.disconnect();
+    } catch {
+      /* ignore */
+    }
+    drawerObserver = null;
+  }
+  observedDrawerNode = null;
+}
+
+// 监听左侧预设面板关闭，关闭时自动退出选择模式
+function setupDrawerCloseObserver() {
   const $ = getJQuery();
+  const listContainer = findListContainer();
+  const $drawer = listContainer.length ? listContainer.closest('.drawer-content') : $('#left-nav-panel');
+  const drawerNode = $drawer[0] || null;
+
+  if (!drawerNode) return;
+  if (drawerObserver && observedDrawerNode === drawerNode) return;
+
+  teardownDrawerCloseObserver();
+
+  drawerObserver = new MutationObserver((mutations) => {
+    if (!isGroupSelectMode) return;
+    for (const mutation of mutations) {
+      if (mutation.type === 'attributes' && (mutation.attributeName === 'class' || mutation.attributeName === 'style')) {
+        if ($(drawerNode).hasClass('closedDrawer') || !$(drawerNode).is(':visible')) {
+          setGroupSelectionMode(false, { silent: true });
+          break;
+        }
+      }
+    }
+  });
+
+  drawerObserver.observe(drawerNode, {
+    attributes: true,
+    attributeFilter: ['class', 'style'],
+  });
+  observedDrawerNode = drawerNode;
+}
+
+function setupGroupSelectionButtonListeners() {
+  const $ = getJQuery();
+  $(document)
+    .off('click.pt-entry-group-select-btn', `.${GROUP_SELECT_BTN_CLASS}`)
+    .on('click.pt-entry-group-select-btn', `.${GROUP_SELECT_BTN_CLASS}`, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setGroupSelectionMode(!isGroupSelectMode);
+    })
+    .off('keydown.pt-entry-group-select-btn', `.${GROUP_SELECT_BTN_CLASS}`)
+    .on('keydown.pt-entry-group-select-btn', `.${GROUP_SELECT_BTN_CLASS}`, (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        setGroupSelectionMode(!isGroupSelectMode);
+      }
+    })
+    .off('keydown.pt-entry-grouping-esc')
+    .on('keydown.pt-entry-grouping-esc', (e) => {
+      if (e.key === 'Escape' && isGroupSelectMode && !$(`#${GROUP_INPUT_DIALOG_ID}`).length) {
+        setGroupSelectionMode(false);
+      }
+    });
+}
+
+function teardownGroupSelectionButtonListeners() {
+  const $ = getJQuery();
+  $(document)
+    .off('click.pt-entry-group-select-btn', `.${GROUP_SELECT_BTN_CLASS}`)
+    .off('keydown.pt-entry-group-select-btn', `.${GROUP_SELECT_BTN_CLASS}`)
+    .off('keydown.pt-entry-grouping-esc');
+}
+
+function bindGroupSelectionEvents() {
+  ensureGroupSelectButtonInjected();
+  bindListCaptureClick();
+  setupDrawerCloseObserver();
+  syncSelectionModeUi();
+}
+
+// 处理在选择模式下点击某个条目
+function handleEntrySelectionClick($item) {
   const presetName = PT.API.getLoadedPresetName?.();
   if (!presetName) return;
 
-  const identifier = $item.attr('data-pm-identifier');
+  const identifier = String($item.attr('data-pm-identifier') ?? '').trim();
   if (!identifier) return;
 
-  $('.entry-grouping-menu').remove();
+  if (selectedPresetName && selectedPresetName !== presetName) {
+    selectedIdentifiers = [];
+  }
+  selectedPresetName = presetName;
+
+  // 再次点击已选中的条目则取消选中
+  const existingIndex = selectedIdentifiers.indexOf(identifier);
+  if (existingIndex !== -1) {
+    selectedIdentifiers.splice(existingIndex, 1);
+    syncSelectionModeUi();
+    return;
+  }
 
   const orderedIdentifiers = getOrderedIdentifiersFromList();
   const groupedIdentifiers = getGroupedIdentifierSet(presetName, orderedIdentifiers);
@@ -1081,111 +1259,66 @@ function showGroupingMenu($item, x, y) {
     return;
   }
 
-  const vars = CommonStyles.getVars();
-  const hasMarks = tempMarks.start !== null || tempMarks.end !== null;
+  if (selectedIdentifiers.length >= 2) {
+    selectedIdentifiers = [identifier];
+    syncSelectionModeUi();
+    return;
+  }
 
-  const menu = $(`
-    <div class="entry-grouping-menu" style="
-      position: fixed; left: ${x}px; top: ${y}px;">
-      <div class="menu-item set-start">设为分组开始</div>
-      <div class="menu-item set-end">设为分组结束</div>
-      ${hasMarks ? '<div class="menu-item clear-marks" style="color: #ef4444;">清除标记</div>' : ''}
-    </div>
-  `);
+  if (selectedIdentifiers.length === 0) {
+    selectedIdentifiers = [identifier];
+    syncSelectionModeUi();
+    return;
+  }
 
-  // 添加到面板内部
-  const panelContainer = findPanelContainer();
-  (panelContainer.length ? panelContainer : $('body')).append(menu);
+  // 选中第二个条目，计算闭区间并弹出命名弹窗
+  const firstIdentifier = selectedIdentifiers[0];
+  const secondIdentifier = identifier;
+  const startIndex = orderedIdentifiers.indexOf(firstIdentifier);
+  const endIndex = orderedIdentifiers.indexOf(secondIdentifier);
 
-  // 阻止事件冒泡
-  menu.on('pointerdown mousedown click', (e) => e.stopPropagation());
+  if (startIndex === -1 || endIndex === -1) {
+    clearSelectedEntries();
+    notify.error('分组锚点无法解析，请重试');
+    return;
+  }
 
-  // 调整位置避免超出屏幕
-  const menuRect = menu[0].getBoundingClientRect();
-  if (menuRect.right > window.innerWidth) menu.css('left', (x - menuRect.width) + 'px');
-  if (menuRect.bottom > window.innerHeight) menu.css('top', (y - menuRect.height) + 'px');
+  const start = Math.min(startIndex, endIndex);
+  const end = Math.max(startIndex, endIndex);
+  const hasOverlap = orderedIdentifiers.slice(start, end + 1).some((id) => groupedIdentifiers.has(id));
+  if (hasOverlap) {
+    clearSelectedEntries();
+    notify.error('选择范围包含已分组条目，请重新选择未分组的范围');
+    return;
+  }
 
-  // 处理标记完成后的逻辑
-  const handleMarkComplete = async (isStart) => {
-    const otherMark = isStart ? tempMarks.end : tempMarks.start;
-    if (otherMark !== null) {
-      showInputDialog('请输入分组名称', '分组', async (groupName) => {
-        const startIndex = orderedIdentifiers.indexOf(tempMarks.start);
-        const endIndex = orderedIdentifiers.indexOf(tempMarks.end);
-        if (startIndex === -1 || endIndex === -1) {
-          resetTempMarks();
-          notify.error('分组锚点无法解析，请重试');
-          return;
-        }
+  selectedIdentifiers = [firstIdentifier, secondIdentifier];
+  syncSelectionModeUi();
 
-        // Disallow overlap: the new group cannot include any already-grouped entry.
-        const start = Math.min(startIndex, endIndex);
-        const end = Math.max(startIndex, endIndex);
-        const hasOverlap = orderedIdentifiers.slice(start, end + 1).some((id) => groupedIdentifiers.has(id));
-        if (hasOverlap) {
-          resetTempMarks();
-          notify.error('选择范围包含已分组条目，请重新选择未分组的范围');
-          return;
-        }
-
-        await addPresetGrouping(
-          presetName,
-          tempMarks.start,
-          tempMarks.end,
-          groupName,
-          orderedIdentifiers,
-        );
-        resetTempMarks();
-        setTimeout(() => applyGroupingToList(), 200);
-        notify.success('分组已创建');
-      });
-    } else {
-      notify.info(`已标记分组${isStart ? '开始' : '结束'}，请继续标记分组${isStart ? '结束' : '开始'}`);
-    }
-  };
-
-  // 菜单项点击处理
-  menu.find('.set-start').on('click', (e) => {
-    e.stopPropagation();
-    if (groupedIdentifiers.has(identifier)) {
-      notify.info('该条目已在分组中，不能作为分组起点');
-      return;
-    }
-    tempMarks.start = identifier;
-    menu.remove();
-    $(document).off('click.grouping-menu');
-    handleMarkComplete(true);
+  showGroupInputDialog({
+    dialogId: GROUP_INPUT_DIALOG_ID,
+    title: '请输入分组名称',
+    placeholder: '分组名称',
+    defaultValue: '分组',
+    container: findPanelContainer(),
+    onConfirm: async (groupName) => {
+      const currentOrdered = getOrderedIdentifiersFromList();
+      await addPresetGrouping(
+        presetName,
+        firstIdentifier,
+        secondIdentifier,
+        groupName,
+        currentOrdered,
+      );
+      clearSelectedEntries();
+      applyGroupingToList();
+      scheduleApplyGrouping(200);
+      notify.success('分组已创建');
+    },
+    onCancel: () => {
+      clearSelectedEntries();
+    },
   });
-
-  menu.find('.set-end').on('click', (e) => {
-    e.stopPropagation();
-    if (groupedIdentifiers.has(identifier)) {
-      notify.info('该条目已在分组中，不能作为分组终点');
-      return;
-    }
-    tempMarks.end = identifier;
-    menu.remove();
-    $(document).off('click.grouping-menu');
-    handleMarkComplete(false);
-  });
-
-  menu.find('.clear-marks').on('click', (e) => {
-    e.stopPropagation();
-    resetTempMarks();
-    menu.remove();
-    $(document).off('click.grouping-menu');
-    notify.info('已清除临时标记');
-  });
-
-  // 点击外部关闭菜单
-  setTimeout(() => {
-    $(document).one('click.grouping-menu', (e) => {
-      if (!$(e.target).closest('.entry-grouping-menu').length) {
-        menu.remove();
-        $(document).off('click.grouping-menu');
-      }
-    });
-  }, 100);
 }
 
 export {

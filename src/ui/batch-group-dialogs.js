@@ -14,7 +14,9 @@ export function showGroupInputDialog({
   placeholder,
   defaultValue,
   confirmLabel = '确定',
+  container,
   onConfirm,
+  onCancel,
   onUngroup,
 } = {}) {
   const $ = getJQuery();
@@ -43,9 +45,9 @@ export function showGroupInputDialog({
           border-radius: 6px; background: ${vars.inputBg}; color: ${vars.textColor};
           margin-bottom: 12px; box-sizing: border-box;">
         <div style="display: flex; flex-direction: row; gap: 8px; justify-content: flex-end; flex-wrap: wrap;">
-          <button class="pt-dialog-cancel menu_button" style="padding: 6px 16px; white-space: nowrap;">取消</button>
-          ${onUngroup ? `<button class="pt-dialog-ungroup menu_button" style="padding: 6px 16px; white-space: nowrap;">取消分组</button>` : ''}
-          <button class="pt-dialog-confirm menu_button" style="padding: 6px 16px; white-space: nowrap;">${escapeHtml(
+          <button type="button" class="pt-dialog-cancel menu_button" style="padding: 6px 16px; white-space: nowrap;">取消</button>
+          ${onUngroup ? `<button type="button" class="pt-dialog-ungroup menu_button" style="padding: 6px 16px; white-space: nowrap;">取消分组</button>` : ''}
+          <button type="button" class="pt-dialog-confirm menu_button" style="padding: 6px 16px; white-space: nowrap;">${escapeHtml(
             String(confirmLabel),
           )}</button>
         </div>
@@ -53,15 +55,19 @@ export function showGroupInputDialog({
     </div>
   `);
 
-  $('body').append(dialog);
+  (container?.length ? container : $('body')).append(dialog);
 
-  dialog.on('pointerdown mousedown click', (e) => e.stopPropagation());
-  dialog.children().first().on('pointerdown mousedown click', (e) => e.stopPropagation());
+  dialog.on('touchstart touchend pointerdown mousedown', (e) => e.stopPropagation());
+  dialog.children().first().on('touchstart touchend pointerdown mousedown click', (e) => e.stopPropagation());
 
   const $input = dialog.find('.pt-dialog-input');
   $input.focus().select();
 
   const closeDialog = () => dialog.remove();
+  const cancelDialog = () => {
+    closeDialog();
+    onCancel?.();
+  };
   const confirmDialog = () => {
     const value = String($input.val() ?? '').trim();
     if (!value) return;
@@ -73,11 +79,22 @@ export function showGroupInputDialog({
     onUngroup?.();
   };
 
-  dialog.find('.pt-dialog-cancel').on('click', closeDialog);
+  dialog.on('click', function (e) {
+    e.stopPropagation();
+    if (e.target === this) cancelDialog();
+  });
+  dialog.find('.pt-dialog-cancel').on('click', cancelDialog);
   dialog.find('.pt-dialog-confirm').on('click', confirmDialog);
   dialog.find('.pt-dialog-ungroup').on('click', ungroupDialog);
-  $input.on('keypress', (e) => {
-    if (e.key === 'Enter') confirmDialog();
+  $input.on('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      confirmDialog();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      cancelDialog();
+    }
   });
 }
 
